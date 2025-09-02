@@ -18,32 +18,34 @@ return new class extends Migration
 
         DB::table('cruds')->insert(
             [
-                'title'      => 'Kullanıcılar',
-                'slug'       => 'users',
-                'table_name' => 'users',
-                'status'     => 1,
-                'main'       => 1
-            ],
-            [
-                'title'      => 'Yetkiler',
-                'slug'       => 'role-groups',
-                'table_name' => 'role-groups',
-                'status'     => 1,
-                'main'       => 1
-            ],
-            [
-                'title'      => 'Menü',
-                'slug'       => 'menus',
-                'table_name' => 'menus',
-                'status'     => 1,
-                'main'       => 1
-            ],
-            [
-                'title'      => 'Modüller',
-                'slug'       => 'cruds',
-                'table_name' => 'cruds',
-                'status'     => 1,
-                'main'       => 1
+                [
+                    'title'      => 'Kullanıcılar',
+                    'slug'       => 'users',
+                    'table_name' => 'users',
+                    'status'     => 1,
+                    'main'       => 1
+                ],
+                [
+                    'title'      => 'Yetkiler',
+                    'slug'       => 'role-groups',
+                    'table_name' => 'role-groups',
+                    'status'     => 1,
+                    'main'       => 1
+                ],
+                [
+                    'title'      => 'Menü',
+                    'slug'       => 'menus',
+                    'table_name' => 'menus',
+                    'status'     => 1,
+                    'main'       => 1
+                ],
+                [
+                    'title'      => 'Modüller',
+                    'slug'       => 'cruds',
+                    'table_name' => 'cruds',
+                    'status'     => 1,
+                    'main'       => 1
+                ]
             ]
         );
     }
