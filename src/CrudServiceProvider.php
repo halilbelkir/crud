@@ -2,8 +2,6 @@
 
 namespace crudPackage;
 
-use crudPackage\Http\Middleware\CheckPermission;
-use crudPackage\Http\Middleware\Variables;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
@@ -45,8 +43,8 @@ class CrudServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../routes/web.php' => base_path('routes/web.php'),
                 __DIR__.'/../resources/lang' => base_path('resources/lang'),
-                $this->app['router']->aliasMiddleware('variables', Variables::class),
-                $this->app['router']->aliasMiddleware('checkPermission', CheckPermission::class),
+                $this->app['router']->aliasMiddleware('variables', crudPackage\Http\Middleware\Variables::class),
+                $this->app['router']->aliasMiddleware('checkPermission', crudPackage\Http\Middleware\CheckPermission::class),
             ], 'all');
         }
     }
