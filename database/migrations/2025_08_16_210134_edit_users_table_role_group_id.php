@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table)
         {
-            $table->foreign('role_group_id','foreign_role_groups')->references('id')->on('role_groups');
+            $table->foreign('role_group_id','foreign_role_groups')->references('id')->on('role_groups')->after('password');;
         });
     }
 

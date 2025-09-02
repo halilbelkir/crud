@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('form_types', function (Blueprint $table) {
-            $table->string('group',30)->nullable()->after('key');;
+            $table->string('group',30)->nullable()->after('key');
         });
     }
 
