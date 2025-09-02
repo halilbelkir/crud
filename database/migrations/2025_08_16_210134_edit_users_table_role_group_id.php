@@ -22,7 +22,7 @@ return new class extends Migration
         DB::table('users')->insert(
             [
                 [
-                    'name'          => 'Ana Kullanıcı',
+                    'name'          => 'Zaurac Teknoloji',
                     'email'         => 'admin@zaurac.io',
                     'password'      => '$2y$12$m3/l6viIi3KsXAvKWzi2/.ybS6cs/bNjz77ZTNf5Sujc5wRA6fY9C',
                     'role_group_id' => 1,

@@ -91,26 +91,6 @@
                                     {!! menuGenerate($mainMenu) !!}
                                 @endif
                             @endforeach
-
-                            <div class="separator separator-gray-300 separator-dashed my-3"></div>
-
-                            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
-                                <a href="ayarlar" class="menu-link">
-                                    <span class="menu-icon">
-                                        <i class="ki-outline ki-setting-2 fs-2"></i>
-                                    </span>
-                                    <span class="menu-title">Ayarlar</span>
-                                </a>
-                            </div>
-
-                            <div data-kt-menu-trigger="click" class="menu-item menu-accordion">
-                                <a href="hesabim" class="menu-link">
-                                    <span class="menu-icon">
-                                        <i class="ki-outline ki-user fs-2"></i>
-                                    </span>
-                                    <span class="menu-title">Hesabım</span>
-                                </a>
-                            </div>
                         </div>
                     </div>
                     <!--end::Menu wrapper-->
