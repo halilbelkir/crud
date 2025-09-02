@@ -41,8 +41,8 @@ class CrudServiceProvider extends ServiceProvider
 
         config(['auth.providers.users.model' => \crudPackage\Models\User::class]);
 
-        $this->app['router']->aliasMiddleware('variables', crudPackage\Http\Middleware\Variables::class);
-        $this->app['router']->aliasMiddleware('checkPermission', crudPackage\Http\Middleware\CheckPermission::class);
+        $this->app['router']->aliasMiddleware('variables', \crudPackage\Http\Middleware\Variables::class);
+        $this->app['router']->aliasMiddleware('checkPermission', \crudPackage\Http\Middleware\CheckPermission::class);
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
