@@ -4,12 +4,14 @@ namespace crudPackage;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Artisan;
 
 class CrudServiceProvider extends ServiceProvider
 {
     public function boot()
     {
+        $this->runMigrations();
+
         $packagePublic = __DIR__ . '/../public';  // Paketin public klasörü
         $laravelPublic = public_path('crud');  // Laravel projesindeki public/vendor/crud yolu
 
@@ -46,6 +48,14 @@ class CrudServiceProvider extends ServiceProvider
             ], 'all');
         }
     }
+
+    protected function runMigrations()
+    {
+        Artisan::call('migrate', [
+            '--force' => true // Otomatik olarak veritabanını güncelle
+        ]);
+    }
+
 
     public function register()
     {
