@@ -52,9 +52,6 @@ class CrudServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/lang' => base_path('resources/lang'),
             ], 'all');
         }
-
-        $this->app['router']->aliasMiddleware('variables', Variables::class);
-        $this->app['router']->aliasMiddleware('checkPermission', CheckPermission::class);
     }
 
     public function register()
@@ -64,6 +61,9 @@ class CrudServiceProvider extends ServiceProvider
         {
             $this->app->register('Yajra\DataTables\DataTablesServiceProvider');
         }
+
+        $this->app['router']->aliasMiddleware('variables', Variables::class);
+        $this->app['router']->aliasMiddleware('checkPermission', CheckPermission::class);
     }
 
     protected function loadHelpers()
