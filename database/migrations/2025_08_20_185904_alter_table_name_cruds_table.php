@@ -22,32 +22,28 @@ return new class extends Migration
                 'slug'       => 'users',
                 'table_name' => 'users',
                 'status'     => 1,
-                'main'       => 1,
-                'verified' => true
+                'main'       => 1
             ],
             [
                 'title'      => 'Yetkiler',
                 'slug'       => 'role-groups',
                 'table_name' => 'role-groups',
                 'status'     => 1,
-                'main'       => 1,
-                'verified' => true
+                'main'       => 1
             ],
             [
                 'title'      => 'Menü',
                 'slug'       => 'menus',
                 'table_name' => 'menus',
                 'status'     => 1,
-                'main'       => 1,
-                'verified' => true
+                'main'       => 1
             ],
             [
                 'title'      => 'Modüller',
                 'slug'       => 'cruds',
                 'table_name' => 'cruds',
                 'status'     => 1,
-                'main'       => 1,
-                'verified' => true
+                'main'       => 1
             ]
         );
     }
