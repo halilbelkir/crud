@@ -24,7 +24,7 @@ return new class extends Migration
                 [
                     'name'          => 'Ana Kullanıcı',
                     'email'         => 'admin@zaurac.io',
-                    'password'      => '$2y$10$T8.uLp2O5jFm8y.Qn4.X0O.a7jZ.fT3g.q3z.fP0wL4jR.sP9',
+                    'password'      => '$2y$12$m3/l6viIi3KsXAvKWzi2/.ybS6cs/bNjz77ZTNf5Sujc5wRA6fY9C',
                     'role_group_id' => 1,
                     'status'        => 1,
                 ]
