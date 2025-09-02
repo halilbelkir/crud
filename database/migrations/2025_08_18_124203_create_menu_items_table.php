@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -25,6 +26,47 @@ return new class extends Migration
             $table->smallInteger('main')->default(0);
             $table->timestamps();
         });
+
+        DB::table('menu_items')->insert(
+            [
+                [
+                    'title'         => 'Modüller',
+                    'route'         => 'cruds.index',
+                    'icon'          => '<i class="ki-outline ki-screen fs-2"></i>',
+                    'menu_id'       => 1,
+                    'order'         => 1,
+                    'dynamic_route' => 1,
+                    'main'          => 1,
+                ],
+                [
+                    'title'         => 'Yetkiler',
+                    'route'         => 'role-groups.index',
+                    'icon'          => '<i class="ki-outline ki-pointers fs-2"></i>',
+                    'menu_id'       => 1,
+                    'order'         => 2,
+                    'dynamic_route' => 1,
+                    'main'          => 1,
+                ],
+                [
+                    'title'         => 'Kullanıcılar',
+                    'route'         => 'users.index',
+                    'icon'          => '<i class="ki-outline ki-profile-user fs-2"></i>',
+                    'menu_id'       => 1,
+                    'order'         => 3,
+                    'dynamic_route' => 1,
+                    'main'          => 1,
+                ],
+                [
+                    'title'         => 'Menü',
+                    'route'         => 'menus.index',
+                    'icon'          => '<i class="ki-outline ki-burger-menu-6 fs-2"></i>',
+                    'menu_id'       => 1,
+                    'order'         => 4,
+                    'dynamic_route' => 1,
+                    'main'          => 1,
+                ]
+            ]
+        );
     }
 
     /**
