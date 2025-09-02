@@ -6,11 +6,17 @@ use crudPackage\Http\Middleware\CheckPermission;
 use crudPackage\Http\Middleware\Variables;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 
 class CrudServiceProvider extends ServiceProvider
 {
     public function boot()
     {
+        if (Schema::hasTable('cruds')) {
+            $menus = \crudPackage\Models\Crud::where('main', 0)->get();
+            view()->share('menus', $menus);
+        }
+
         $packagePublic = __DIR__ . '/../public';  // Paketin public klasörü
         $laravelPublic = public_path('crud');  // Laravel projesindeki public/vendor/crud yolu
 
