@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-
-            $table->unsignedBigInteger('role_group_id')->change();
+        Schema::table('users', function (Blueprint $table)
+        {
             $table->foreign('role_group_id','foreign_role_groups')->references('id')->on('role_groups');
         });
     }
