@@ -16,6 +16,7 @@ return new class extends Migration
             $table->id();
             $table->string('title')->nullable();
             $table->string('key')->nullable();
+            $table->string('group',30)->nullable();
             $table->smallInteger('status')->index()->default(1)->nullable();
             $table->timestamps();
         });

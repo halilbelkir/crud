@@ -26,6 +26,7 @@ return new class extends Migration
             $table->smallInteger('delete')->index()->default(0)->nullable();
             $table->smallInteger('status')->index()->default(1)->nullable();
             $table->integer('order')->index()->default(99)->nullable();
+            $table->smallInteger('relationship')->default(0);
             $table->timestamps();
         });
     }

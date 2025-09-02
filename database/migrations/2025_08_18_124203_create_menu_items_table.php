@@ -22,6 +22,7 @@ return new class extends Migration
             $table->smallInteger('dynamic_route')->index()->default(0)->nullable();
             $table->smallInteger('target')->index()->default(0)->nullable();
             $table->smallInteger('status')->index()->default(1)->nullable();
+            $table->smallInteger('main')->default(0);
             $table->timestamps();
         });
     }
