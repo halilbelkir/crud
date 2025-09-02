@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('crud_items', function (Blueprint $table) {
-            $table->smallInteger('relationship')->default(0)->after('order');;
+            $table->smallInteger('relationship')->default(0)->after('order');
         });
     }
 
