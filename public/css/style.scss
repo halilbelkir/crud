@@ -1,0 +1,464 @@
+@import "variables";
+
+.app-header-logo
+{
+   .theme-light-show
+   {
+      display: none;
+   }
+
+   .theme-dark-show
+   {
+      display: inline !important;
+   }
+}
+
+.app-sidebar-menu
+{
+   .menu
+   {
+      .menu-item
+      {
+         .menu-link
+         {
+            .menu-title
+            {
+               color: $secondary !important;
+            }
+
+            .menu-icon
+            {
+               i
+               {
+                  color: $secondary !important;
+                  font-size: 20px;
+               }
+            }
+
+            &:hover,
+            &.active
+            {
+               .menu-title
+               {
+                  color: $primary !important;
+               }
+
+               .menu-icon
+               {
+                  i
+                  {
+                     color: $primary !important;
+                  }
+               }
+            }
+         }
+      }
+   }
+}
+
+.btn.btn-primary
+{
+   color: $white;
+   border-color: $primary !important;
+   background-color: $primary !important;
+
+   &:hover
+   {
+      border-color: $secondary !important;
+      background-color: $secondary !important;
+   }
+}
+
+.form-group
+{
+   margin-bottom: 15px;
+
+   .title
+   {
+      margin-bottom: 10px;
+   }
+
+   .form-control
+   {
+      &.form-control-solid
+      {
+         background-color: $lightGrey !important;
+         border-color: $grey !important;
+      }
+
+      &.is-invalid
+      {
+         border: 1px solid $danger !important;
+
+         & + .tox-tinymce
+         {
+            border-color: $danger !important;
+         }
+      }
+   }
+
+   .invalid-feedback
+   {
+      display: block;
+   }
+}
+
+#addUpdateForm,
+#commentInsert,
+#detailFilterExcel
+{
+   .loading
+   {
+      height: 40px;
+   }
+}
+
+.table
+{
+   thead
+   {
+      tr
+      {
+         th
+         {
+            text-align: left;
+
+            &:last-child
+            {
+               text-align: right;
+            }
+         }
+      }
+   }
+
+   tbody
+   {
+      tr
+      {
+         td
+         {
+            text-align: left;
+            vertical-align: middle;
+
+
+            img
+            {
+               height: 50px;
+            }
+
+            &.action
+            {
+               text-align: right;
+               a
+               {
+                  transition: .2s;
+
+                  &:hover
+                  {
+                     transition: .2s;
+                     filter: drop-shadow(0px 0px 7px #00000080);
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   colgroup
+   {
+      col
+      {
+         width: auto !important;
+      }
+   }
+}
+
+.form-label
+{
+   margin-top: 10px;
+}
+
+.form-check-input
+{
+   &:checked
+   {
+      background-color: $primary;
+      border-color : $primary;
+   }
+}
+
+.btn
+{
+   &.btn-light-primary
+   {
+      color: $primary;
+      background-color: $lightHoverRed;
+
+      i
+      {
+         color: $primary;
+      }
+
+      &:hover
+      {
+         background-color: $primary !important;
+         color: $white;
+      }
+   }
+
+   &.btn-tertiary
+   {
+      color: $secondary !important;
+      background-color: $tertiary !important;
+      font-weight: bold;
+
+      i
+      {
+         color: $secondary !important;
+      }
+
+      &:hover
+      {
+         background-color: $primary !important;
+         color: $white !important;
+
+         i
+         {
+            color: $white !important;
+         }
+      }
+   }
+
+   &.btn-outline-primary
+   {
+      color: $primary;
+      border: 1px solid $primary !important;
+
+      &:hover
+      {
+         background-color: $primary;
+         color: $white !important;
+      }
+   }
+}
+
+.stepper-item
+{
+   &.current
+   {
+      .stepper-title
+      {
+         color: $primary !important;
+         font-weight: bold;
+      }
+
+      &:after
+      {
+         background-color: $primary !important;
+      }
+   }
+}
+
+.active
+{
+   & > .page-link
+   {
+      background-color: $primary !important;
+   }
+}
+
+
+.modal-xxl
+{
+   max-width: 1600px !important;
+}
+
+[data-repeater-item]
+{
+   border-bottom: 1px solid $secondary !important;
+   padding-bottom: 10px;
+   margin-bottom: 10px;
+}
+
+
+#menu,
+#columns
+{
+   padding-left: 0;
+   list-style: none !important;
+   position: relative;
+
+   li
+   {
+      margin: 5px 0;
+      padding: 15px;
+      background: $lightGrey;
+      border: 1px solid $greyTwo;
+      border-radius: 4px;
+      cursor: move;
+      list-style: none !important;
+      font-weight: 500;
+
+      &.placeholder
+      {
+         width: 100%;
+         background: $greyTwo !important;
+         border: 1px solid $lightGrey;
+         height: 100%;
+         display: block;
+      }
+
+      &.dragged
+      {
+         position: absolute;
+         opacity: 0.5;
+         z-index: 2000;
+      }
+   }
+}
+
+.color-primary
+{
+   color: $primary !important;
+}
+
+.CodeMirror
+{
+   background-color: $lightGrey !important;
+   border-color: $grey !important;
+   height: 175px !important;
+   border: 1px solid var(--bs-gray-300);
+   border-radius: 0.65rem;
+}
+
+.handle
+{
+   cursor: move !important;
+}
+
+#columns
+{
+   [data-repeater-item]
+   {
+      margin-bottom: 0;
+      padding: 30px;
+
+      &.ribbon
+      {
+         background-color: $lightGrey;
+
+         .ribbon-label
+         {
+            z-index: 999999;
+            left: 5px;
+            top: 70%;
+            font-size: 14px;
+            font-weight: bold;
+         }
+
+         .form-control,
+         li
+         {
+            background-color: $white !important;
+         }
+
+         .form-check-label
+         {
+            color: $secondary !important;
+         }
+
+         .form-check-input
+         {
+            background-color: $white !important;
+            border-color: $secondary !important;
+
+            &:checked
+            {
+               background-color: $secondary !important;
+            }
+         }
+
+         .CodeMirror
+         {
+            background-color: $white !important;
+            border-color: $secondary !important;
+            border: 1px solid $secondary;
+         }
+
+         .jsonOrganizerButton
+         {
+            border:1px solid  $secondary !important;
+         }
+      }
+
+      &:last-child
+      {
+         border-bottom: none !important;
+      }
+   }
+}
+
+.detailIcon
+{
+   display: inline-block;
+
+   i
+   {
+      display: inline-block;
+      font-size: 30px !important;
+      margin-right: 10px;
+   }
+}
+
+.crud-switch
+{
+   & ~ .invalid-feedback
+   {
+      display: inline-block;
+   }
+
+   input
+   {
+      width: auto !important;
+      cursor: pointer;
+      height: auto !important;
+      padding-top: 7px;
+      padding-bottom: 7px;
+
+      &.is-invalid
+      {
+         border: 1px solid $danger !important;
+      }
+
+      &:before
+      {
+         content: attr(data-off);
+         color: $secondary;
+         display: block;
+         margin-left: 40px;
+         margin-right: 20px;
+         font-weight: 500;
+         font-size: 14px;
+      }
+
+      &:checked
+      {
+         &:before
+         {
+            display: none;
+         }
+
+         &:after
+         {
+            content: attr(data-on);
+            color: $white;
+            display: block;
+            margin-left: 20px;
+            margin-right: 40px;
+            font-weight: 500;
+            font-size: 14px;
+         }
+      }
+   }
+
+}

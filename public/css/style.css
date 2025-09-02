@@ -1,0 +1,283 @@
+.app-header-logo .theme-light-show {
+  display: none;
+}
+.app-header-logo .theme-dark-show {
+  display: inline !important;
+}
+
+.app-sidebar-menu .menu .menu-item .menu-link .menu-title {
+  color: #001244 !important;
+}
+.app-sidebar-menu .menu .menu-item .menu-link .menu-icon i {
+  color: #001244 !important;
+  font-size: 20px;
+}
+.app-sidebar-menu .menu .menu-item .menu-link:hover .menu-title, .app-sidebar-menu .menu .menu-item .menu-link.active .menu-title {
+  color: #2900FF !important;
+}
+.app-sidebar-menu .menu .menu-item .menu-link:hover .menu-icon i, .app-sidebar-menu .menu .menu-item .menu-link.active .menu-icon i {
+  color: #2900FF !important;
+}
+
+.btn.btn-primary {
+  color: #ffffff;
+  border-color: #2900FF !important;
+  background-color: #2900FF !important;
+}
+.btn.btn-primary:hover {
+  border-color: #001244 !important;
+  background-color: #001244 !important;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+.form-group .title {
+  margin-bottom: 10px;
+}
+.form-group .form-control.form-control-solid {
+  background-color: #f6f6f6 !important;
+  border-color: #cecece !important;
+}
+.form-group .form-control.is-invalid {
+  border: 1px solid #af2219 !important;
+}
+.form-group .form-control.is-invalid + .tox-tinymce {
+  border-color: #af2219 !important;
+}
+.form-group .invalid-feedback {
+  display: block;
+}
+
+#addUpdateForm .loading,
+#commentInsert .loading,
+#detailFilterExcel .loading {
+  height: 40px;
+}
+
+.table thead tr th {
+  text-align: left;
+}
+.table thead tr th:last-child {
+  text-align: right;
+}
+.table tbody tr td {
+  text-align: left;
+  vertical-align: middle;
+}
+.table tbody tr td img {
+  height: 50px;
+}
+.table tbody tr td.action {
+  text-align: right;
+}
+.table tbody tr td.action a {
+  transition: 0.2s;
+}
+.table tbody tr td.action a:hover {
+  transition: 0.2s;
+  filter: drop-shadow(0px 0px 7px #00000080);
+}
+.table colgroup col {
+  width: auto !important;
+}
+
+.form-label {
+  margin-top: 10px;
+}
+
+.form-check-input:checked {
+  background-color: #2900FF;
+  border-color: #2900FF;
+}
+
+.btn.btn-light-primary {
+  color: #2900FF;
+  background-color: rgba(233, 87, 61, 0.1);
+}
+.btn.btn-light-primary i {
+  color: #2900FF;
+}
+.btn.btn-light-primary:hover {
+  background-color: #2900FF !important;
+  color: #ffffff;
+}
+.btn.btn-tertiary {
+  color: #001244 !important;
+  background-color: #1DE6FF !important;
+  font-weight: bold;
+}
+.btn.btn-tertiary i {
+  color: #001244 !important;
+}
+.btn.btn-tertiary:hover {
+  background-color: #2900FF !important;
+  color: #ffffff !important;
+}
+.btn.btn-tertiary:hover i {
+  color: #ffffff !important;
+}
+.btn.btn-outline-primary {
+  color: #2900FF;
+  border: 1px solid #2900FF !important;
+}
+.btn.btn-outline-primary:hover {
+  background-color: #2900FF;
+  color: #ffffff !important;
+}
+
+.stepper-item.current .stepper-title {
+  color: #2900FF !important;
+  font-weight: bold;
+}
+.stepper-item.current:after {
+  background-color: #2900FF !important;
+}
+
+.active > .page-link {
+  background-color: #2900FF !important;
+}
+
+.modal-xxl {
+  max-width: 1600px !important;
+}
+
+[data-repeater-item] {
+  border-bottom: 1px solid #001244 !important;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+#menu,
+#columns {
+  padding-left: 0;
+  list-style: none !important;
+  position: relative;
+}
+#menu li,
+#columns li {
+  margin: 5px 0;
+  padding: 15px;
+  background: #f6f6f6;
+  border: 1px solid #a0a0a0;
+  border-radius: 4px;
+  cursor: move;
+  list-style: none !important;
+  font-weight: 500;
+}
+#menu li.placeholder,
+#columns li.placeholder {
+  width: 100%;
+  background: #a0a0a0 !important;
+  border: 1px solid #f6f6f6;
+  height: 100%;
+  display: block;
+}
+#menu li.dragged,
+#columns li.dragged {
+  position: absolute;
+  opacity: 0.5;
+  z-index: 2000;
+}
+
+.color-primary {
+  color: #2900FF !important;
+}
+
+.CodeMirror {
+  background-color: #f6f6f6 !important;
+  border-color: #cecece !important;
+  height: 175px !important;
+  border: 1px solid var(--bs-gray-300);
+  border-radius: 0.65rem;
+}
+
+.handle {
+  cursor: move !important;
+}
+
+#columns [data-repeater-item] {
+  margin-bottom: 0;
+  padding: 30px;
+}
+#columns [data-repeater-item].ribbon {
+  background-color: #f6f6f6;
+}
+#columns [data-repeater-item].ribbon .ribbon-label {
+  z-index: 999999;
+  left: 5px;
+  top: 70%;
+  font-size: 14px;
+  font-weight: bold;
+}
+#columns [data-repeater-item].ribbon .form-control,
+#columns [data-repeater-item].ribbon li {
+  background-color: #ffffff !important;
+}
+#columns [data-repeater-item].ribbon .form-check-label {
+  color: #001244 !important;
+}
+#columns [data-repeater-item].ribbon .form-check-input {
+  background-color: #ffffff !important;
+  border-color: #001244 !important;
+}
+#columns [data-repeater-item].ribbon .form-check-input:checked {
+  background-color: #001244 !important;
+}
+#columns [data-repeater-item].ribbon .CodeMirror {
+  background-color: #ffffff !important;
+  border-color: #001244 !important;
+  border: 1px solid #001244;
+}
+#columns [data-repeater-item].ribbon .jsonOrganizerButton {
+  border: 1px solid #001244 !important;
+}
+#columns [data-repeater-item]:last-child {
+  border-bottom: none !important;
+}
+
+.detailIcon {
+  display: inline-block;
+}
+.detailIcon i {
+  display: inline-block;
+  font-size: 30px !important;
+  margin-right: 10px;
+}
+
+.crud-switch ~ .invalid-feedback {
+  display: inline-block;
+}
+.crud-switch input {
+  width: auto !important;
+  cursor: pointer;
+  height: auto !important;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+.crud-switch input.is-invalid {
+  border: 1px solid #af2219 !important;
+}
+.crud-switch input:before {
+  content: attr(data-off);
+  color: #001244;
+  display: block;
+  margin-left: 40px;
+  margin-right: 20px;
+  font-weight: 500;
+  font-size: 14px;
+}
+.crud-switch input:checked:before {
+  display: none;
+}
+.crud-switch input:checked:after {
+  content: attr(data-on);
+  color: #ffffff;
+  display: block;
+  margin-left: 20px;
+  margin-right: 40px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/*# sourceMappingURL=style.css.map */

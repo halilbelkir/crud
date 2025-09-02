@@ -1,0 +1,26 @@
+{
+  "name": "zaurac/crud",
+  "description": "Laravel için CRUD paketi",
+  "type": "library",
+  "autoload": {
+    "psr-4": {
+      "crudPackage\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "crudPackage\\CrudServiceProvider"
+      ]
+    }
+  },
+  "require": {
+    "yajra/laravel-datatables-oracle": "*",
+    "intervention/image": "*"
+  },
+  "scripts": {
+    "post-install-cmd": [
+      "@php artisan vendor:publish --provider=\"crudPackage\\CrudServiceProvider\", --tag=\"all\""
+    ]
+  }
+}
