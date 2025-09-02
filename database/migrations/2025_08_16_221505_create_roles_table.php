@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -22,6 +23,47 @@ return new class extends Migration
             $table->smallInteger('delete')->index()->default(0)->nullable();
             $table->timestamps();
         });
+
+        DB::table('roles')->insert(
+            [
+                [
+                    'role_group_id' => 1,
+                    'crud_id'       => 1,
+                    'browse'        => 1,
+                    'read'          => 1,
+                    'edit'          => 1,
+                    'add'           => 1,
+                    'delete'        => 1,
+                ],
+                [
+                    'role_group_id' => 1,
+                    'crud_id'       => 2,
+                    'browse'        => 1,
+                    'read'          => 1,
+                    'edit'          => 1,
+                    'add'           => 1,
+                    'delete'        => 1,
+                ],
+                [
+                    'role_group_id' => 1,
+                    'crud_id'       => 3,
+                    'browse'        => 1,
+                    'read'          => 1,
+                    'edit'          => 1,
+                    'add'           => 1,
+                    'delete'        => 1,
+                ],
+                [
+                    'role_group_id' => 1,
+                    'crud_id'       => 4,
+                    'browse'        => 1,
+                    'read'          => 1,
+                    'edit'          => 1,
+                    'add'           => 1,
+                    'delete'        => 1,
+                ]
+            ]
+        );
     }
 
     /**
