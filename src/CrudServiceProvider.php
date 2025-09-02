@@ -20,9 +20,6 @@ class CrudServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'crudPackage');
         $this->loadHelpers();
 
-        $this->app['router']->aliasMiddleware('variables', Variables::class);
-        $this->app['router']->aliasMiddleware('checkPermission', CheckPermission::class);
-
 
         // Eğer public/vendor/crud dizini yoksa, oluştur
         if (!file_exists($laravelPublic))
@@ -49,6 +46,9 @@ class CrudServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/lang' => base_path('resources/lang'),
             ], 'all');
         }
+
+        $this->app['router']->aliasMiddleware('variables', Variables::class);
+        $this->app['router']->aliasMiddleware('checkPermission', CheckPermission::class);
     }
 
     public function register()
