@@ -69,3 +69,17 @@ php artisan migrate
 ---
 
 ✅ Artık paketiniz kullanıma hazırdır!
+
+### Kullanıcı Bilgileri
+
+Kullanıcı Adı: 
+
+```bash
+admin@zaurac.io
+```
+
+Şifre : 
+
+```bash
+Zaurac12345.,
+```
