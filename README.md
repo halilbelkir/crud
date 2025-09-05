@@ -66,6 +66,19 @@ Veritabanı tablolarını oluşturmak için:
 php artisan migrate
 ```
 
+## 1️⃣ filesystem.php Düzenelemesi
+
+Ana projenizin `config/filesystem.php` dosyasına aşağıdaki gibi **upload** alanını ekleyin:
+
+```array
+'upload' =>
+            [
+                'driver' => 'local',
+                'root'   => public_path() . '/upload',
+                'url'    => '/upload',
+            ],
+```
+
 ---
 
 ✅ Artık paketiniz kullanıma hazırdır!
