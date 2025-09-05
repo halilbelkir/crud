@@ -83,14 +83,14 @@
 
                                 if (empty($item))
                                 {
-                                    $item = (object) [ 'relationship' => 0 , 'id' => null ,'form_type_id' => null];
+                                    $item = (object) [ 'relationship' => 0 ,'repeater' => 0 , 'id' => null ,'form_type_id' => null];
                                 }
                             @endphp
 
-                            <div data-item-no="{{$columnKey}}" @if($item->relationship == 1) class="ribbon ribbon-start ribbon-clip" @endif data-column-name="{{$column->name}}" data-repeater-item>
-                                @if($item->relationship == 1)
+                            <div data-item-no="{{$columnKey}}" @if($item->relationship == 1 || $item->repeater == 1) class="ribbon ribbon-start ribbon-clip" @endif data-column-name="{{$column->name}}" data-repeater-item>
+                                @if($item->relationship == 1 || $item->repeater == 1)
                                     <div class="ribbon-label">
-                                        İlişkili
+                                        @if($item->relationship == 1) İlişkili @else Tekrarlanan Alan @endif
                                         <span class="ribbon-inner bg-info"></span>
                                     </div>
                                 @endif
@@ -112,6 +112,11 @@
                                                 <i class="ki-outline ki-trash fs-3"></i>
                                                 Sil
                                             </a>
+                                        @elseif($item->repeater == 1)
+                                            <a data-route="{{route('cruds.repeater.destroy',$item->id)}}" onclick="destroy(this)" data-title="{{$item->title.' isimli tekrarlanan alanı'}}" class="btn btn-flex btn-tertiary">
+                                                <i class="ki-outline ki-trash fs-3"></i>
+                                                Sil
+                                            </a>
                                         @endif
 
                                         <input type="hidden" name="column_name" value="{{$column->name}}">
@@ -126,7 +131,7 @@
 
                                         <div class="col-md-12 form-group">
                                             <label class="fw-semibold fs-6 mb-2">Tip</label>
-                                            <select name="form_type_id" class="form-control form-control-solid" @if($column->name == 'created_at' || $column->name == 'id' || $column->name == 'updated_at' || $item->relationship == 1) disabled @endif>
+                                            <select name="form_type_id" class="form-control form-control-solid" @if($column->name == 'created_at' || $column->name == 'id' || $column->name == 'updated_at' || $item->relationship == 1 || $item->repeater == 1) disabled @endif>
                                                 <option value="">Seçiniz</option>
                                                 @foreach($formTypes as $type)
                                                     <option value="{{$type->id}}" @if($item->form_type_id == $type->id || $column->name == 'id' && $type->key == 'hidden' || $column->name == 'created_at' && $type->key == 'datetime' || $column->name == 'updated_at' && $type->key == 'datetime') selected @endif>{{$type->title}}</option>
@@ -171,6 +176,10 @@
                 <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#insertModal">
                     İlişki Ekle
                 </button>
+
+                <button type="button" class="btn btn-tertiary ms-2 fw-normal" data-bs-toggle="modal" data-bs-target="#repeaterModal">
+                    Tekrarlanan Alan Ekle
+                </button>
             </div>
         </div>
 
@@ -184,7 +193,7 @@
          aria-hidden="true" style="display: none;">
         <div class="modal-dialog modal-dialog-centered ">
             <div class="modal-content">
-                <div class="modal-header" id="kt_modal_add_user_header">
+                <div class="modal-header" id="repeaterModalHeader">
                     <h2 class="fw-bold">İlişki Ekle</h2>
                     <div class="btn btn-icon btn-sm btn-active-icon-primary" data-dismiss="modal">
                         <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span
@@ -196,11 +205,11 @@
                     <form id="relationshipForm" class="form  fv-plugins-bootstrap5 fv-plugins-framework"
                           method="post" action="{{route('cruds.relationship.store',$value->id)}}">
                         @method('PUT')
-                        <div class="row scroll-y me-n7 pe-7" id="kt_modal_add_user_scroll"
+                        <div class="row scroll-y me-n7 pe-7" id="repeaterModalScroll"
                              data-kt-scroll="true" data-kt-scroll-activate="{default: false, lg: true}"
                              data-kt-scroll-max-height="auto"
-                             data-kt-scroll-dependencies="#kt_modal_add_user_header"
-                             data-kt-scroll-wrappers="#kt_modal_add_user_scroll"
+                             data-kt-scroll-dependencies="#repeaterModalHeader"
+                             data-kt-scroll-wrappers="#repeaterModalScroll"
                              data-kt-scroll-offset="300px" style="max-height: 281px;">
 
                             <div class="col-12 form-group">
@@ -258,6 +267,89 @@
                                 </select>
                             </div>
 
+                        </div>
+
+                        <div class="text-center border-top pt-10 mt-5">
+                            <button type="reset" class="btn btn-light me-3" data-dismiss="modal"> Vazgeç </button>
+                            <button type="submit" class="btn btn-primary"
+                                    data-kt-users-modal-action="submit"> Kaydet
+                            </button>
+                            @include('crudPackage::components.loading')
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade modal-xl" data-bs-backdrop="static" data-bs-keyboard="false" id="repeaterModal"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered ">
+            <div class="modal-content">
+                <div class="modal-header" id="repeaterModalHeader">
+                    <h2 class="fw-bold">Tekrarlanan Alan Ekle</h2>
+                    <div class="btn btn-icon btn-sm btn-active-icon-primary" data-dismiss="modal">
+                        <i class="ki-outline ki-cross fs-1"></i>
+                    </div>
+                </div>
+
+                <div class="modal-body scroll-y mx-5 mx-xl-10">
+                    <form id="repeaterForm" class="form"
+                          method="post" action="{{route('cruds.repeater.store',$value->id)}}">
+                        @method('PUT')
+                        <div class="row scroll-y me-n7 pe-7" id="repeaterModalScroll"
+                             data-kt-scroll="true" data-kt-scroll-activate="{default: false, lg: true}"
+                             data-kt-scroll-max-height="auto"
+                             data-kt-scroll-dependencies="#repeaterModalHeader"
+                             data-kt-scroll-wrappers="#repeaterModalScroll"
+                             data-kt-scroll-offset="300px" style="max-height: 281px;">
+
+                            <div class="form-group col-12">
+                                <label class="required fw-semibold fs-6 mb-2">Referans Alınacak Alan</label>
+                                <select name="repeater_column_name" data-control="select2" data-placeholder="Referans Alınacak Alan Seçiniz" data-allow-clear="true" class="form-control form-control-solid ">
+                                    <option value="">Seçiniz</option>
+                                    @foreach($columns as $column)
+                                        <option value="{{$column->name}}">{{$column->name}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div data-repeater-list="repeaterArea">
+                                <div data-item-no="0" data-repeater-item>
+                                    <div class="form-group row">
+
+                                        <div class="col-md-1 form-group handle"><i class="bi text-dark me-3 fs-4 bi-arrows-move"></i></div>
+                                        <div class="col-md-6 form-group">
+                                            <label class="fw-semibold fs-6 mb-2">Alan Bilgileri</label>
+                                            <textarea id="area_info" name="area_info" data-modal-json="true" class="form-control form-control-solid" data-value='{"column_name":"geçici alan adı","validation":"required","title":"Form element Başlık","class":"Form element Class İsimleri Örn : (col-md-6)","relationships":{"table":"db tablo adı","key":"referans gösterilecek alan adı","show":"Görüntülenecek alan adı"},"option":{"key":"value"},"search":"true ise select2 fonksiyonunun olması demektir","rows":"textarea satır sayısı"}'></textarea>
+                                            <div id="area_info_json_organizer" class="btn jsonOrganizerButton btn-secondary mt-3">JSON'u Düzenle</div>
+                                        </div>
+
+                                        <div class="col-md-4 form-group">
+                                            <label class="fw-semibold fs-6 mb-2">Tip</label>
+                                            <select name="form_type_id" class="form-control form-control-solid">
+                                                <option value="">Seçiniz</option>
+                                                @foreach($formTypes as $type)
+                                                    <option value="{{$type->id}}">{{$type->title}}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-1 form-group">
+                                            <a href="javascript:;" data-repeater-delete class="btn btn-flex btn-tertiary mt-6">
+                                                <i class="ki-outline ki-trash  fs-3"></i>
+                                                Sil
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group mt-5">
+                                <a href="javascript:;" data-repeater-create class="btn btn-light-primary">
+                                    <i class="ki-duotone ki-plus fs-3"></i>
+                                    Satır Ekle
+                                </a>
+                            </div>
                         </div>
 
                         <div class="text-center border-top pt-10 mt-5">

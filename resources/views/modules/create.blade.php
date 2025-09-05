@@ -16,3 +16,6 @@
         </div>
     </div>
 @endsection
+@section('js')
+    <script src="{{asset('crud/vendor/formrepeater/formrepeater.bundle.js')}}"></script>
+@endsection

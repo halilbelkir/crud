@@ -26,7 +26,6 @@ class CrudController extends Controller
             'browse'   => "Listeme",
             'add'      => "Ekleme",
             'edit'     => "Düzenleme",
-            'delete'   => "Silme",
             'read'     => "Detay",
         ];
     /**
@@ -685,6 +684,101 @@ class CrudController extends Controller
                 [
                     'result'  => 0,
                     'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
+                ],403);
+        }
+    }
+
+    public function repeaterDestroy(CrudItem $crudItem)
+    {
+        try
+        {
+            $crudItem->repeater = 0;
+            $crudItem->detail   = '{}';
+            $crudItem->save();
+
+            return response()->json(
+                [
+                    'result'  => 1,
+                    'message' => 'İşlem Başarılı.',
+                ]
+            );
+        }
+        catch (Exception $e)
+        {
+            return response()->json(
+                [
+                    'result'  => 0,
+                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
+                ],403);
+        }
+    }
+
+    public function repeaterStore(Request $request,Crud $crud)
+    {
+        try
+        {
+            $attribute =
+                [
+                    'repeater_column_name'        => 'Referans Alınacak Alan',
+                    'repeaterArea'                => 'Tekrarlanan Alanlar',
+                    'repeaterArea.*.form_type_id' => 'Tip',
+                    'repeaterArea.*.area_info'    => 'Alan Bilgileri',
+                ];
+
+            $rules =
+                [
+                    'repeater_column_name'        => 'required',
+                    'repeaterArea'                => 'required|array|min:1',
+                    'repeaterArea.*.form_type_id' => 'required|integer',
+                    'repeaterArea.*.area_info'    => 'required|json',
+                ];
+
+            $validator = Validator::make($request->all(), $rules);
+            $validator->setAttributeNames($attribute);
+
+            if ($validator->fails())
+            {
+                return response()->json(
+                    [
+                        'result' => 2,
+                        'message' => $validator->errors()
+                    ],403
+                );
+            }
+
+            $repeaterAreas = $request->get('repeaterArea');
+            $repeaterData  = [];
+
+            foreach ($repeaterAreas as $repeaterArea)
+            {
+                $areaInfo                 = $repeaterArea['area_info'];
+                $areaInfo                 = json_decode($areaInfo, true);
+                $areaInfo['form_type_id'] = $repeaterArea['form_type_id'];
+                array_push($repeaterData, $areaInfo);
+            }
+
+            $crudItem               = CrudItem::where('column_name',$request->get('repeater_column_name'))->first();
+            $crudItem->column_name  = $request->get('repeater_column_name');
+            $crudItem->detail       = json_encode($repeaterData);
+            $crudItem->form_type_id = 17;
+            $crudItem->repeater     = 1;
+            $crudItem->save();
+
+            return response()->json(
+                [
+                    'result'  => 1,
+                    'message' => 'İşlem Başarılı.'
+                ]
+            );
+
+        }
+        catch (Exception $e)
+        {
+            return response()->json(
+                [
+                    'result'  => 0,
+                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
+
                 ],403);
         }
     }

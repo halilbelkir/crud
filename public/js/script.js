@@ -1,7 +1,12 @@
 let editor        = $('[data-editor="true"]');
 if (editor.length > 0)
 {
-    document.querySelectorAll('[data-editor="true"]').forEach(function(textarea)
+    createEditor('[data-editor="true"]');
+}
+
+function createEditor(selector)
+{
+    document.querySelectorAll(selector).forEach(function(textarea)
     {
         const example_image_upload_handler = (blobInfo, progress) => new Promise((resolve, reject) =>
         {
@@ -60,7 +65,6 @@ if (editor.length > 0)
         });
     });
 }
-
 $('#login').submit(function (e)
 {
     e.preventDefault();
@@ -110,14 +114,42 @@ $('#productRoutesForm').submit(function (e)
     formSend(formSelector,this);
 });
 
+$('#repeaterForm').submit(function (e)
+{
+    e.preventDefault();
+    formSend('#repeaterForm',this);
+});
+
+$('#addUpdateForm').submit(function (e)
+{
+    e.preventDefault();
+    formSend('#addUpdateForm',this);
+});
+
 let jsonEditors = $('[data-json="true"]');
 let editorsJson = [];
 
 if (jsonEditors.length > 0)
 {
+    jsonOrganizers(jsonEditors);
+}
+
+function jsonOrganizers(jsonEditors,value = null)
+{
     jsonEditors.each(function(index)
     {
         let textarea = $(this)[0];
+
+        if (textarea.value == '')
+        {
+            textarea.value = '{}';
+        }
+
+        if (value)
+        {
+            textarea.value = value;
+        }
+
         let jsonEditor = CodeMirror.fromTextArea(textarea,
             {
                 mode: { name: "javascript", json: true },
@@ -179,6 +211,11 @@ function formSend(formSelector,bu)
     if (jsonEditors.length > 0)
     {
         editorsJson.forEach(ed => ed.save());
+    }
+
+    if ($(formSelector).find('[data-repeater-item]').length > 0)
+    {
+        renumberItems(formSelector);
     }
 
     let formData = new FormData(bu);
@@ -384,13 +421,6 @@ function messageToast(formSelector,status,message)
     },(hide + 5000));
 }
 
-$('#addUpdateForm').submit(function (e)
-{
-    e.preventDefault();
-    formSend('#addUpdateForm',this);
-});
-
-
 function statusUpdate(bu)
 {
 
@@ -513,44 +543,69 @@ function destroy(bu)
         }
     });
 }
+
+function modalWithSwal(modalName)
+{
+    let modalSelector = $(modalName);
+    let cancelButton  = $(modalName+' [data-dismiss="modal"]')
+
+    modalSelector.modal(
+        {
+            focus: false,
+            show: false
+        });
+
+    cancelButton.click(function (e)
+    {
+        e.preventDefault();
+
+        Swal.fire({
+            text: "Kayıt işleminden vazgeçmek istediğinize emin misiniz?",
+            icon: "warning",
+            showCancelButton: true,
+            buttonsStyling: false,
+            confirmButtonText: "Evet",
+            cancelButtonText: "Hayır",
+            customClass: {
+                confirmButton: "btn btn-primary",
+                cancelButton: "btn btn-active-light"
+            }
+        }).then(function (result)
+        {
+            if (result.value)
+            {
+                modalSelector.find('form')[0].reset();
+                modalSelector.modal('hide');
+            }
+        });
+    });
+}
+
 $(function()
 {
     if ($('#insertModal').length > 0)
     {
-        let modalName     = '#insertModal';
-        let modalSelector = $(modalName);
-        let cancelButton  = $(modalName+' [data-dismiss="modal"]')
+        modalWithSwal('#insertModal');
+    }
 
-        modalSelector.modal(
-            {
-                focus: false,
-                show: false
-            });
+    if ($('#repeaterModal').length > 0)
+    {
+        let modalSelector = 'repeaterModal';
+        modalWithSwal('#' + modalSelector);
+        let modalShowNo = 0;
 
-        cancelButton.click(function (e)
+        document.getElementById(modalSelector).addEventListener('shown.bs.modal', () =>
         {
-            e.preventDefault();
-
-            Swal.fire({
-                text: "Kayıt işleminden vazgeçmek istediğinize emin misiniz?",
-                icon: "warning",
-                showCancelButton: true,
-                buttonsStyling: false,
-                confirmButtonText: "Evet",
-                cancelButtonText: "Hayır",
-                customClass: {
-                    confirmButton: "btn btn-primary",
-                    cancelButton: "btn btn-active-light"
-                }
-            }).then(function (result)
+            if (modalShowNo == 0)
             {
-                if (result.value)
-                {
-                    modalSelector.find('form')[0].reset();
-                    modalSelector.modal('hide');
-                }
-            });
-        });
+                jsonEditors = $('[data-modal-json="true"]');
+                let jsonEditorFirstValue = $('#' + modalSelector).find('[data-modal-json="true"]').eq(0).data('value');
+                jsonEditorFirstValue = JSON.stringify(jsonEditorFirstValue,null, 2);
+                jsonOrganizers(jsonEditors,jsonEditorFirstValue);
+            }
+
+            modalShowNo = 1;
+        })
     }
 
     if ($('[name="city_id"]').length > 0)
@@ -787,12 +842,11 @@ function getCrud(self)
 
 if ($('#items [data-repeater-list="items"]').length > 0)
 {
+    let itemsSelector = '[data-repeater-list="columns"]';
+
     repeaterGenerate('#items');
 
-
-    $( '#items [data-repeater-list="items"]' ).sortable({opacity: 0.5,revert:200});
-
-    $( '#items [data-repeater-list="items"]' ).sortable(
+    $( itemsSelector).sortable(
         {
             opacity: 0.5,
             revert:200,
@@ -806,9 +860,11 @@ if ($('#items [data-repeater-list="items"]').length > 0)
 
 if ($('#columns [data-repeater-list="columns"]').length > 0)
 {
+    let columnsSelector = '#columns [data-repeater-list="columns"]';
+
     repeaterGenerate('#columns');
 
-    $( '#columns [data-repeater-list="columns"]' ).sortable(
+    $( columnsSelector).sortable(
         {
             opacity: 0.5,
             revert:200,
@@ -820,21 +876,66 @@ if ($('#columns [data-repeater-list="columns"]').length > 0)
         });
 }
 
-function repeaterGenerate(selector)
+if ($('#repeaterCrud [data-repeater-list]').length > 0)
+{
+    let repeaterSelector = '#repeaterCrud [data-repeater-list]';
+
+    repeaterGenerate('#repeaterCrud');
+
+    $( repeaterSelector ).sortable(
+        {
+            opacity: 0.5,
+            revert:200,
+            handle : '.handle',
+            update: function( event, ui )
+            {
+                renumberItems('#repeaterCrud');
+            }
+        });
+}
+
+if ($('#repeaterForm [data-repeater-list="repeaterArea"]').length > 0)
+{
+    repeaterGenerate('#repeaterForm',1);
+
+    $( '#repeaterForm [data-repeater-list="repeaterArea"]' ).sortable(
+        {
+            opacity: 0.5,
+            revert:200,
+            handle : '.handle',
+            update: function( event, ui )
+            {
+                renumberItems('#repeaterForm');
+            }
+        });
+}
+
+function repeaterGenerate(selector,modalJsonEditorValue = null)
 {
     $(selector).repeater({
         initEmpty: false,
 
         show: function ()
         {
+            console.log($(this));
             $(this).slideDown();
 
-            $('[maxlength]').maxlength({
+            $(selector).find('[maxlength]').maxlength({
                 warningClass: "badge badge-primary",
                 limitReachedClass: "badge badge-success"
             });
 
-            renumberItems(selector);
+            let jsonEditorFirstValue = null;
+
+            if (modalJsonEditorValue)
+            {
+                jsonEditorFirstValue = $(selector).find('[data-modal-json="true"]').eq(0).data('value');
+                jsonEditorFirstValue = JSON.stringify(jsonEditorFirstValue,null, 2);
+            }
+
+            jsonOrganizers($(this).find('[data-modal-json="true"]'),jsonEditorFirstValue);
+
+            createEditor('[data-editor="true"]');
         },
 
         hide: function (deleteElement) {
@@ -843,7 +944,7 @@ function repeaterGenerate(selector)
 
         ready : function ()
         {
-            $('[maxlength]').maxlength(
+            $(selector).find('[maxlength]').maxlength(
                 {
                     warningClass: "badge badge-primary",
                     limitReachedClass: "badge badge-success"
@@ -854,7 +955,7 @@ function repeaterGenerate(selector)
 
 function renumberItems(selector)
 {
-    $('[data-repeater-item]').each(function(index)
+    $(selector).find('[data-repeater-item]').each(function(index)
     {
         let item = $(this);
         item.attr('data-item-no', index);

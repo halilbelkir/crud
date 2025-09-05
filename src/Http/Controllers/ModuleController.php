@@ -6,6 +6,7 @@ use crudPackage\Models\Crud;
 use Carbon\Carbon;
 use crudPackage\Library\ImageUpload\ImageUpload;
 use crudPackage\Library\Relationships\CrudRelationships;
+use crudPackage\Models\FormType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -66,15 +67,54 @@ class ModuleController extends Controller
         $datatableColumns  = [];
         $relationships     = $this->relationShips;
         $elements          = '';
+        $rElements         = '';
+        $elementsView      = '';
 
-        foreach($crud->addColumns as $columnKey => $column)
+        foreach($crud->addColumns as $column)
         {
             $formType  = $column->type;
             $type      = $formType->key;
-            $elements .= '<div class="form-group '.($column->form_type_id == 13 ? 'd-none' : null) .' col-12 mb-7 fv-plugins-icon-container">';
-            $elements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="'.$column->column_name.'">'.$column->title.'</label>';
-            $elements .= view('crudPackage::formTypes.'. $formType->group,compact('column','type','crud','formType'))->render();
-            $elements .= '</div>';
+
+            if ($column->repeater == 1)
+            {
+                $details = json_decode($column->detail);
+
+                foreach($details as $detail)
+                {
+                    if (strstr('required',$detail->validation))
+                    {
+                        $detail->required = 1;
+                    }
+                    else
+                    {
+                        $detail->required = 0;
+                    }
+
+                    $detail->repeater = 1;
+                    $formTypeR  = FormType::find($detail->form_type_id);
+                    $typeR      = $formTypeR->key;
+                    $rElements .= '<div class="form-group '.($detail->form_type_id == 13 ? 'd-none' : null) .' '.(isset($detail->class) ? $detail->class : 'col').' mb-7 fv-plugins-icon-container">';
+                    $rElements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="repeater_'.$detail->column_name.'">'.$detail->title.'</label>';
+                    $rElements .= view('crudPackage::formTypes.'. $formTypeR->group,['column' => $detail,'formType' => $formTypeR,'type' => $typeR],compact('crud'))->render();
+                    $rElements .= '</div>';
+                }
+
+                $elementsView .= '<div data-item-no="0" data-repeater-item>';
+                $elementsView .= '<div class="form-group row">';
+                $elementsView .= '<div class="col-md-1 form-group handle"><i class="bi text-dark me-3 fs-4 bi-arrows-move"></i></div>';
+                $elementsView .= $rElements;
+                $elementsView .= '<div class="col-md-1 form-group"> <a href="javascript:;" data-repeater-delete class="btn btn-flex btn-tertiary mt-6"> <i class="ki-outline ki-trash  fs-3"></i> Sil </a> </div>';
+                $elementsView .= '</div>';
+                $elementsView .= '</div>';
+                $elements     .= view('crudPackage::formTypes.'. $formType->group,['elements' => $elementsView],compact('column','type','crud','formType'))->render();
+            }
+            else
+            {
+                $elements .= '<div class="form-group '.($column->form_type_id == 13 ? 'd-none' : null) .' col-12 mb-7 fv-plugins-icon-container">';
+                $elements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="'.$column->column_name.'">'.$column->title.'</label>';
+                $elements .= view('crudPackage::formTypes.'. $formType->group,compact('column','type','crud','formType'))->render();
+                $elements .= '</div>';
+            }
         }
 
         return view('crudPackage::modules.create',compact('crud','datatableColumns','relationships','elements'));
@@ -127,6 +167,17 @@ class ModuleController extends Controller
 
                 $rules[$column->column_name] = $validations;
             }
+
+            if ($column->repeater == 1)
+            {
+                $rules[$column->column_name] .= '|array|min:1';
+
+                foreach ($details as $detail)
+                {
+                    $rules[$column->column_name.'.*.'.$detail->column_name]     = $detail->validation;
+                    $attribute[$column->column_name.'.*.'.$detail->column_name] = $detail->title;
+                }
+            }
         }
 
         return [$attribute,$rules];
@@ -175,6 +226,10 @@ class ModuleController extends Controller
                     {
                         $allData[$column->column_name] = 0;
                     }
+                }
+                if ($column->repeater == 1)
+                {
+                    $allData[$column->column_name] = json_encode($allData[$column->column_name]);
                 }
 
                 if (isset($allData['crud_copy_id']))
@@ -301,15 +356,63 @@ class ModuleController extends Controller
         $model             = $crud->model;
         $value             = $model::find($id);
         $elements          = '';
+        $elementsView      = '';
+        $elementValues     = '';
+        $repeaterValue     = [];
 
         foreach($crud->editColumns as $columnKey => $column)
         {
             $formType  = $column->type;
             $type      = $formType->key;
-            $elements .= '<div class="form-group '.($column->form_type_id == 13 ? 'd-none' : null) .' col-12 mb-7 fv-plugins-icon-container">';
-            $elements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="'.$column->column_name.'">'.$column->title.'</label>';
-            $elements .= view('crudPackage::formTypes.'. $formType->group,compact('column','type','crud','value','formType'))->render();
-            $elements .= '</div>';
+
+            if ($column->repeater == 1)
+            {
+                $details       = json_decode($column->detail);
+                $elementValues = json_decode($value->{$column->column_name});
+
+                foreach($elementValues as $elementKey => $elementValue)
+                {
+                    $rElements    = '';
+
+                    foreach ($details as $detail)
+                    {
+                        if (strstr('required',$detail->validation))
+                        {
+                            $detail->required = 1;
+                        }
+                        else
+                        {
+                            $detail->required = 0;
+                        }
+
+                        $detail->repeater = 1;
+
+                        $formTypeR  = FormType::find($detail->form_type_id);
+                        $typeR      = $formTypeR->key;
+                        $rElements .= '<div class="form-group '.($detail->form_type_id == 13 ? 'd-none' : null) .' '.(isset($detail->class) ? $detail->class : 'col').' mb-7 fv-plugins-icon-container">';
+                        $rElements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="repeater_'.$detail->column_name.'">'.$detail->title.'</label>';
+                        $rElements .= view('crudPackage::formTypes.'. $formTypeR->group,['column' => $detail,'formType' => $formTypeR,'type' => $typeR,'value' => $elementValue],compact('crud'))->render();
+                        $rElements .= '</div>';
+                    }
+
+                    $elementsView .= '<div data-item-no="'.$elementKey.'" data-repeater-item>';
+                    $elementsView .= '<div class="form-group row">';
+                    $elementsView .= '<div class="col-md-1 form-group handle"><i class="bi text-dark me-3 fs-4 bi-arrows-move"></i></div>';
+                    $elementsView .= $rElements;
+                    $elementsView .= '<div class="col-md-1 form-group"> <a href="javascript:;" data-repeater-delete class="btn btn-flex btn-tertiary mt-6"> <i class="ki-outline ki-trash  fs-3"></i> Sil </a> </div>';
+                    $elementsView .= '</div>';
+                    $elementsView .= '</div>';
+                }
+
+                $elements .= view('crudPackage::formTypes.'. $formType->group,['elements' => $elementsView],compact('column','type','crud','formType'))->render();
+            }
+            else
+            {
+                $elements .= '<div class="form-group '.($column->form_type_id == 13 ? 'd-none' : null) .' col-12 mb-7 fv-plugins-icon-container">';
+                $elements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="'.$column->column_name.'">'.$column->title.'</label>';
+                $elements .= view('crudPackage::formTypes.'. $formType->group,compact('column','type','crud','value','formType'))->render();
+                $elements .= '</div>';
+            }
         }
 
         return [
@@ -412,6 +515,11 @@ class ModuleController extends Controller
                     {
                         $allData[$column->column_name] = 0;
                     }
+                }
+
+                if ($column->repeater == 1)
+                {
+                    $allData[$column->column_name] = json_encode($allData[$column->column_name]);
                 }
             }
 

@@ -3,9 +3,18 @@
     @foreach($crud->readColumns as $column)
         @php
             $formType   = $column->type;
-            $inputValue = $values->{$column->column_name};
             $details    = json_decode($column->detail,true);
             $multiple   = isset($details['multiple']) && $details['multiple'] == true ? 'multiple' : null;
+
+            if ($column->repeater == 1)
+            {
+                $inputValue = html_entity_decode($values->{$column->column_name});
+                $inputValue = json_decode($inputValue);
+            }
+            else
+            {
+                $inputValue = $values->{$column->column_name};
+            }
         @endphp
 
         <div class="card mb-5 mb-xl-10">
@@ -43,6 +52,31 @@
                                     </a>
                                 </div>
                             @endforeach
+                        </div>
+                    @elseif($column->repeater == 1)
+                        <div class="table-responsive">
+                            <table class="table align-middle table-row-dashed fs-6 gy-4 dataTable no-footer">
+                                <thead>
+                                    <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                                        @foreach($details as $detail)
+                                            <td>{{$detail['title']}}</td>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                @foreach($inputValue as $value)
+                                    <tr>
+                                        @foreach($details as $detail)
+                                            @if($detail['form_type_id'] == 3)
+                                                <td>{{ \Carbon\Carbon::make($value->{$detail['column_name']})->format('d.m.Y') }}</td>
+                                            @elseif($detail['form_type_id'] == 4)
+                                                <td>{{ \Carbon\Carbon::make($value->{$detail['column_name']})->format('d.m.Y H:i:s') }}</td>
+                                            @else
+                                                <td>{!! $value->{$detail['column_name']} !!}</td>
+                                            @endif
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </table>
                         </div>
                     @else
                         {!! $inputValue !!}

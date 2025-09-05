@@ -124,6 +124,12 @@ return new class extends Migration
                     'group'  => 'select',
                     'status' => 1,
                 ],
+                [
+                    'title'  => 'Tekrarlayan Alan',
+                    'key'    => 'repeater',
+                    'group'  => 'repeater',
+                    'status' => 1,
+                ],
             ];
     }
 

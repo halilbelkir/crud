@@ -1,31 +1,40 @@
 @php
-    $details  = json_decode($column->detail,true);
-    $multiple = null;
-    $name     = $column->column_name;
     $inputValue = null;
+    $multiple   = null;
+    $name       = $column->column_name;
 
-    if ($type == 'datetime')
-    {
-        $type = 'datetime-local';
-    }
-    else if ($type == 'image')
-    {
-        $type     = 'file';
-        $multiple = isset($details['multiple']) && $details['multiple'] == true ? 'multiple' : null;
-        $name     = $multiple == 'multiple' ? $name . '[]' : $name;
-    }
-
-    if (isset($value))
+    if (isset($value) && $column->repeater == 1)
     {
         $inputValue = $value->{$column->column_name};
     }
-    else
+    else if (isset($column->detail))
     {
-        if ($type == 'date' || $type == 'datetime-local')
+        $details  = json_decode($column->detail,true);
+
+        if ($type == 'datetime')
         {
-            $inputValue = date('Y-m-d');
+            $type = 'datetime-local';
+        }
+        else if ($type == 'image')
+        {
+            $type     = 'file';
+            $multiple = isset($details['multiple']) && $details['multiple'] == true ? 'multiple' : null;
+            $name     = $multiple == 'multiple' ? $name . '[]' : $name;
+        }
+
+        if (isset($value))
+        {
+            $inputValue = $value->{$column->column_name};
+        }
+        else
+        {
+            if ($type == 'date' || $type == 'datetime-local')
+            {
+                $inputValue = date('Y-m-d');
+            }
         }
     }
+
 @endphp
 
 @if($formType->key == 'image' && isset($inputValue) && isset($value) && $multiple != 'multiple')
@@ -42,7 +51,7 @@
             type="{{$type}}"
             value="{{ $inputValue }}"
             name="{{$name}}"
-            id="{{$name}}"
+            id="{{$column->repeater == 1 ? 'repeater_'.$name : $name}}"
             class="form-control form-control-solid mb-3 mb-lg-0"
             placeholder="{{$column->title}}"
             @if(isset($dt))

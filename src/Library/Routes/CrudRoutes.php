@@ -55,6 +55,8 @@ class CrudRoutes
             Route::get('role-groups/datatable', [\crudPackage\Http\Controllers\RoleGroupController::class, 'datatable'])->name('role-groups.datatables');
             Route::resource('role-groups', \crudPackage\Http\Controllers\RoleGroupController::class);
 
+            Route::put('cruds/repeater/store/{crud}', [\crudPackage\Http\Controllers\CrudController::class, 'repeaterStore'])->name('cruds.repeater.store');
+            Route::delete('cruds/repeater/delete/{crud_item}', [\crudPackage\Http\Controllers\CrudController::class, 'repeaterDestroy'])->name('cruds.repeater.destroy');
             Route::delete('cruds/relationship/delete/{crud_item}', [\crudPackage\Http\Controllers\CrudController::class, 'relationshipDestroy'])->name('cruds.relationship.destroy');
             Route::put('cruds/relationship/store/{crud}', [\crudPackage\Http\Controllers\CrudController::class, 'relationshipStore'])->name('cruds.relationship.store');
             Route::post('cruds/orderable', [\crudPackage\Http\Controllers\CrudController::class, 'orderable'])->name('cruds.orderable');
