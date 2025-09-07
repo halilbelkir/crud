@@ -1,7 +1,7 @@
 @extends('crudPackage::layout.main',['activePage' => $crud->display_plural])
 @section('content')
     @if($crud->content)
-        <div class="alert alert-dismissible bg-primary d-flex flex-column align-items-center flex-sm-row p-5 mb-10">
+        <div class="alert alert-dismissible bg-secondary d-flex flex-column align-items-center flex-sm-row p-5 mb-10">
             <div class="fw-bold">{!! $crud->content !!}</div>
         </div>
     @endif
