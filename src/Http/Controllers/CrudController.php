@@ -137,6 +137,7 @@ class CrudController extends Controller
             $data->content         = $request->get('content');
             $data->icon            = $request->get('icon');
             $data->table_name      = $request->get('table_name');
+            $data->only_edit       = $request->has('only_edit') ? 1 : 0;
             $data->area_1          = isset($area1) ? json_encode($area1) : null;
             $data->save();
 
@@ -149,13 +150,20 @@ class CrudController extends Controller
                 $this->setItem($crudItem,$item,$data->id,($key + 1));
             }
 
+            if ($data->only_edit == 1)
+            {
+                $newModuleData = new $data->model();
+                $newModuleData->save();
+                $route = $data->slug.'.edit,'.$newModuleData->id;
+            }
+
             $menuId                  = 1;
             $menuItemLast            = MenuItem::where('menu_id',$menuId)->orderBy('order','desc')->first();
             $menuItem                = new MenuItem();
             $menuItem->menu_id       = $menuId;
             $menuItem->order         = $menuItemLast->order + 1;
             $menuItem->title         = $data->title;
-            $menuItem->route         = $data->slug.'.index';
+            $menuItem->route         = $data->only_edit == 1 ? $route : $data->slug.'.index';
             $menuItem->icon          = $data->icon;
             $menuItem->dynamic_route = 1;
             $menuItem->target        = 0;
@@ -339,10 +347,14 @@ class CrudController extends Controller
             $data->model           = $request->get('model');
             $data->content         = $request->get('content');
             $data->icon            = $request->get('icon');
+            $data->only_edit       = $request->has('only_edit') ? 1 : 0;
             $data->area_1          = isset($area1) ? json_encode($area1) : null;
             $data->save();
 
-            $crudItems = $request->get('columns');
+            $crudItems   = $request->get('columns');
+            $moduleModel = $data->model;
+            $moduleFirst = $moduleModel::first();
+            $route       = $data->slug.'.index';
 
             foreach ($crudItems as $crudItemKey => $item)
             {
@@ -358,11 +370,26 @@ class CrudController extends Controller
                 $this->setItem($crudItem,$item,$data->id,($crudItemKey + 1));
             }
 
+            if ($data->only_edit == 1)
+            {
+                if ($moduleFirst)
+                {
+                    $route = $data->slug.'.edit,'.$moduleFirst->id;
+                }
+                else
+                {
+                    $newModuleData = new $moduleModel();
+                    $newModuleData->save();
+                    $route = $data->slug.'.edit,'.$newModuleData->id;
+                }
+            }
+
             $previousData            = $data->getPrevious()['slug'] ?? $data->slug;
             $menuItem                = MenuItem::whereLike('route','%'.$previousData.'%')->where('menu_id',1)->first();
             $menuItem->title         = $data->title;
-            $menuItem->route         = $data->slug.'.index';
+            $menuItem->route         = $route;
             $menuItem->icon          = $data->icon;
+            $menuItem->dynamic_route = isset($data->only_edit) ? 1 : $menuItem->dynamic_route;
             $menuItem->save();
 
             return response()->json(

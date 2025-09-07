@@ -25,6 +25,7 @@ return new class extends Migration
             $table->json('area_1')->nullable();
             $table->smallInteger('status')->index()->default(1)->nullable();
             $table->smallInteger('main')->index()->default(0)->nullable();
+            $table->smallInteger('only_edit')->index()->default(0)->nullable();
             $table->timestamps();
         });
 

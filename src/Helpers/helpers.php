@@ -2,10 +2,21 @@
 
     function menuGenerate($menu)
     {
+        if (strstr($menu->route,','))
+        {
+            $arr         = explode(',',$menu->route);
+            $menu->route = $arr[0];
+            $parameter   = $arr[1];
+            $route       = route($menu->route,$parameter);
+        }
+        else
+        {
+            $route = $menu->dynamic_route == 1 ? route($menu->route) : $menu->route;
+        }
+
         $activeRoute      = explode('.',$menu->route);
         $activeRoute      = $activeRoute[0];
         $activeRoute     .= '*';
-        $route            = $menu->dynamic_route == 1 ? route($menu->route) : $menu->route;
         $target           = $menu->target == 1 ? 'target="_blank"' : null;
         $children         = $menu->children;
         $childrenControl  = count($children) > 0 ? 1 : 0;

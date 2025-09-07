@@ -1,4 +1,4 @@
-@extends('crudPackage::layout.main',['activePage' => $crud->display_single.' Düzenle','parentPage' => $crud->display_plural,'parentPageRoute' => route($crud->slug .'.index')])
+@extends('crudPackage::layout.main',$breadcrumbs)
 @section('content')
     <div class="card">
         <div class="card-body py-4">

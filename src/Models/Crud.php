@@ -18,9 +18,9 @@ class Crud extends Model
 
     public function menuItems()
     {
-        $slug = $this->slug.'.index';
+        $slug = $this->slug;
 
-        return MenuItem::where('route',$slug)->first();
+        return MenuItem::whereLike('route','%'.$slug.'%')->first();
     }
 
     public function getRoles()

@@ -65,6 +65,20 @@
                     <label class="required fw-semibold fs-6 mb-2">Açıklama</label>
                     <textarea name="content" cols="30" rows="3" placeholder="Açıklama" class="form-control form-control-solid mb-3 mb-lg-0"></textarea>
                 </div>
+
+                <div class="form-group col-12 mb-7 fv-plugins-icon-container">
+                    <div class="form-check  form-check-sm mb-3">
+                        <input class="form-check-input only_edit"
+                               id="only_edit"
+                               name="only_edit"
+                               type="checkbox"
+                               value="1"
+                        />
+                        <label class="form-check-label text-gray-700 fw-semibold" for="only_edit">
+                            Sadece Düzenleme Adımı Olsun
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
 

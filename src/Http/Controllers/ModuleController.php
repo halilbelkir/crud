@@ -342,7 +342,6 @@ class ModuleController extends Controller
     public function show(string $id)
     {
         $crud      = $this->crud;
-        $model     = $crud->model;
         $elements  = $this->datatable($id);
         $values    = $elements->getData()->data[0];
         $inputValue = '';
@@ -359,6 +358,20 @@ class ModuleController extends Controller
         $elementsView      = '';
         $elementValues     = '';
         $repeaterValue     = [];
+        $breadcrumbs       =
+            [
+                'activePage'      => $crud->display_single.' Düzenle',
+                'parentPage'      => $crud->display_plural,
+                'parentPageRoute' => route($crud->slug .'.index')
+            ];
+
+        if($crud->only_edit == 1)
+        {
+            $breadcrumbs =
+                [
+                    'activePage' => $crud->display_single
+                ];
+        }
 
         foreach($crud->editColumns as $columnKey => $column)
         {
@@ -416,9 +429,10 @@ class ModuleController extends Controller
         }
 
         return [
-            'crud'     => $crud,
-            'elements' => $elements,
-            'value'    => $value
+            'crud'        => $crud,
+            'elements'    => $elements,
+            'value'       => $value,
+            'breadcrumbs' => $breadcrumbs,
         ];
     }
 
@@ -532,12 +546,13 @@ class ModuleController extends Controller
 
             $data->save();
 
+            $route = $crud->only_edit == 1 ? route($crud->slug.'.edit',$data->id) : route($crud->slug .'.index');
 
             return response()->json(
                 [
                     'result'  => 1,
                     'message' => 'İşlem Başarılı.',
-                    'route'   => $request->has('other_route') ? $request->get('other_route') : route($crud->slug .'.index')
+                    'route'   => $request->has('other_route') ? $request->get('other_route') : $route
                 ]
             );
 
