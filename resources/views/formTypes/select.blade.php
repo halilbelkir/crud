@@ -17,9 +17,9 @@
     }
     else
     {
-        foreach ($details['items'] as $item)
+        foreach ($details['items'] as $key => $item)
         {
-            $options .= '<option value="'. $item .'" '.( isset($value) && $item == $value->{$name} ? 'selected' : null ).'> '. $item .' </option>';
+            $options .= '<option value="'. $key .'" '.( isset($value) && $key == $value->{$name} ? 'selected' : null ).'> '. $item .' </option>';
         }
     }
 @endphp
