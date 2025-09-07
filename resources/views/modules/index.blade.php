@@ -1,6 +1,10 @@
 @extends('crudPackage::layout.main',['activePage' => $crud->display_plural])
 @section('content')
-    @if($crud->content) {!! $crud->content !!} @endif
+    @if($crud->content)
+        <div class="alert alert-dismissible bg-primary d-flex flex-column align-items-center flex-sm-row p-5 mb-10">
+            <div class="fw-bold">{!! $crud->content !!}</div>
+        </div>
+    @endif
     <div class="card">
         <div class="card-header border-0 pt-6">
             <div class="card-title">
