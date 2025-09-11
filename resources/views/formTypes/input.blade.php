@@ -1,7 +1,8 @@
 @php
-    $inputValue = null;
-    $multiple   = null;
-    $name       = $column->column_name;
+    $inputValue      = null;
+    $multiple        = null;
+    $onKeyUpFunction = null;
+    $name            = $column->column_name;
 
     if (isset($value) && $column->repeater == 1)
     {
@@ -20,6 +21,12 @@
             $type     = 'file';
             $multiple = isset($details['multiple']) && $details['multiple'] == true ? 'multiple' : null;
             $name     = $multiple == 'multiple' ? $name . '[]' : $name;
+        }
+
+
+        if (isset($details['slug-generate']))
+        {
+            $onKeyUpFunction = "slug1(this.value,'[name=\"".$details['slug-generate']['column_name']."\"]')";
         }
 
         if (isset($value))
@@ -54,9 +61,12 @@
             id="{{$column->repeater == 1 ? 'repeater_'.$name : $name}}"
             class="form-control form-control-solid mb-3 mb-lg-0"
             placeholder="{{$column->title}}"
+            @if(isset($onKeyUpFunction))
+                onkeyup="{{$onKeyUpFunction}}"
+            @endif
             @if(isset($dt))
                 data-route="{{route($crud->slug. '.realtime',$value->id)}}"
-                onkeyup="crudRealtime(this)"
+            onkeyup="crudRealtime(this)"
             @endif
             @if($column->required == 1) required @endif
             {{$multiple}}

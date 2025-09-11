@@ -355,9 +355,6 @@ class ModuleController extends Controller
         $model             = $crud->model;
         $value             = $model::find($id);
         $elements          = '';
-        $elementsView      = '';
-        $elementValues     = '';
-        $repeaterValue     = [];
         $breadcrumbs       =
             [
                 'activePage'      => $crud->display_single.' Düzenle',
@@ -382,6 +379,8 @@ class ModuleController extends Controller
             {
                 $details       = json_decode($column->detail);
                 $elementValues = json_decode($value->{$column->column_name});
+                $elementsView      = '';
+                $repeaterValue     = [];
 
                 foreach($elementValues as $elementKey => $elementValue)
                 {
