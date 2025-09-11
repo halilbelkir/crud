@@ -5,10 +5,20 @@
 
     if($column->relationship == 1)
     {
-        $model            = $details['model'];
-        $data             = $model::get();
-        $showColumn       = $details['show_column'];
-        $matchColumn      = $details['match_column'];
+        $model = $details['model'];
+
+        if (isset($details['scope']))
+        {
+            $scope = $details['scope'];
+            $data  = $model::{$scope}()->get();
+        }
+        else
+        {
+            $data = $model::get();
+        }
+
+        $showColumn  = $details['show_column'];
+        $matchColumn = $details['match_column'];
 
         foreach ($data as $option)
         {
@@ -31,7 +41,7 @@
         @if($column->required == 1) required @endif
         @if(isset($dt))
             data-route="{{route($crud->slug. '.realtime',$value->id)}}"
-            onclick="crudRealtime(this)"
+        onclick="crudRealtime(this)"
         @endif
 >
 
