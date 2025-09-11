@@ -674,6 +674,21 @@ class ModuleController extends Controller
                     };
                 }
 
+
+                if ($formType == 12)
+                {
+                    $dtColumns[$columnName] = function ($value) use ($columnName,$details)
+                    {
+                        foreach ($details['items'] as $keyItem => $item)
+                        {
+                            if ($keyItem == $value->$columnName)
+                            {
+                                return $item;
+                            }
+                        }
+                    };
+                }
+
                 if ($formType == 1)
                 {
                     $dtColumns[$columnName] = function ($value) use ($columnName,$details)
