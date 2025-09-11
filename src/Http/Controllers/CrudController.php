@@ -663,7 +663,7 @@ class CrudController extends Controller
                     'match_column'   => $request->get('match_column'),
                 ];
 
-            $crudItem               = CrudItem::where('column_name',$request->get('relationship_column_name'))->first();
+            $crudItem               = CrudItem::where('column_name',$request->get('relationship_column_name'))->where('crud_id',$crud->id)->first();
             $crudItem->title        = $request->get('relationship_title');
             $crudItem->column_name  = $request->get('relationship_column_name');
             $crudItem->detail       = json_encode($detail);
