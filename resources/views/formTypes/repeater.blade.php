@@ -1,4 +1,4 @@
-<div id="repeaterCrud">
+<div id="{{$column->column_name}}" data-repeater-crud>
     <div class="separator separator-content border-dark my-15"><span class="w-250px h2">{{$column->title}}</span></div>
     <div data-repeater-list="{{$column->column_name}}">
         {!! $elements !!}
