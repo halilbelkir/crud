@@ -67,8 +67,6 @@ class ModuleController extends Controller
         $datatableColumns  = [];
         $relationships     = $this->relationShips;
         $elements          = '';
-        $rElements         = '';
-        $elementsView      = '';
 
         foreach($crud->addColumns as $column)
         {
@@ -77,7 +75,9 @@ class ModuleController extends Controller
 
             if ($column->repeater == 1)
             {
-                $details = json_decode($column->detail);
+                $details      = json_decode($column->detail);
+                $rElements    = '';
+                $elementsView = '';
 
                 foreach($details as $detail)
                 {
