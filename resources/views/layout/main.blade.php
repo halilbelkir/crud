@@ -214,13 +214,18 @@
         @if (trim($__env->yieldContent('datatables.columns')))
         const documentTitle = '@yield('datatables.files.title')';
         var datatables = $('#data-tables').DataTable({
-            dom: 'Bfrtip',
+            dom: 'Bflrtip',
             processing: true,
             serverSide: true,
             searchDelay: 500,
             scrollX: true,
             autoWidth: false,
             order: [],
+            pageLength: 25,
+            lengthMenu: [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "Hepsi"]
+            ],
             columnDefs:
                 [
                     {
@@ -254,6 +259,8 @@
                 $('.dt-buttons').addClass('d-none');
                 $('.dt-buttons + div').addClass('d-none');
                 $('.dataTables_filter').addClass('d-none');
+                $('[name="data-tables_length"]').closest('div').addClass('d-inline-block');
+                $('[name="data-tables_length"]').closest('label').addClass('dt-length');
             }
         });
 

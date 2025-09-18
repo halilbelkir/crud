@@ -280,4 +280,13 @@
   font-size: 14px;
 }
 
+#data-tables_wrapper .dt-length {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
 /*# sourceMappingURL=style.css.map */
