@@ -23,7 +23,6 @@
             $name     = $multiple == 'multiple' ? $name . '[]' : $name;
         }
 
-
         if (isset($details['slug-generate']))
         {
             $onKeyUpFunction = "slug1(this.value,'[name=\"".$details['slug-generate']['column_name']."\"]')";
@@ -48,7 +47,7 @@
     <div class="image-input image-input-outline">
         <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" style="top: 0;left: 50%;" data-kt-image-input-action="change" data-bs-toggle="tooltip" data-bs-trigger="hover" title="Resmi Değiştir">
             <i class="ki-outline ki-pencil fs-7"></i>
-            <input type="file" id="imageUpdate" name="{{$name}}">
+            <input type="file" id="imageUpdate" value="{{ $inputValue }}" name="{{$name}}">
         </label>
         <img src="{{$inputValue}}" id="imageUpdatePreview" class="mb-7 w-100 object-fit-contain h-175px">
         <div id="preview"></div>
@@ -66,9 +65,9 @@
             @endif
             @if(isset($dt))
                 data-route="{{route($crud->slug. '.realtime',$value->id)}}"
-            onkeyup="crudRealtime(this)"
+                onkeyup="crudRealtime(this)"
             @endif
-            @if($column->required == 1) required @endif
+            @if($column->required == 1 && $formType->key != 'image') required @endif
             {{$multiple}}
     >
 
