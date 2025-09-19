@@ -6,7 +6,7 @@
 
     if (isset($value) && $column->repeater == 1)
     {
-        $inputValue = $value->{$column->column_name};
+        $inputValue = $value->{$column->column_name} ?? null;
     }
     else if (isset($column->detail))
     {
