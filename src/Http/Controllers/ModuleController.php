@@ -120,39 +120,52 @@ class ModuleController extends Controller
         return view('crudPackage::modules.create',compact('crud','datatableColumns','relationships','elements'));
     }
 
-    public function dynamicValidation($request)
+    public function dynamicValidation($request,$status = 0,$data = null)
     {
         $crud      = $this->crud;
         $attribute = [];
         $rules     = [];
+        $columns   = $crud->addColumns;
 
-        foreach ($crud->addColumns as $column)
+        if ($status == 1)
         {
-            $details                         = json_decode($column->detail);
-            $attribute[$column->column_name] = $column->title;
+            $columns = $crud->editColumns;
+        }
+
+        if ($request->has('crud_copy_id'))
+        {
+            $status = 1;
+        }
+
+        foreach ($columns as $column)
+        {
+            $details                = json_decode($column->detail);
+            $columnName             = $column->column_name;
+            $attribute[$columnName] = $column->title;
+
 
             if ($column->required == 1 && isset($details->validation))
             {
-                $rules[$column->column_name] = 'required|'.$details->validation;
+                $rules[$columnName] = 'required|'.$details->validation;
             }
             else if ($column->required == 0 && isset($details->validation))
             {
-                $rules[$column->column_name] = $details->validation;
+                $rules[$columnName] = $details->validation;
             }
             else if ($column->required == 1 && !isset($details->validation))
             {
-                $rules[$column->column_name] = 'required';
+                $rules[$columnName] = 'required';
             }
 
             if ($column->form_type_id == 1)
             {
-                if (strstr($rules[$column->column_name],'|'))
+                if (strstr($rules[$columnName],'|'))
                 {
-                    $validations = explode('|',$rules[$column->column_name]);
+                    $validations = explode('|',$rules[$columnName]);
                 }
                 else
                 {
-                    $validations = [$rules[$column->column_name]];
+                    $validations = [$rules[$columnName]];
                 }
 
                 $validations[] = function ($attribute, $value, $fail) use ($column)
@@ -165,18 +178,23 @@ class ModuleController extends Controller
                     }
                 };
 
-                $rules[$column->column_name] = $validations;
+                $rules[$columnName] = $validations;
             }
 
             if ($column->repeater == 1)
             {
-                $rules[$column->column_name] .= '|array|min:1';
+                $rules[$columnName] .= '|array|min:1';
 
                 foreach ($details as $detail)
                 {
-                    $rules[$column->column_name.'.*.'.$detail->column_name]     = $detail->validation;
-                    $attribute[$column->column_name.'.*.'.$detail->column_name] = $detail->title;
+                    $rules[$columnName.'.*.'.$detail->column_name]     = $detail->validation;
+                    $attribute[$columnName.'.*.'.$detail->column_name] = $detail->title;
                 }
+            }
+
+            if ($column->form_type_id == 6 && isset($data) && !empty($data->$columnName))
+            {
+                unset($rules[$columnName]);
             }
         }
 
@@ -190,7 +208,21 @@ class ModuleController extends Controller
     {
         try
         {
-            $validators = $this->dynamicValidation($request);
+            $copyData = null;
+            $status   = 0;
+            $crud     = $this->crud;
+            $allFiles = $request->allFiles();
+            $allData  = $request->all();
+            $images   = [];
+
+            if (isset($allData['crud_copy_id']))
+            {
+                $model    = $crud->model;
+                $copyData = $model::find($allData['crud_copy_id']);
+                $status   = 1;
+            }
+
+            $validators = $this->dynamicValidation($request,$status,$copyData);
             $validator  = Validator::make($request->all(), $validators[1]);
             $validator->setAttributeNames($validators[0]);
 
@@ -203,11 +235,6 @@ class ModuleController extends Controller
                     ],403
                 );
             }
-
-            $crud     = $this->crud;
-            $allFiles = $request->allFiles();
-            $allData  = $request->all();
-            $images   = [];
 
             foreach ($crud->addColumns as $columnKey => $column)
             {
@@ -455,8 +482,15 @@ class ModuleController extends Controller
     {
         try
         {
-            $validators = $this->dynamicValidation($request);
+            $crud       = $this->crud;
+            $model      = $crud->model;
+            $data       = $model::find($id);
+            $allFiles   = $request->allFiles();
+            $allData    = $request->all();
+            $images     = [];
+            $validators = $this->dynamicValidation($request,1,$data);
             $validator  = Validator::make($request->all(), $validators[1]);
+
             $validator->setAttributeNames($validators[0]);
 
             if ($validator->fails())
@@ -469,12 +503,6 @@ class ModuleController extends Controller
                 );
             }
 
-            $crud     = $this->crud;
-            $model    = $crud->model;
-            $data     = $model::find($id);
-            $allFiles = $request->allFiles();
-            $allData  = $request->all();
-            $images   = [];
 
             if (count($allFiles) > 0)
             {
