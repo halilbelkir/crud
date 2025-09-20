@@ -52,6 +52,7 @@ function createEditor(selector)
 
         tinymce.init({
             target: textarea,
+            entity_encoding: 'raw',
             height: 400,
             plugins: 'image code lists link table',
             toolbar: 'undo redo | styleselect | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image | code',
