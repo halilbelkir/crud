@@ -988,6 +988,19 @@ $(document).ready(function ()
             });
         }, 300);
     }
+
+    if ($('body').find('[maxlength]').length > 0)
+    {
+        let allMaxlength = $('body').find('[maxlength]');
+
+        allMaxlength.each(function()
+        {
+            $(this).maxlength({
+                warningClass: "badge badge-primary",
+                limitReachedClass: "badge badge-success"
+            });
+        });
+    }
 });
 
 function moduleSortableUpdate(sortableSelector)
@@ -1068,18 +1081,5 @@ function crudRealtime(self)
         {
 
         }
-    });
-}
-
-if ($('body').find('[maxlength]').length > 0)
-{
-    let allMaxlength = $('body').find('[maxlength]');
-
-    allMaxlength.each(function()
-    {
-        $(this).find('[maxlength]').maxlength({
-            warningClass: "badge badge-primary",
-            limitReachedClass: "badge badge-success"
-        });
     });
 }
