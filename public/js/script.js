@@ -405,7 +405,7 @@ function messageToast(formSelector,status,message)
         '<div class="position-absolute top-0 end-0 p-3 z-index-3" id="messageToastDiv">' +
         '  <div class="toast text-bg-'+statusClass+' border-0" id="messageToast" role="alert" aria-live="assertive" aria-atomic="true">\n' +
         '    <div class="toast-body text-center text-white fs-3 text-body">\n'
-                + message +
+        + message +
         '    </div>\n' +
         '  </div>\n' +
         '</div>';
@@ -1059,11 +1059,11 @@ function crudRealtime(self)
         dataType: "json",
         url: route,
         data:
-        {
-            value : value,
-            column_name: columnName,
-            _token: token
-        },
+            {
+                value : value,
+                column_name: columnName,
+                _token: token
+            },
         success: function(response)
         {
 
@@ -1071,3 +1071,15 @@ function crudRealtime(self)
     });
 }
 
+if ($('body').find('[maxlength]').length > 0)
+{
+    let allMaxlength = $('body').find('[maxlength]');
+
+    allMaxlength.each(function()
+    {
+        $(this).find('[maxlength]').maxlength({
+            warningClass: "badge badge-primary",
+            limitReachedClass: "badge badge-success"
+        });
+    });
+}

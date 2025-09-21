@@ -342,7 +342,13 @@ class ModuleController extends Controller
             unset($allData['crud_copy_id']);
 
             $data = new $crud->model();
-            $data->insert($allData);
+
+            foreach ($allData as $key => $value)
+            {
+                $data->$key = $value;
+            }
+
+            $data->save();
 
             return response()->json(
                 [
