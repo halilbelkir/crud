@@ -1,6 +1,6 @@
 @php
-        $name = $column->column_name;
-        $detail = json_decode($column->detail);
+        $name   = $column->column_name;
+        $detail = isset($column->detail) ? json_decode($column->detail) : null;
 @endphp
 <textarea
         name="{{$name}}"
