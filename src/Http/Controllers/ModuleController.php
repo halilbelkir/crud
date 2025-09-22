@@ -72,6 +72,7 @@ class ModuleController extends Controller
         {
             $formType  = $column->type;
             $type      = $formType->key;
+            $info      = '';
 
             if ($column->repeater == 1)
             {
@@ -110,8 +111,14 @@ class ModuleController extends Controller
             }
             else
             {
+                if (isset($column->detail))
+                {
+                    $details = json_decode($column->detail);
+                    $info    = isset($details->info) ? ' (<small>' .$details->info. '</small>)' : null;
+                }
+
                 $elements .= '<div class="form-group '.($column->form_type_id == 13 ? 'd-none' : null) .' col-12 mb-7 fv-plugins-icon-container">';
-                $elements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="'.$column->column_name.'">'.$column->title.'</label>';
+                $elements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="'.$column->column_name.'">'.$column->title.$info.'</label>';
                 $elements .= view('crudPackage::formTypes.'. $formType->group,compact('column','type','crud','formType'))->render();
                 $elements .= '</div>';
             }
@@ -407,6 +414,7 @@ class ModuleController extends Controller
         {
             $formType  = $column->type;
             $type      = $formType->key;
+            $info      = '';
 
             if ($column->repeater == 1)
             {
@@ -453,8 +461,14 @@ class ModuleController extends Controller
             }
             else
             {
+                if (isset($column->detail))
+                {
+                    $details = json_decode($column->detail);
+                    $info    = isset($details->info) ? ' (<small>' .$details->info. '</small>)' : null;
+                }
+
                 $elements .= '<div class="form-group '.($column->form_type_id == 13 ? 'd-none' : null) .' col-12 mb-7 fv-plugins-icon-container">';
-                $elements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="'.$column->column_name.'">'.$column->title.'</label>';
+                $elements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="'.$column->column_name.'">'.$column->title.$info.'</label>';
                 $elements .= view('crudPackage::formTypes.'. $formType->group,compact('column','type','crud','value','formType'))->render();
                 $elements .= '</div>';
             }
