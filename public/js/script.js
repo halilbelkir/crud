@@ -748,6 +748,32 @@ function slug1(ad,yazilacakyer)
     turkcekarekteryoket(str,yazilacakyer);
 }
 
+function slugify(text,selector)
+{
+    const trMap = {
+        'ç':'c','Ç':'c',
+        'ğ':'g','Ğ':'g',
+        'ş':'s','Ş':'s',
+        'ü':'u','Ü':'u',
+        'ö':'o','Ö':'o',
+        'ı':'i','İ':'i'
+    };
+
+    let replacement = text
+        .split('')
+        .map(char => trMap[char] || char) // Türkçe harfleri dönüştür
+        .join('')
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')       // boşlukları - yap
+        .replace(/&/g, '-ve-')      // & işaretini "ve" yap
+        .replace(/[^\w\-]+/g, '')   // harf-rakam dışındakileri sil
+        .replace(/\-\-+/g, '-');
+
+    $(selector).val(replacement);
+}
+
+
 function turkcekarekteryoket(gelenler,yazilacakyer)
 {
     var specialChars = [["Ã…Å¸","s"],["Ã…Â","s"],["Ã„Å¸","g"],["Ã„Â","g"],["ÃƒÂ¼","u"],["ÃƒÅ“","u"],["Ã„Â°","i"],["Ã„Â±","i"],["_","-"],["Ãƒâ€“","o"],["ÃƒÂ¶","o"],["Ãƒâ€¦Ã‚Â","S"],["Ãƒâ€Ã‚Â","G"],["ÃƒÆ’Ã¢â‚¬Â¡","C"],["Ãƒâ€¡","c"],["ÃƒÂ§","c"],["ÃƒÆ’Ã…â€œ","U"],["Ãƒâ€Ã‚Â°","I"],["ÃƒÆ’Ã¢â‚¬â€œ","O"],["Ãƒâ€¦Ã…Â¸","s"],["ç","c"],["Ç","c"],["ş","s"],["Ş","s"],["İ","i"],["I","i"],["ı","i"],["Ü","u"],["ü","u"]];
