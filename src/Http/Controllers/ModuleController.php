@@ -334,11 +334,6 @@ class ModuleController extends Controller
                     }
                     else
                     {
-                        if (isset($allData['crud_copy_id']))
-                        {
-                            $imageUpload->delete($copyData->$inputName);
-                        }
-
                         $name                = $crud->table_name.'-'.random_int(100000000, 999999999999).time();
                         $fileName             = $imageUpload->getName($file,$name,$crud->table_name);
                         $allData[$inputName] = $fileName;
