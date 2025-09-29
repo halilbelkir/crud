@@ -53,7 +53,7 @@ class CrudRoutes
             Route::resource('users', \crudPackage\Http\Controllers\UserController::class)->middleware('checkPermission');
 
             Route::get('role-groups/datatable', [\crudPackage\Http\Controllers\RoleGroupController::class, 'datatable'])->name('role-groups.datatables');
-            Route::resource('role-groups', \crudPackage\Http\Controllers\RoleGroupController::class);
+            Route::resource('role-groups', \crudPackage\Http\Controllers\RoleGroupController::class)->middleware('checkPermission');
 
             Route::put('cruds/repeater/store/{crud}', [\crudPackage\Http\Controllers\CrudController::class, 'repeaterStore'])->name('cruds.repeater.store');
             Route::delete('cruds/repeater/delete/{crud_item}', [\crudPackage\Http\Controllers\CrudController::class, 'repeaterDestroy'])->name('cruds.repeater.destroy');
@@ -63,7 +63,7 @@ class CrudRoutes
             Route::post('cruds/getColumns', [\crudPackage\Http\Controllers\CrudController::class, 'getColumns'])->name('cruds.create.columns');
             Route::get('cruds/create/{table_name}', [\crudPackage\Http\Controllers\CrudController::class, 'create'])->name('cruds.create.new');
             Route::get('cruds/datatable', [\crudPackage\Http\Controllers\CrudController::class, 'datatable'])->name('cruds.datatables');
-            Route::resource('cruds', \crudPackage\Http\Controllers\CrudController::class);
+            Route::resource('cruds', \crudPackage\Http\Controllers\CrudController::class)->middleware('checkPermission');
 
             self::getRoutes();
         });

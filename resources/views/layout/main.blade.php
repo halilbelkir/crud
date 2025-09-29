@@ -78,7 +78,7 @@
 
                             @if(count($menus) > 0)
                                 @foreach($menus as $menu)
-                                    @if(auth()->user()->hasPermission($menu->route) || $menu->dynamic_routes == 0)
+                                    @if(auth()->user()->hasPermission($menu->route) || $menu->dynamic_route == 0)
                                         {!! menuGenerate($menu) !!}
                                     @endif
                                 @endforeach
@@ -87,7 +87,7 @@
                             <div class="separator separator-gray-300 separator-dashed my-3"></div>
 
                             @foreach($mainMenus as $mainMenu)
-                                @if(auth()->user()->hasPermission($mainMenu->route) || $mainMenu->dynamic_routes == 0)
+                                @if(auth()->user()->hasPermission($mainMenu->route) || $mainMenu->dynamic_route == 0)
                                     {!! menuGenerate($mainMenu) !!}
                                 @endif
                             @endforeach
