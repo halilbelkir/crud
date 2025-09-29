@@ -164,7 +164,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
 @endsection
 @section('js')
-    <script src="{{asset('crud/vendor/formrepeater/formrepeater.bundle.js')}}"></script>
+    <script src="{{asset('crud/vendor/formRepeater/formRepeater.bundle.js')}}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/format/formatting.min.js"></script>

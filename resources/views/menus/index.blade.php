@@ -179,5 +179,5 @@
 @stop
 @section('js')
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
-    <script src="{{asset('crud/vendor/formrepeater/formrepeater.bundle.js')}}"></script>
+    <script src="{{asset('crud/vendor/formRepeater/formRepeater.bundle.js')}}"></script>
 @endsection

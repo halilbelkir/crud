@@ -112,5 +112,5 @@
 @endsection
 @section('js')
     <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
-    <script src="{{asset('crud/vendor/formrepeater/formrepeater.bundle.js')}}"></script>
+    <script src="{{asset('crud/vendor/formRepeater/formRepeater.bundle.js')}}"></script>
 @endsection
