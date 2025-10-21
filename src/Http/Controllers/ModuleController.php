@@ -352,6 +352,8 @@ class ModuleController extends Controller
 
             $data->save();
 
+            self::cacheClear();
+
             return response()->json(
                 [
                     'result'  => 1,
@@ -629,6 +631,8 @@ class ModuleController extends Controller
 
             $route = $crud->only_edit == 1 ? route($crud->slug.'.edit',$data->id) : route($crud->slug .'.index');
 
+            self::cacheClear();
+
             return response()->json(
                 [
                     'result'  => 1,
@@ -680,6 +684,8 @@ class ModuleController extends Controller
             }
 
             $value->delete();
+
+            self::cacheClear();
 
             return response()->json(
                 [
@@ -865,10 +871,6 @@ class ModuleController extends Controller
                 {
                     $actions .= '<div class="menu-item px-3"> <a href="'.route($slug . '.edit',$value->id).'" class="menu-link px-3"> Düzenle </a> </div>';
                 }
-
-                if (auth()->user()->hasPermission($slug . '.edit'))
-                {
-                    $actions .= '<div class="menu-item px-3"> <a href="#" data-model-name="'.$modelName.'" data-status="'.$value->status.'" data-id="'.$value->id.'" data-route="'.route('statusUpdate').'" class="menu-link px-3" onclick="statusUpdate(this)"> '.($value->status == 0 ? 'Aktif Et' : 'Pasif Et').' </a> </div>';                }
 
                 if (auth()->user()->hasPermission($slug . '.destroy'))
                 {

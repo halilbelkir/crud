@@ -54,6 +54,13 @@ Repoda gelen `.env.example` dosyasını kendi projenize kopyalayın:
 cp vendor/zaurac/crud/.env.example .env
 ```
 
+Önyüzde cache yapısı kullanıldığında, .env dosyasına aşağıdaki parametre eklenmelidir. Bu parametre, önyüzde oluşturacağınız cache:clear fonksiyonunun bağlantı (URL) adresini belirtmelidir.
+Bu işlem; ekleme, düzenleme, silme ve kopyalama gibi durumlarda otomatik olarak çalışacaktır.
+
+```bash
+APP_CACHE_URL=https://example.com/cache-clear
+```
+
 Daha sonra `.env` dosyasını ihtiyacınıza göre düzenleyin.
 
 ---
