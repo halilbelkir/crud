@@ -65,8 +65,9 @@
             @endif
             @if(isset($dt))
                 data-route="{{route($crud->slug. '.realtime',$value->id)}}"
-            onkeyup="crudRealtime(this)"
+                onkeyup="crudRealtime(this)"
             @endif
+            @if(isset($detail->maxlength)) maxlength="{{ $detail->maxlength }}" @endif
             @if($column->required == 1 && $formType->key != 'image') required @endif
             {{$multiple}}
     >
