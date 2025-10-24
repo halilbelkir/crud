@@ -1,5 +1,10 @@
 @extends('crudPackage::layout.main',['activePage' => $crud->display_single. ' Ekle','parentPage' => $crud->display_plural,'parentPageRoute' => route($crud->slug .'.index')])
 @section('content')
+    @if($crud->content)
+        <div class="alert alert-dismissible bg-secondary d-flex flex-column align-items-center flex-sm-row p-5 mb-10">
+            <div class="fw-bold">{!! $crud->content !!}</div>
+        </div>
+    @endif
     <div class="card">
         <div class="card-body py-4">
             <div id="formResponse"></div>
