@@ -95,7 +95,7 @@ class ModuleController extends Controller
                     $formTypeR  = FormType::find($detail->form_type_id);
                     $typeR      = $formTypeR->key;
                     $rElements .= '<div class="form-group '.($detail->form_type_id == 13 ? 'd-none' : null) .' '.(isset($detail->class) ? $detail->class : 'col').' mb-7 fv-plugins-icon-container">';
-                    $rElements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="repeater_'.$detail->column_name.'">'.$detail->title.'</label>';
+                    $rElements .= '<label class=" '.($detail->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="repeater_'.$detail->column_name.'">'.$detail->title.'</label>';
                     $rElements .= view('crudPackage::formTypes.'. $formTypeR->group,['column' => $detail,'formType' => $formTypeR,'type' => $typeR],compact('crud'))->render();
                     $rElements .= '</div>';
                 }
