@@ -194,8 +194,11 @@ class ModuleController extends Controller
 
                 foreach ($details as $detail)
                 {
-                    $rules[$columnName.'.*.'.$detail->column_name]     = $detail->validation;
-                    $attribute[$columnName.'.*.'.$detail->column_name] = $detail->title;
+                    if (isset($detail->validation))
+                    {
+                        $rules[$columnName.'.*.'.$detail->column_name]     = $detail->validation;
+                        $attribute[$columnName.'.*.'.$detail->column_name] = $detail->title;
+                    }
                 }
             }
 
