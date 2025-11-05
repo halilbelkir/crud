@@ -202,6 +202,14 @@ class ModuleController extends Controller
                 }
             }
 
+            if ($column->required == 16 && isset($details->multiple))
+            {
+                $rules[$columnName] .= '|array|min:1';
+
+                $rules[$columnName.'.*']     = $rules[$columnName];
+                $attribute[$columnName.'.*'] = $attribute[$columnName];
+            }
+
             if ($column->form_type_id == 6 && isset($data) && !empty($data->$columnName))
             {
                 unset($rules[$columnName]);

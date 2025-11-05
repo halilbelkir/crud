@@ -34,7 +34,7 @@
     }
 @endphp
 
-<select name="{{$name}}"
+<select
         @if($type == 'select2') data-control="select2" data-placeholder="{{$column->title}} Seçiniz" data-allow-clear="true" @endif
         class="form-control form-control-solid"
         id="{{$column->repeater == 1 ? 'repeater_'.$name : $name}}"
@@ -42,6 +42,12 @@
         @if(isset($dt))
             data-route="{{route($crud->slug. '.realtime',$value->id)}}"
         onclick="crudRealtime(this)"
+        @endif
+        @if(isset($details['multiple']))
+            multiple
+        name="{{$name}}[]"
+        @else
+            name="{{$name}}"
         @endif
 >
 
