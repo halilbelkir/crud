@@ -417,11 +417,12 @@ class ModuleController extends Controller
         return view('crudPackage::modules.show',compact('crud','values','inputValue'));
     }
 
-    public function getEdit(string $id)
+    public function getEdit(string $id,$status = 0)
     {
         $crud              = $this->crud;
         $model             = $crud->model;
         $value             = $model::find($id);
+        $columns           = $crud->editColumns;
         $elements          = '';
         $breadcrumbs       =
             [
@@ -438,7 +439,12 @@ class ModuleController extends Controller
                 ];
         }
 
-        foreach($crud->editColumns as $columnKey => $column)
+        if ($status == 1)
+        {
+            $columns = $crud->addColumns;
+        }
+
+        foreach($columns as $columnKey => $column)
         {
             $formType  = $column->type;
             $type      = $formType->key;
@@ -551,7 +557,7 @@ class ModuleController extends Controller
 
     public function copy(string $id)
     {
-        return view('crudPackage::modules.copy',$this->getEdit($id));
+        return view('crudPackage::modules.copy',$this->getEdit($id,1));
     }
 
     /**
