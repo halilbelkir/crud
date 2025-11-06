@@ -203,8 +203,8 @@ class RoleGroupController extends Controller
             }
 
 
-            $data              = $roleGroup;
-            $data->title       = $request->get('title');
+            $data        = $roleGroup;
+            $data->title = $request->get('title');
             $data->save();
 
             $crudsSql = Crud::where('status',1)->orderBy('main','desc')->get();
@@ -223,10 +223,16 @@ class RoleGroupController extends Controller
                 }
                 else
                 {
-                    foreach ($cruds[$crud->id] as $index => $permission)
+                    foreach ($this->permissions as $permissionKey => $permission)
                     {
-                        $permission = (int) $permission;
-                        $roles->{$this->permissions[$index]['column']} = $permission;
+                        if (isset($cruds[$crud->id][$permissionKey]))
+                        {
+                            $roles->{$permission['column']} = 1;
+                        }
+                        else
+                        {
+                            $roles->{$permission['column']} = 0;
+                        }
                     }
                 }
 
