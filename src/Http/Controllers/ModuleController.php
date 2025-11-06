@@ -358,7 +358,7 @@ class ModuleController extends Controller
 
             foreach ($allData as $key => $value)
             {
-                $data->$key = $value;
+                $data->$key = is_array($value) ? json_encode($value) : $value;
             }
 
             $data->save();
@@ -772,7 +772,6 @@ class ModuleController extends Controller
                     };
                 }
 
-
                 if ($formType == 12)
                 {
                     $dtColumns[$columnName] = function ($value) use ($columnName,$details)
@@ -830,6 +829,20 @@ class ModuleController extends Controller
                     $dtColumns[$columnName] = function ($value) use ($relationship,$columnName,$details)
                     {
                         $showColumn = $details['show_column'];
+
+                        if (isset($details['multiple']) && $details['multiple'] == true)
+                        {
+                            $values     = json_decode($value->$columnName);
+                            $showValues = [];
+
+                            foreach ($values as $item)
+                            {
+                                $query        = $details['model']::where($details['match_column'],$item)->first();
+                                $showValues[] = $query->$showColumn;
+                            }
+
+                            return implode(', ',$showValues);
+                        }
 
                         return $value->$relationship->$showColumn;
                     };

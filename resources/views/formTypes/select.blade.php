@@ -19,10 +19,25 @@
 
         $showColumn  = $details['show_column'];
         $matchColumn = $details['match_column'];
+        $selected    = [];
 
         foreach ($data as $option)
         {
-            $options .= '<option value="'. $option->$matchColumn .'" '.( isset($value) && $option->$matchColumn == $value->{$name} ? 'selected' : null ).'> '. $option->$showColumn .' </option>';
+            if (isset($details['multiple']) && isset($value))
+            {
+                $values = json_decode($value->{$name});
+
+                foreach ($values as $newValue)
+                {
+                    $selected[$newValue] = $option->$matchColumn == $newValue ? true : false;
+                }
+
+                $options .= '<option value="'. $option->$matchColumn .'" '.( isset($value) && isset($selected[$option->$matchColumn]) &&  $selected[$option->$matchColumn] == true ? 'selected' : null ).'> '. $option->$showColumn .' </option>';
+            }
+            else
+            {
+                $options .= '<option value="'. $option->$matchColumn .'" '.( isset($value) && $option->$matchColumn == $value->{$name} ? 'selected' : null ).'> '. $option->$showColumn .' </option>';
+            }
         }
     }
     else
