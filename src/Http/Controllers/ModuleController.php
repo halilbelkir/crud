@@ -139,17 +139,11 @@ class ModuleController extends Controller
             $columns = $crud->editColumns;
         }
 
-        if ($request->has('crud_copy_id'))
-        {
-            $status = 1;
-        }
-
         foreach ($columns as $column)
         {
             $details                = json_decode($column->detail);
             $columnName             = $column->column_name;
             $attribute[$columnName] = $column->title;
-
 
             if ($column->required == 1 && isset($details->validation))
             {
@@ -162,6 +156,32 @@ class ModuleController extends Controller
             else if ($column->required == 1 && !isset($details->validation))
             {
                 $rules[$columnName] = 'required';
+            }
+
+            if ($status == 1 && isset($details->validation) && strstr($details->validation,'unique'))
+            {
+                $validations = $details->validation;
+                $exxploded   = explode('|',$validations);
+
+                if (count($exxploded) > 1)
+                {
+                    $uniqueValidateIndex = '';
+
+                    foreach ($exxploded as $exxplodeKey => $exxplode)
+                    {
+                        if (strstr($exxplode,'unique'))
+                        {
+                            $uniqueValidateIndex = $exxplodeKey;
+                        }
+                    }
+
+                    $exxploded[$uniqueValidateIndex] = $exxploded[$uniqueValidateIndex]. ','.$columnName.',' . $data->id;
+                    $rules[$columnName]              = implode('|',$exxploded);
+                }
+                else
+                {
+                    $rules[$columnName] = $details->validation. ','.$columnName.',' . $data->id;
+                }
             }
 
             if ($column->form_type_id == 1)
@@ -237,7 +257,7 @@ class ModuleController extends Controller
             {
                 $model    = $crud->model;
                 $copyData = $model::find($allData['crud_copy_id']);
-                $status   = 1;
+                $status   = 0;
             }
 
             $validators = $this->dynamicValidation($request,$status,$copyData);
