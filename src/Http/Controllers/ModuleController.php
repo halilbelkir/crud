@@ -894,7 +894,7 @@ class ModuleController extends Controller
         {
             $datatable->addColumn('orderable',function ($value)
             {
-                return '<i class="bi text-dark fs-3 bi-arrows-move cursor-move"></i>';
+                return '<i data-id="'. $value->id .'" class="bi text-dark fs-3 bi-arrows-move cursor-move"></i>';
             });
 
             array_push($rawColumns,'orderable');
