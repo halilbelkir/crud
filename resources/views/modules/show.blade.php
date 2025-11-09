@@ -39,29 +39,31 @@
                             }
                         @endphp
 
-                        <div class="row g-10 row-cols-2 row-cols-lg-5">
-                            @foreach($images as $order => $image)
-                                <div class="col">
-                                    <a class="d-block overlay" data-fslightbox="lightbox-hot-sales" href="{{$image}}">
-                                        <div class="overlay-wrapper bgi-no-repeat bgi-position-center bgi-size-cover card-rounded h-175px"
-                                             style="background-image:url({{$image}}">
-                                        </div>
-                                        <div class="overlay-layer card-rounded bg-dark bg-opacity-25">
-                                            <i class="ki-outline ki-eye fs-3x text-white"></i>
-                                        </div>
-                                    </a>
-                                </div>
-                            @endforeach
-                        </div>
+                        @if(!empty($images))
+                            <div class="row g-10 row-cols-2 row-cols-lg-5">
+                                @foreach($images as $order => $image)
+                                    <div class="col">
+                                        <a class="d-block overlay" data-fslightbox="lightbox-hot-sales" href="{{$image}}">
+                                            <div class="overlay-wrapper bgi-no-repeat bgi-position-center bgi-size-cover card-rounded h-175px"
+                                                 style="background-image:url({{$image}}">
+                                            </div>
+                                            <div class="overlay-layer card-rounded bg-dark bg-opacity-25">
+                                                <i class="ki-outline ki-eye fs-3x text-white"></i>
+                                            </div>
+                                        </a>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     @elseif($column->repeater == 1)
                         <div class="table-responsive">
                             <table class="table align-middle table-row-dashed fs-6 gy-4 dataTable no-footer">
                                 <thead>
-                                    <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
-                                        @foreach($details as $detail)
-                                            <td>{{$detail['title']}}</td>
-                                        @endforeach
-                                    </tr>
+                                <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                                    @foreach($details as $detail)
+                                        <td>{{$detail['title']}}</td>
+                                    @endforeach
+                                </tr>
                                 </thead>
                                 @foreach($inputValue as $value)
                                     <tr>
@@ -79,7 +81,7 @@
                             </table>
                         </div>
                     @else
-                        {!! $inputValue !!}
+                        {!! $inputValue ?? '<div class="alert alert-primary w-auto d-inline-block" style="font-weight:500;font-size:15px;"> Veri girişi yapılmamış!</div>' !!}
                     @endif
                 </div>
             </div>
