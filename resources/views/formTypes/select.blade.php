@@ -23,7 +23,7 @@
 
         foreach ($data as $option)
         {
-            if (isset($details['multiple']) && isset($value))
+            if (isset($details['multiple']) && isset($value->{$name}))
             {
                 $values = json_decode($value->{$name});
 
