@@ -1109,3 +1109,14 @@ function crudRealtime(self)
         }
     });
 }
+
+KTUtil.onDOMContentLoaded(function() {
+    $('[data-control="select2"]').each(function() {
+        const el = $(this);
+        el.select2({
+            minimumResultsForSearch: 0,
+            closeOnSelect: false,
+            allowClear: true
+        });
+    });
+});

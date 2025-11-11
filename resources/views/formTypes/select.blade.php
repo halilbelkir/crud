@@ -50,17 +50,19 @@
 @endphp
 
 <select
-        @if($type == 'select2') data-control="select2" data-placeholder="{{$column->title}} Seçiniz" data-allow-clear="true" @endif
+        @if($type == 'select2') data-control="select2"  data-placeholder="{{$column->title}} Seçiniz" data-allow-clear="true" @endif
         class="form-control form-control-solid"
         id="{{$column->repeater == 1 ? 'repeater_'.$name : $name}}"
         @if($column->required == 1) required @endif
         @if(isset($dt))
             data-route="{{route($crud->slug. '.realtime',$value->id)}}"
-        onclick="crudRealtime(this)"
+            onclick="crudRealtime(this)"
         @endif
         @if(isset($details['multiple']))
-            multiple
-        name="{{$name}}[]"
+            data-close-on-select="false"
+            data-hide-search="false"
+            multiple="multiple"
+            name="{{$name}}[]"
         @else
             name="{{$name}}"
         @endif
