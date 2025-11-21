@@ -59,8 +59,7 @@
             onclick="crudRealtime(this)"
         @endif
         @if(isset($details['multiple']))
-            data-close-on-select="false"
-            data-hide-search="false"
+            data-select-multiple="true"
             multiple="multiple"
             name="{{$name}}[]"
         @else

@@ -1110,13 +1110,18 @@ function crudRealtime(self)
     });
 }
 
-KTUtil.onDOMContentLoaded(function() {
-    $('[data-control="select2"]').each(function() {
-        const el = $(this);
-        el.select2({
-            minimumResultsForSearch: 0,
-            closeOnSelect: false,
-            allowClear: true
+
+if ($('[data-select-multiple="true"]').length > 0)
+{
+    KTUtil.onDOMContentLoaded(function()
+    {
+        $('[data-select-multiple="true"]').each(function() {
+            const el = $(this);
+            el.select2({
+                minimumResultsForSearch: 0,
+                closeOnSelect: false,
+                allowClear: true
+            });
         });
     });
-});
+}

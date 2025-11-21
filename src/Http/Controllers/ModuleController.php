@@ -208,7 +208,7 @@ class ModuleController extends Controller
                 $rules[$columnName] = $validations;
             }
 
-            if ($column->repeater == 1)
+            if ($column->repeater == 1 && $column->required == 1)
             {
                 $rules[$columnName] .= '|array|min:1';
 
