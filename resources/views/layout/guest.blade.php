@@ -29,8 +29,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Saira:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link href="{{asset('crud/vendor/guest/plugins.bundle.min.css')}}" rel="stylesheet" type="text/css"/>
     <link href="{{asset('crud/css/guest/style.bundle.css')}}" rel="stylesheet" type="text/css"/>
+    <link href="{{asset('crud/css/guest/style.min.css')}}" rel="stylesheet" type="text/css"/>
 </head>
-<body id="kt_body"  class="app-blank bgi-size-cover bgi-position-center">
+<body id="kt_body"  class="app-blank bgi-size-cover bgi-no-repeat bgi-position-top">
 <script>
     var defaultThemeMode = "light";
     var themeMode;
@@ -56,15 +57,35 @@
 <div class="d-flex flex-column flex-root" id="kt_app_root">
     <style>
         body {
-            background-image: url('{{asset('crud/images/bg10.jpeg')}}');
+            background-image: url('{{asset('crud/images/guest.jpg')}}');
         }
 
         [data-bs-theme="dark"] body {
-            background-image: url('{{asset('crud/images/bg10-dark.jpeg')}}');
+            background-image: url('{{asset('crud/images/guest.jpg')}}');
         }
     </style>
 
-    @yield('content')
+    <div class="container-fluid">
+        <div class="row">
+            <div class=" col-xl-8 col-md-6 guestHead">
+                <div class="guestTitle">
+                    <h1 class="text-white fs-2qx fw-bold text-start">
+                        Zaurac Teknoloji
+                    </h1>
+                    <h3 class="text-white fw-bold text-start">
+                        Yönetim Paneline Hoş Geldiniz
+                    </h3>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-5">
+                <div class="guestSidebar">
+                    <div class="bg-body rounded-4 p-10">
+                        @yield('content')
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 
