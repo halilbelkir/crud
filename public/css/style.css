@@ -5,6 +5,19 @@
   display: inline !important;
 }
 
+#kt_app_main {
+  margin-left: 30px;
+}
+
+.app-sidebar {
+  box-shadow: 4px 0 24px -7px #00000014 !important;
+}
+
+#kt_app_sidebar_mobile_toggle i {
+  font-size: 30px;
+  color: #20252b;
+}
+
 .app-sidebar-menu .menu .menu-item .menu-link .menu-title {
   color: #001244 !important;
 }

@@ -36,32 +36,30 @@
 <div class="d-flex flex-column flex-root app-root" id="kt_app_root">
     <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
         <div id="kt_app_header" class="app-header d-flex d-lg-none border-bottom">
-            <div class="app-container container-fluid d-flex flex-stack" id="kt_app_header_container">
-                <button class="btn btn-icon btn-sm btn-active-color-primary ms-n2" id="kt_app_sidebar_mobile_toggle">
-                    <i class="ki-outline ki-abstract-14 fs-2"></i>
-                </button>
-                <a href="{{route('dashboard')}}">
-                    <img alt="Logo" src="{{asset('crud/images/logo.svg')}}" class="h-30px theme-light-show" />
-                    <img alt="Logo" src="{{asset('crud/images/logo.svg')}}" class="h-30px theme-dark-show" />
-                </a>
-                <button class="btn btn-icon btn-sm btn-active-color-primary me-n2" id="kt_app_aside_mobile_toggle">
-                    <i class="ki-outline ki-menu fs-2"></i>
-                </button>
+            <div class="app-container align-content-center container-fluid" id="kt_app_header_container">
+                <div class="row">
+                    <div class="col-4 align-content-center">
+                        <button class="btn btn-icon btn-sm btn-active-color-primary ms-n2" id="kt_app_sidebar_mobile_toggle">
+                            <i class="ki-outline ki-burger-menu-5"></i>
+                        </button>
+                    </div>
+                    <div class="col-8 align-content-center">
+                        <a href="{{route('dashboard')}}">
+                            <img alt="Logo" src="{{asset('crud/images/logo.svg')}}" class="h-40px theme-light-show" />
+                            <img alt="Logo" src="{{asset('crud/images/logo.svg')}}" class="h-40px theme-dark-show" />
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
 
             <div id="kt_app_sidebar" class="app-sidebar" data-kt-drawer="true" data-kt-drawer-name="app-sidebar" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="225px" data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle">
-                <div class="app-sidebar-logo d-flex flex-stack px-9 pt-10 pb-5" id="kt_app_sidebar_logo">
+                <div class="app-sidebar-logo d-flex align-center justify-content-center px-9 pt-10 pb-5" id="kt_app_sidebar_logo">
                     <a href="{{route('dashboard')}}">
                         <img alt="Logo" src="{{asset('crud/images/logo.svg')}}" class="h-50px theme-light-show" />
                         <img alt="Logo" src="{{asset('crud/images/logo.svg')}}" class="h-50px theme-dark-show" />
                     </a>
-                    <div class="ms-2">
-                        <div class="btn btn-icon btn-circle btn-light btn-color-gray-500 btn-active-color-primary w-40px h-40px" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end" id="kt_activities_toggle">
-                            <i class="ki-outline ki-notification-on fs-2"></i>
-                        </div>
-                    </div>
                 </div>
                 <div class="app-sidebar-menu flex-column-fluid px-7">
                     <!--begin::Menu wrapper-->
