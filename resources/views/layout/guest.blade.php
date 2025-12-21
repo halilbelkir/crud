@@ -62,7 +62,7 @@
 
     <div class="container-fluid">
         <div class="row">
-            <div class=" col-xl-8 col-md-6 guestHead">
+            <div class="col-xl-7 col-md-5 guestHead">
                 <div class="guestTitle">
                     <h1 class="text-white fs-2qx fw-bold text-start">
                         {{ settings('title') }}
@@ -72,7 +72,7 @@
                     </h3>
                 </div>
             </div>
-            <div class="col-xl-3 col-md-5">
+            <div class="col-xl-4 col-md-6">
                 <div class="guestSidebar">
                     <div class="bg-body rounded-4 p-10">
                         @yield('content')
