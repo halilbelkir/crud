@@ -1,5 +1,8 @@
 <?php
 
+use crudPackage\Models\Setting;
+use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
 function menuGenerate($menu)
 {
     if (strstr($menu->route,','))
@@ -82,4 +85,35 @@ function menuGenerate($menu)
     $html .= '</div>';
 
     return $html;
+}
+
+function settings($column)
+{
+    $cacheName = 'settings';
+    $cache     = Cache::remember($cacheName, Carbon::now()->addMinutes(480), function () use ($cacheName,$column)
+    {
+        $settings = Setting::find(1);
+
+        if($settings)
+        {
+            return $settings;
+        }
+        else
+        {
+            return null;
+        }
+    });
+
+    $columns =
+        [
+            'logo'     => 'crud/images/logo.svg',
+            'loader'   => 'crud/images/loading.gif',
+            'bg_image' => 'crud/images/guest.jpg',
+            'icon'     => 'crud/images/fav/android-icon-192x192.png',
+            'color_1'  => '#2900FF',
+            'color_2'  => '#001244',
+            'title'    => 'Zaurac Teknoloji',
+        ];
+
+    return $cache->$column ?? $columns[$column];
 }

@@ -19,27 +19,27 @@
 }
 
 .app-sidebar-menu .menu .menu-item .menu-link .menu-title {
-  color: #001244 !important;
+  color: var(--secondaryColor) !important;
 }
 .app-sidebar-menu .menu .menu-item .menu-link .menu-icon i {
-  color: #001244 !important;
+  color: var(--secondaryColor) !important;
   font-size: 20px;
 }
 .app-sidebar-menu .menu .menu-item .menu-link:hover .menu-title, .app-sidebar-menu .menu .menu-item .menu-link.active .menu-title {
-  color: #2900FF !important;
+  color: var(--primaryColor) !important;
 }
 .app-sidebar-menu .menu .menu-item .menu-link:hover .menu-icon i, .app-sidebar-menu .menu .menu-item .menu-link.active .menu-icon i {
-  color: #2900FF !important;
+  color: var(--primaryColor) !important;
 }
 
 .btn.btn-primary {
   color: #ffffff;
-  border-color: #2900FF !important;
-  background-color: #2900FF !important;
+  border-color: var(--primaryColor) !important;
+  background-color: var(--primaryColor) !important;
 }
 .btn.btn-primary:hover {
-  border-color: #001244 !important;
-  background-color: #001244 !important;
+  border-color: var(--secondaryColor) !important;
+  background-color: var(--secondaryColor) !important;
 }
 
 .form-group {
@@ -100,55 +100,55 @@
 }
 
 .form-check-input:checked {
-  background-color: #2900FF;
-  border-color: #2900FF;
+  background-color: var(--primaryColor);
+  border-color: var(--primaryColor);
 }
 
 .btn.btn-light-primary {
-  color: #2900FF;
+  color: var(--primaryColor);
   background-color: rgba(233, 87, 61, 0.1);
 }
 .btn.btn-light-primary i {
-  color: #2900FF;
+  color: var(--primaryColor);
 }
 .btn.btn-light-primary:hover {
-  background-color: #2900FF !important;
+  background-color: var(--primaryColor) !important;
   color: #ffffff;
 }
 .btn.btn-tertiary {
-  color: #001244 !important;
+  color: var(--secondaryColor) !important;
   background-color: #1DE6FF !important;
   font-weight: bold;
 }
 .btn.btn-tertiary i {
-  color: #001244 !important;
+  color: var(--secondaryColor) !important;
 }
 .btn.btn-tertiary:hover {
-  background-color: #2900FF !important;
+  background-color: var(--primaryColor) !important;
   color: #ffffff !important;
 }
 .btn.btn-tertiary:hover i {
   color: #ffffff !important;
 }
 .btn.btn-outline-primary {
-  color: #2900FF;
-  border: 1px solid #2900FF !important;
+  color: var(--primaryColor);
+  border: 1px solid var(--primaryColor) !important;
 }
 .btn.btn-outline-primary:hover {
-  background-color: #2900FF;
+  background-color: var(--primaryColor);
   color: #ffffff !important;
 }
 
 .stepper-item.current .stepper-title {
-  color: #2900FF !important;
+  color: var(--primaryColor) !important;
   font-weight: bold;
 }
 .stepper-item.current:after {
-  background-color: #2900FF !important;
+  background-color: var(--primaryColor) !important;
 }
 
 .active > .page-link {
-  background-color: #2900FF !important;
+  background-color: var(--primaryColor) !important;
 }
 
 .modal-xxl {
@@ -156,7 +156,7 @@
 }
 
 [data-repeater-item] {
-  border-bottom: 1px solid #001244 !important;
+  border-bottom: 1px solid var(--secondaryColor) !important;
   padding-bottom: 10px;
   margin-bottom: 30px;
 }
@@ -194,7 +194,7 @@
 }
 
 .color-primary {
-  color: #2900FF !important;
+  color: var(--primaryColor) !important;
 }
 
 .CodeMirror {
@@ -228,22 +228,22 @@
   background-color: #ffffff !important;
 }
 #columns [data-repeater-item].ribbon .form-check-label {
-  color: #001244 !important;
+  color: var(--secondaryColor) !important;
 }
 #columns [data-repeater-item].ribbon .form-check-input {
   background-color: #ffffff !important;
-  border-color: #001244 !important;
+  border-color: var(--secondaryColor) !important;
 }
 #columns [data-repeater-item].ribbon .form-check-input:checked {
-  background-color: #001244 !important;
+  background-color: var(--secondaryColor) !important;
 }
 #columns [data-repeater-item].ribbon .CodeMirror {
   background-color: #ffffff !important;
-  border-color: #001244 !important;
-  border: 1px solid #001244;
+  border-color: var(--secondaryColor) !important;
+  border: 1px solid var(--secondaryColor);
 }
 #columns [data-repeater-item].ribbon .jsonOrganizerButton {
-  border: 1px solid #001244 !important;
+  border: 1px solid var(--secondaryColor) !important;
 }
 #columns [data-repeater-item]:last-child {
   border-bottom: none !important;
@@ -273,7 +273,7 @@
 }
 .crud-switch input:before {
   content: attr(data-off);
-  color: #001244;
+  color: var(--secondaryColor);
   display: block;
   margin-left: 40px;
   margin-right: 20px;

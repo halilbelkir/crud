@@ -68,23 +68,13 @@ class ImageUpload
 
     public function resize($image, $width, $height, $title,$table)
     {
-        $cdn       = new Cdn();
         $manager   = new ImageManager(new Driver());
         $img       = $manager->read(file_get_contents($image));
         $resize    = $img->cover($width, $height);
         $encode    = $img->encodeByExtension($image->extension());
         $imageName = $this->setImageName($image,$title,$table);
-        $fileName   = $imageName[0];
 
-        $this->getStorage()->put($fileName, $encode->toString());
-
-        $tmpImage = public_path($this->getStorage()->url($fileName));
-        $response = $cdn->setFile($tmpImage,$imageName[1]);
-        $getImage = json_decode($response);
-
-        $this->delete($tmpImage);
-
-        return $getImage->file_url;
+        return $this->set($image,$imageName);
     }
 
     public function copy($oldFile,$newFile)

@@ -95,7 +95,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <a href="javascript:;" data-repeater-create class="btn btn-flex btn-light-primary">
+                        <a href="javascript:;" data-repeater-create class="btn btn-flex btn-primary">
                             <i class="ki-duotone ki-plus fs-3"></i>
                             Ekle
                         </a>

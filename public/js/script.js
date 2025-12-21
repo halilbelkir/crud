@@ -724,20 +724,24 @@ function getDatatable(id,exportButtons = null,documentTitle = null)
     }
 }
 
-const images = document.getElementById('imageUpdate'),
-    preview = document.getElementById('imageUpdatePreview');
-
-if (images)
+if ($('.showImage').length > 0)
 {
-    images.addEventListener('change', function() {
-        [...this.files].map(file => {
-            const reader = new FileReader();
-            reader.addEventListener('load', function(){
-                preview.src = this.result;
-            });
-            reader.readAsDataURL(file);
+    document.querySelectorAll('.showImage').forEach(function(showImage)
+    {
+        let image   = showImage.querySelector('.imageUpdate');
+        let preview = showImage.querySelector('.imageUpdatePreview');
+
+        image.addEventListener('change', function()
+        {
+            [...this.files].map(file => {
+                const reader = new FileReader();
+                reader.addEventListener('load', function(){
+                    preview.src = this.result;
+                });
+                reader.readAsDataURL(file);
+            })
         })
-    })
+    });
 }
 
 function slug1(ad,yazilacakyer)

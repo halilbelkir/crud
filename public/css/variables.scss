@@ -1,5 +1,5 @@
-$primary       : #2900FF;
-$secondary     : #001244;
+$primary       : var(--primaryColor);
+$secondary     : var(--secondaryColor);
 $tertiary      : #1DE6FF;
 $danger        : #af2219;
 $lightHoverRed : rgba(233, 87, 61, 0.1);

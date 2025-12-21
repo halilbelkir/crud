@@ -64,6 +64,15 @@ return new class extends Migration
                     'order'         => 4,
                     'dynamic_route' => 1,
                     'main'          => 1,
+                ],
+                [
+                    'title'         => 'Ayarlar',
+                    'route'         => 'settings.index',
+                    'icon'          => '<i class="ki-outline ki-setting-2 fs-2"></i>',
+                    'menu_id'       => 1,
+                    'order'         => 5,
+                    'dynamic_route' => 1,
+                    'main'          => 1,
                 ]
             ]
         );

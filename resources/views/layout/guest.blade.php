@@ -5,24 +5,12 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Zaurac Teknoloji</title>
-    <link rel="apple-touch-icon" sizes="57x57" href="{{asset('crud/images/fav/apple-icon-57x57.png')}}">
-    <link rel="apple-touch-icon" sizes="60x60" href="{{asset('crud/images/fav/apple-icon-60x60.png')}}">
-    <link rel="apple-touch-icon" sizes="72x72" href="{{asset('crud/images/fav/apple-icon-72x72.png')}}">
-    <link rel="apple-touch-icon" sizes="76x76" href="{{asset('crud/images/fav/apple-icon-76x76.png')}}">
-    <link rel="apple-touch-icon" sizes="114x114" href="{{asset('crud/images/fav/apple-icon-114x114.png')}}">
-    <link rel="apple-touch-icon" sizes="120x120" href="{{asset('crud/images/fav/apple-icon-120x120.png')}}">
-    <link rel="apple-touch-icon" sizes="144x144" href="{{asset('crud/images/fav/apple-icon-144x144.png')}}">
-    <link rel="apple-touch-icon" sizes="152x152" href="{{asset('crud/images/fav/apple-icon-152x152.png')}}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{asset('crud/images/fav/apple-icon-180x180.png')}}">
-    <link rel="icon" type="image/png" sizes="192x192"  href="{{asset('crud/images/fav/android-icon-192x192.png')}}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{asset('crud/images/fav/favicon-32x32.png')}}">
-    <link rel="icon" type="image/png" sizes="96x96" href="{{asset('crud/images/fav/favicon-96x96.png')}}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{asset('crud/images/fav/favicon-16x16.png')}}">
-    <link rel="manifest" href="{{asset('crud/images/fav/manifest.json')}}">
-    <meta name="msapplication-TileColor" content="#c21b17">
-    <meta name="msapplication-TileImage" content="{{asset('crud/images/fav/ms-icon-144x144.png')}}">
-    <meta name="theme-color" content="#c21b17">
+    <title>{{ settings('title') }}</title>
+    <meta name="description" content="{{ settings('subtitle') }}">
+    <link rel="shortcut icon" href="{{ asset(settings('icon')) }}" type="image/png">
+    <meta name="msapplication-TileColor" content="{{ settings('color_1') }}">
+    <meta name="theme-color" content="{{ settings('color_1') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,6 +18,13 @@
     <link href="{{asset('crud/vendor/guest/plugins.bundle.min.css')}}" rel="stylesheet" type="text/css"/>
     <link href="{{asset('crud/css/guest/style.bundle.css')}}" rel="stylesheet" type="text/css"/>
     <link href="{{asset('crud/css/guest/style.min.css')}}" rel="stylesheet" type="text/css"/>
+    <style>
+        :root
+        {
+            --primaryColor   : {{ settings('color_1') }};
+            --secondaryColor : {{ settings('color_2') }};
+        }
+    </style>
 </head>
 <body id="kt_body"  class="app-blank bgi-size-cover bgi-no-repeat bgi-position-top">
 <script>
@@ -57,11 +52,11 @@
 <div class="d-flex flex-column flex-root" id="kt_app_root">
     <style>
         body {
-            background-image: url('{{asset('crud/images/guest.jpg')}}');
+            background-image: url('{{ asset(settings('bg_image')) }}');
         }
 
         [data-bs-theme="dark"] body {
-            background-image: url('{{asset('crud/images/guest.jpg')}}');
+            background-image: url('{{ asset(settings('bg_image')) }}');
         }
     </style>
 
@@ -70,10 +65,10 @@
             <div class=" col-xl-8 col-md-6 guestHead">
                 <div class="guestTitle">
                     <h1 class="text-white fs-2qx fw-bold text-start">
-                        Zaurac Teknoloji
+                        {{ settings('title') }}
                     </h1>
                     <h3 class="text-white fw-bold text-start">
-                        Yönetim Paneline Hoş Geldiniz
+                        {{ settings('subtitle') }}
                     </h3>
                 </div>
             </div>

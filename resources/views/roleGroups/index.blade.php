@@ -11,11 +11,11 @@
             </div>
             <div class="card-toolbar">
                 <div class="d-flex justify-content-end" id="exportButtons" data-kt-user-table-toolbar="base">
-                    <button type="button" class="btn btn-light-primary me-3" data-kt-menu-trigger="click"
+                    <button type="button" class="btn btn-primary me-3" data-kt-menu-trigger="click"
                             data-kt-menu-placement="bottom-end">
                         <i class="ki-outline ki-exit-up fs-2"></i> Dışa Aktar
                     </button>
-                    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-200px w-md-200px py-4"
+                    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-primary fw-semibold fs-7 w-200px w-md-200px py-4"
                          data-kt-menu="true" data-popper-placement="bottom-end">
                         <div class="menu-item px-3">
                             <a href="#" class="menu-link px-3" data-table-export-button-name="excel"> Excel </a>

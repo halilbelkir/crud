@@ -26,7 +26,7 @@
   --bs-gray-900: #191A1F;
   --bs-white: #ffffff;
   --bs-light: #F9F9F9;
-  --bs-primary: #2900FF;
+  --bs-primary: var(--primaryColor);
   --bs-secondary: #E1E3EA;
   --bs-success: #50cd89;
   --bs-info: #7239ea;
@@ -7177,7 +7177,7 @@ textarea.form-control-lg {
 }
 
 .link-primary {
-  color: #2900FF !important;
+  color: var(--primaryColor) !important;
 }
 .link-primary:hover, .link-primary:focus {
   color: #383848 !important;
@@ -28020,7 +28020,7 @@ textarea.form-control-lg {
   --bs-gray-900-rgb: 24, 28, 50;
   --bs-white: #ffffff;
   --bs-light: #F9F9F9;
-  --bs-primary: #2900FF;
+  --bs-primary: var(--primaryColor);
   --bs-secondary: #E1E3EA;
   --bs-success: #50cd89;
   --bs-info: #7239ea;
@@ -28060,7 +28060,7 @@ textarea.form-control-lg {
   --bs-danger-rgb: 241, 65, 108;
   --bs-dark-rgb: 24, 28, 50;
   --bs-text-white: #ffffff;
-  --bs-text-primary: #2900FF;
+  --bs-text-primary: var(--primaryColor);
   --bs-text-secondary: #E1E3EA;
   --bs-text-light: #F9F9F9;
   --bs-text-success: #50cd89;
@@ -28207,7 +28207,7 @@ textarea.form-control-lg {
   --bs-dark-rgb: 255, 255, 255;
   --bs-secondary-rgb: 50, 50, 72;
   --bs-text-white: #ffffff;
-  --bs-text-primary: #2900FF;
+  --bs-text-primary: var(--primaryColor);
   --bs-text-secondary: #323248;
   --bs-text-light: #2B2B40;
   --bs-text-success: #50cd89;
@@ -34001,7 +34001,7 @@ h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
   color: var(--bs-primary-inverse);
   border-color: var(--bs-primary);
   background-color: var(--bs-primary);
-    border: 1px solid #2900FF !important;
+    border: 1px solid var(--primaryColor) !important;
 }
 .btn.btn-primary i,
 .btn.btn-primary .svg-icon {
@@ -34012,8 +34012,8 @@ h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
 }
 .btn-check:checked + .btn.btn-primary, .btn-check:active + .btn.btn-primary, .btn.btn-primary:focus:not(.btn-active), .btn.btn-primary:hover:not(.btn-active), .btn.btn-primary:active:not(.btn-active), .btn.btn-primary.active, .btn.btn-primary.show, .show > .btn.btn-primary {
   color: #FFFFFF;
-    border: 1px solid #001244 !important;
-  background-color: #001244  !important;
+    border: 1px solid var(--secondaryColor) !important;
+  background-color: var(--secondaryColor)  !important;
 }
 .btn-check:checked + .btn.btn-primary i,
 .btn-check:checked + .btn.btn-primary .svg-icon, .btn-check:active + .btn.btn-primary i,

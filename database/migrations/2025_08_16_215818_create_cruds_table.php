@@ -58,6 +58,13 @@ return new class extends Migration
                     'table_name' => 'cruds',
                     'status'     => 1,
                     'main'       => 1
+                ],
+                [
+                    'title'      => 'Ayarlar',
+                    'slug'       => 'settings',
+                    'table_name' => 'settings',
+                    'status'     => 1,
+                    'main'       => 1
                 ]
             ]
         );

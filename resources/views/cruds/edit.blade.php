@@ -360,7 +360,7 @@
                                 </div>
                             </div>
                             <div class="form-group mt-5">
-                                <a href="javascript:;" data-repeater-create class="btn btn-light-primary">
+                                <a href="javascript:;" data-repeater-create class="btn btn-primary">
                                     <i class="ki-duotone ki-plus fs-3"></i>
                                     Satır Ekle
                                 </a>

@@ -1,26 +1,13 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <title>{{isset($activePage) ? $activePage.' - ' : null}} Zaurac Teknoloji</title>
+    <title>{{isset($activePage) ? $activePage.' - ' : null}} {{ settings('title') }}</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="apple-touch-icon" sizes="57x57" href="{{asset('crud/images/fav/apple-icon-57x57.png')}}">
-    <link rel="apple-touch-icon" sizes="60x60" href="{{asset('crud/images/fav/apple-icon-60x60.png')}}">
-    <link rel="apple-touch-icon" sizes="72x72" href="{{asset('crud/images/fav/apple-icon-72x72.png')}}">
-    <link rel="apple-touch-icon" sizes="76x76" href="{{asset('crud/images/fav/apple-icon-76x76.png')}}">
-    <link rel="apple-touch-icon" sizes="114x114" href="{{asset('crud/images/fav/apple-icon-114x114.png')}}">
-    <link rel="apple-touch-icon" sizes="120x120" href="{{asset('crud/images/fav/apple-icon-120x120.png')}}">
-    <link rel="apple-touch-icon" sizes="144x144" href="{{asset('crud/images/fav/apple-icon-144x144.png')}}">
-    <link rel="apple-touch-icon" sizes="152x152" href="{{asset('crud/images/fav/apple-icon-152x152.png')}}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{asset('crud/images/fav/apple-icon-180x180.png')}}">
-    <link rel="icon" type="image/png" sizes="192x192"  href="{{asset('crud/images/fav/android-icon-192x192.png')}}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{asset('crud/images/fav/favicon-32x32.png')}}">
-    <link rel="icon" type="image/png" sizes="96x96" href="{{asset('crud/images/fav/favicon-96x96.png')}}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{asset('crud/images/fav/favicon-16x16.png')}}">
-    <link rel="manifest" href="{{asset('crud/images/fav/manifest.json')}}">
-    <meta name="msapplication-TileColor" content="#c21b17">
-    <meta name="msapplication-TileImage" content="{{asset('crud/images/fav/ms-icon-144x144.png')}}">
-    <meta name="theme-color" content="#c21b17">
+    <meta name="description" content="{{ settings('subtitle') }}">
+    <link rel="shortcut icon" href="{{ asset(settings('icon')) }}" type="image/png">
+    <meta name="msapplication-TileColor" content="{{ settings('color_1') }}">
+    <meta name="theme-color" content="{{ settings('color_1') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,6 +17,13 @@
     <link href="{{asset('crud/css/main/style.bundle.css')}}" rel="stylesheet" type="text/css"/>
     <link href="{{asset('crud/vendor/datatables/datatables.bundle.min.css')}}" rel="stylesheet" type="text/css"/>
     @yield('style')
+    <style>
+        :root
+        {
+            --primaryColor   : {{ settings('color_1') }};
+            --secondaryColor : {{ settings('color_2') }};
+        }
+    </style>
 </head>
 <body id="kt_app_body" data-kt-app-header-fixed="true" data-kt-app-header-fixed-mobile="true" data-kt-app-sidebar-enabled="true" data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-push-header="true" data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" data-kt-app-aside-enabled="true" data-kt-app-aside-fixed="true" data-kt-app-aside-push-header="true" data-kt-app-aside-push-toolbar="true" data-kt-app-aside-push-footer="true" class="app-default">
 <script>var defaultThemeMode = "light"; var themeMode; if ( document.documentElement ) { if ( document.documentElement.hasAttribute("data-bs-theme-mode")) { themeMode = document.documentElement.getAttribute("data-bs-theme-mode"); } else { if ( localStorage.getItem("data-bs-theme") !== null ) { themeMode = localStorage.getItem("data-bs-theme"); } else { themeMode = defaultThemeMode; } } if (themeMode === "system") { themeMode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } document.documentElement.setAttribute("data-bs-theme", themeMode); }</script>
@@ -45,8 +39,7 @@
                     </div>
                     <div class="col-8 align-content-center">
                         <a href="{{route('dashboard')}}">
-                            <img alt="Logo" src="{{asset('crud/images/logo.svg')}}" class="h-40px theme-light-show" />
-                            <img alt="Logo" src="{{asset('crud/images/logo.svg')}}" class="h-40px theme-dark-show" />
+                            <img alt="Logo" src="{{ asset(settings('logo')) }}" class="h-40px theme-light-show" />
                         </a>
                     </div>
                 </div>
@@ -57,8 +50,7 @@
             <div id="kt_app_sidebar" class="app-sidebar" data-kt-drawer="true" data-kt-drawer-name="app-sidebar" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="225px" data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle">
                 <div class="app-sidebar-logo d-flex align-center justify-content-center px-9 pt-10 pb-5" id="kt_app_sidebar_logo">
                     <a href="{{route('dashboard')}}">
-                        <img alt="Logo" src="{{asset('crud/images/logo.svg')}}" class="h-50px theme-light-show" />
-                        <img alt="Logo" src="{{asset('crud/images/logo.svg')}}" class="h-50px theme-dark-show" />
+                        <img alt="Logo" src="{{ asset(settings('logo')) }}" class="h-50px theme-light-show" />
                     </a>
                 </div>
                 <div class="app-sidebar-menu flex-column-fluid px-7">

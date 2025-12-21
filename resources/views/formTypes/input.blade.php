@@ -44,12 +44,12 @@
 @endphp
 
 @if($formType->key == 'image' && isset($inputValue) && isset($value) && $multiple != 'multiple')
-    <div class="image-input image-input-outline">
+    <div class="image-input image-input-outline showImage">
         <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" style="top: 0;left: 50%;" data-kt-image-input-action="change" data-bs-toggle="tooltip" data-bs-trigger="hover" title="Resmi Değiştir">
             <i class="ki-outline ki-pencil fs-7"></i>
-            <input type="file" id="imageUpdate" value="{{ $inputValue }}" name="{{$name}}">
+            <input type="file" class="imageUpdate" value="{{ $inputValue }}" name="{{$name}}">
         </label>
-        <img src="{{$inputValue}}" id="imageUpdatePreview" class="mb-7 w-100 object-fit-contain h-175px">
+        <img src="{{$inputValue}}"  class="mb-7 imageUpdatePreview w-100 object-fit-contain h-175px">
         <div id="preview"></div>
     </div>
 @else

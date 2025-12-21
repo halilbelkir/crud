@@ -24,7 +24,7 @@
                                     <button class="btn btn-sm btn-icon btn-bg-light btn-active-color-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
                                         <i class="ki-solid ki-dots-horizontal fs-2x"></i>
                                     </button>
-                                    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg-light-primary fw-semibold w-200px py-3" data-kt-menu="true">
+                                    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg-primary fw-semibold w-200px py-3" data-kt-menu="true">
 
                                         @if(auth()->user()->hasPermission('role-groups.edit'))
                                             <div class="menu-item px-3">
