@@ -23,6 +23,12 @@ class UserController extends Controller
     public function index()
     {
         $roles = RoleGroup::all();
+        $user  = Auth::user();
+
+        if ($user->role_group_id != 1)
+        {
+            $roles = RoleGroup::where('id',$user->role_group_id)->get();
+        }
 
         return view('crudPackage::users.index',compact('roles'));
     }
@@ -113,6 +119,11 @@ class UserController extends Controller
     {
         $value = $user;
         $roles = RoleGroup::all();
+
+        if ($user->role_group_id != 1)
+        {
+            $roles = RoleGroup::where('id',$user->role_group_id)->get();
+        }
 
         return view('crudPackage::users.edit',compact('value','roles'));
     }
@@ -206,7 +217,15 @@ class UserController extends Controller
 
     public function datatable()
     {
-        return Datatables::of(User::where('id','!=',Auth::user()->id)->get())
+        $user = Auth::user();
+        $sql  = User::where('id','!=',$user->id);
+
+        if ($user->role_group_id != 1)
+        {
+            $sql = $sql->where('role_group_id',$user->role_group_id);
+        }
+
+        return Datatables::of($sql->get())
             ->addColumn('role_group', function ($value) {
                 return $value->roleGroup->title ?? '-';
             })

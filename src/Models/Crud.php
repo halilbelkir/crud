@@ -57,4 +57,20 @@ class Crud extends Model
     {
         return $this->hasMany(CrudItem::class)->where('crud_items.column_name',$column)->first();
     }
+
+    public function scopeWithRolePermissions($query, int $roleGroupId)
+    {
+        return $query
+            ->join('roles', 'roles.crud_id', '=', 'cruds.id')
+            ->where('roles.role_group_id', $roleGroupId)
+            ->whereAny([
+                'roles.browse',
+                'roles.read',
+                'roles.edit',
+                'roles.add',
+                'roles.delete',
+            ], '!=', 0)
+            ->select('cruds.*')
+            ->distinct();
+    }
 }

@@ -51,6 +51,12 @@ class RoleGroupController extends Controller
     {
         $cruds       = Crud::where('status',1)->orderBy('main','desc')->get();
         $permissions = $this->permissions;
+        $user        = Auth::user();
+
+        if ($user->role_group_id != 1)
+        {
+            $cruds = Crud::where('status',1)->withRolePermissions($user->role_group_id)->orderBy('main','desc')->get();
+        }
 
         return view('crudPackage::roleGroups.index',compact('cruds','permissions'));
     }
@@ -166,6 +172,11 @@ class RoleGroupController extends Controller
         $value       = $roleGroup;
         $cruds       = Crud::where('status',1)->orderBy('main','desc')->get();
         $permissions = $this->permissions;
+
+        if (Auth::user()->role_group_id != 1)
+        {
+            $cruds = Crud::where('status',1)->withRolePermissions($value->id)->orderBy('main','desc')->get();
+        }
 
         return view('crudPackage::roleGroups.edit',compact('cruds','permissions','value'));
     }
@@ -298,7 +309,15 @@ class RoleGroupController extends Controller
 
     public function datatable()
     {
-        return Datatables::of(RoleGroup::all())
+        $roles = RoleGroup::all();
+        $user  = Auth::user();
+
+        if ($user->role_group_id != 1)
+        {
+            $roles = RoleGroup::where('id',$user->role_group_id)->get();
+        }
+
+        return Datatables::of($roles)
             ->addColumn('actions', function ($value)
             {
                 if (auth()->user()->hasPermission('role-groups.destroy') || auth()->user()->hasPermission('role-groups.edit') || auth()->user()->hasPermission('role-groups.show'))
