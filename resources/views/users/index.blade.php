@@ -56,7 +56,7 @@
                                         <div class="d-flex flex-column text-light pe-0 pe-sm-10">
                                             <h4 class="mb-2 fw-bolder text-light">Bilgilendirme</h4>
                                             <div class="fw-bold">Yeni oluşturulan her kullanıcının şifresi <span
-                                                        class="fw-bolder">Zaurac12345.,</span> olarak otomatik
+                                                        class="fw-bolder">{{ Str::camel(Str::slug(settings('title'))) }}12345.,</span> olarak otomatik
                                                 tanımlanmaktadır.
                                             </div>
                                         </div>

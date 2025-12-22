@@ -2,14 +2,14 @@
 
 namespace crudPackage\Http\Controllers;
 
-use crudPackage\Models\Customer;
-use crudPackage\Models\CustomerLimits;
 use crudPackage\Models\RoleGroup;
+use crudPackage\Models\Setting;
 use crudPackage\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Mockery\Exception;
 use Session;
 use Validator;
@@ -69,7 +69,8 @@ class UserController extends Controller
                 );
             }
 
-            $newPassword          = 'Zaurac12345.,';
+            $panelTitle           = settings('title');
+            $newPassword          = Str::camel(Str::slug($panelTitle)) . '12345.,';
             $data                 = new User;
             $data->name           = $request->get('name');
             $data->email          = $request->get('email');
