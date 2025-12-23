@@ -65,6 +65,13 @@ return new class extends Migration
                     'table_name' => 'settings',
                     'status'     => 1,
                     'main'       => 1
+                ],
+                [
+                    'title'      => 'Loglar',
+                    'slug'       => 'logs',
+                    'table_name' => 'activity_log',
+                    'status'     => 1,
+                    'main'       => 1
                 ]
             ]
         );

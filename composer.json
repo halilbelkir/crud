@@ -16,7 +16,8 @@
   },
   "require": {
     "yajra/laravel-datatables-oracle": "*",
-    "intervention/image": "*"
+    "intervention/image": "*",
+    "spatie/laravel-activitylog": "*"
   },
   "scripts": {
     "post-install-cmd": [

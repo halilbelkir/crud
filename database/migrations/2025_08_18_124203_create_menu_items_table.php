@@ -73,6 +73,15 @@ return new class extends Migration
                     'order'         => 5,
                     'dynamic_route' => 1,
                     'main'          => 1,
+                ],
+                [
+                    'title'         => 'Geçmiş',
+                    'route'         => 'logs.index',
+                    'icon'          => '<i class="bi bi-clock-history fs-2"></i>',
+                    'menu_id'       => 1,
+                    'order'         => 6,
+                    'dynamic_route' => 1,
+                    'main'          => 1,
                 ]
             ]
         );

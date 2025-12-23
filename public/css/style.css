@@ -302,4 +302,11 @@
   margin-bottom: 20px;
 }
 
+#columns.tab-pane .border-success .card-title,
+#columns.tab-pane .border-success .card-toolbar i,
+#columns.tab-pane .border-danger .card-title,
+#columns.tab-pane .border-danger .card-toolbar i {
+  color: #ffffff !important;
+}
+
 /*# sourceMappingURL=style.css.map */

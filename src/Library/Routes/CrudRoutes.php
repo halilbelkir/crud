@@ -57,6 +57,9 @@ class CrudRoutes
 
             Route::resource('settings', \crudPackage\Http\Controllers\SettingController::class)->middleware('checkPermission');
 
+            Route::get('logs/datatable', [\crudPackage\Http\Controllers\LogController::class, 'datatable'])->name('logs.datatables');
+            Route::resource('logs', \crudPackage\Http\Controllers\LogController::class)->middleware('checkPermission');
+
             Route::put('cruds/repeater/store/{crud}', [\crudPackage\Http\Controllers\CrudController::class, 'repeaterStore'])->name('cruds.repeater.store');
             Route::delete('cruds/repeater/delete/{crud_item}', [\crudPackage\Http\Controllers\CrudController::class, 'repeaterDestroy'])->name('cruds.repeater.destroy');
             Route::delete('cruds/relationship/delete/{crud_item}', [\crudPackage\Http\Controllers\CrudController::class, 'relationshipDestroy'])->name('cruds.relationship.destroy');

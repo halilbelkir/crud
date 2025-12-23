@@ -5,11 +5,27 @@ namespace crudPackage;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Database\Eloquent\Model;
+use crudPackage\Listeners\GlobalCrudListener;
+use Illuminate\Support\Facades\Event;
+
 
 class CrudServiceProvider extends ServiceProvider
 {
     public function boot()
     {
+        Event::listen('eloquent.created: *', function (string $event, array $data) {
+            app(GlobalCrudListener::class)->created($data[0]);
+        });
+
+        Event::listen('eloquent.updated: *', function (string $event, array $data) {
+            app(GlobalCrudListener::class)->updated($data[0]);
+        });
+
+        Event::listen('eloquent.deleted: *', function (string $event, array $data) {
+            app(GlobalCrudListener::class)->deleted($data[0]);
+        });
+
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
 
         $this->runMigrations();

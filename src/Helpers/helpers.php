@@ -117,3 +117,27 @@ function settings($column)
 
     return $cache->$column ?? $columns[$column];
 }
+
+function diffFields(array $old, array $new): array
+{
+    $diff = [];
+
+    foreach ($new as $key => $value)
+    {
+        if (!array_key_exists($key, $old) || $key == 'created_at' || $key == 'updated_at')
+        {
+            continue;
+        }
+
+        if ($old[$key] != $value)
+        {
+            $diff[$key] =
+                [
+                    'old' => $old[$key],
+                    'new' => $value,
+                ];
+        }
+    }
+
+    return $diff;
+}

@@ -70,6 +70,15 @@ return new class extends Migration
                     'edit'          => 1,
                     'add'           => 0,
                     'delete'        => 0,
+                ],
+                [
+                    'role_group_id' => 1,
+                    'crud_id'       => 6,
+                    'browse'        => 1,
+                    'read'          => 1,
+                    'edit'          => 1,
+                    'add'           => 0,
+                    'delete'        => 0,
                 ]
             ]
         );

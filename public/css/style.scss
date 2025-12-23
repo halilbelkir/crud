@@ -493,3 +493,16 @@
       margin-bottom: 20px;
    }
 }
+
+#columns.tab-pane
+{
+   .border-success,
+   .border-danger
+   {
+      .card-title,
+      .card-toolbar i
+      {
+         color: $white !important;
+      }
+   }
+}
