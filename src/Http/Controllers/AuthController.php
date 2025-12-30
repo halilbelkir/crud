@@ -236,8 +236,11 @@ class AuthController extends Controller
         }
         catch (\Exception $e)
         {
-            dd($e);
-            return response()->json(['result' => 0,'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'],403);
+            return response()->json(
+                [
+                    'result'  => 0,
+                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
+                ],403);
         }
     }
     public function logout()

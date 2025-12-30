@@ -6,7 +6,7 @@
             <img src="{{asset('crud/images/401.png')}}" class="w-50 w-lg-75">
         </div>
         <div class="col-lg-7">
-            <h1>{{ $exception->getMessage() ? $exception->getMessage() : $title}}</h1>
+            <h1>{{ $message ? $message : $title}}</h1>
             <p class="fs-2">Yetkiniz için lütfen ana kullanıcınız ile iletişime geçiniz.</p>
         </div>
     </div>

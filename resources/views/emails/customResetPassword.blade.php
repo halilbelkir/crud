@@ -2,8 +2,14 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Zaurac Teknoloji - Şifre Sıfırlama</title>
+    <title>{{ settings('title') }} - Şifre Sıfırlama</title>
     <style>
+        :root
+        {
+            --primaryColor : {{ settings('color_1') }};
+            --secondaryColor : {{ settings('color_2') }};
+        }
+
         body
         {
             font-family: Arial, sans-serif;
@@ -16,8 +22,8 @@
         {
             max-width: 600px;
             margin: 50px auto;
-            background-color: #001244;
-            color: #FFF3E6 !important;
+            background-color: #d8d8d8;
+            color: #20252b !important;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -25,8 +31,8 @@
 
         .button
         {
-            background-color: #FFF3E6;
-            color: #262631 !important;
+            background-color: {{ settings('color_1') }};
+            color: {{ settings('color_2') }} !important;
             padding: 10px 20px;
             text-align: center;
             text-decoration: none;
@@ -43,7 +49,7 @@
 
         a
         {
-            color: #FFF3E6 !important;
+            color: {{ settings('color_1') }} !important;
         }
     </style>
 </head>
@@ -51,7 +57,7 @@
 
 <div class="container">
     <div style="text-align: center">
-        <img src="{{asset('crud/images/logo-light.png')}}" style="height: 50px;" alt="">
+        <img src="{{ asset(settings('logo')) }}" style="height: 50px;" alt="">
     </div>
     <p><strong>Merhaba,</strong></p>
     <p>Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:</p>
@@ -61,7 +67,7 @@
     </div>
     <p>Bu işlemi siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.</p>
     <p>Saygılarımızla,</p>
-    <p>Zaurac Teknoloji</p>
+    <p>{{ settings('title') }}</p>
     <hr>
     <p>"Şifreyi Sıfırla" butonuna tıklamada sorun yaşıyorsanız, aşağıdaki URL'yi kopyalayıp web tarayıcınıza yapıştırın: <a href="{{ $actionUrl }}">{{ $actionUrl }}</a> </p>
 </div>

@@ -341,6 +341,11 @@
    color: $primary !important;
 }
 
+.color-secondary
+{
+   color: $secondary !important;
+}
+
 .CodeMirror
 {
    background-color: $lightGrey !important;
@@ -504,5 +509,148 @@
       {
          color: $white !important;
       }
+   }
+}
+
+.media
+{
+   .lists
+   {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+
+      .item
+      {
+         border: 1px solid $primary;
+         padding : 10px;
+         color : $primary;
+         display: block;
+         text-align: center;
+         border-radius: 10px;
+         width: 80px;
+         height: 80px;
+         align-content: space-around;
+
+         span
+         {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+         }
+
+         i
+         {
+            font-size : 30px;
+            color : $primary;
+         }
+
+         &.active
+         {
+            background-color: $secondary;
+            color : $white;
+
+            i
+            {
+               color : $white;
+            }
+         }
+
+         &:hover
+         {
+            background-color: $primary;
+            color : $white;
+
+            i
+            {
+               color : $white;
+            }
+         }
+      }
+   }
+
+   .preview
+   {
+      img
+      {
+         height : 155px;
+         width : 100%;
+         border-radius : 10px;
+         object-fit: cover;
+      }
+
+      .content
+      {
+         ul
+         {
+            display: flex;
+            gap: 5px;
+            flex-direction: column;
+            width: 100%;
+
+            li
+            {
+               display: flex;
+               column-gap: 5px;
+               align-items: center;
+
+               .copy
+               {
+                  padding: 0;
+                  height: auto;
+                  border: none;
+                  background-color: transparent;
+
+                  i
+                  {
+                     color: $secondary;
+                  }
+
+                  &:hover
+                  {
+                     i
+                     {
+                        color : $primary;
+                     }
+                  }
+
+                  &.success
+                  {
+                     i
+                     {
+                        color : $greenDark;
+                     }
+                  }
+               }
+            }
+         }
+
+         .icon
+         {
+            width: 100%;
+            border-radius: 10px;
+            height: 155px;
+            text-align: center;
+            background-color: $greyThree;
+            align-items: center;
+            display: flex;
+            justify-content: center;
+
+            i
+            {
+               font-size : 90px;
+               color : $grey;
+            }
+         }
+      }
+   }
+}
+
+@media (max-width: 992px)
+{
+   #kt_app_main
+   {
+      margin-left: 0px;
    }
 }

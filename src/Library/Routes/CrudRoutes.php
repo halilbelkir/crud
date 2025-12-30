@@ -6,6 +6,7 @@ use crudPackage\Http\Controllers\ModuleController;
 use crudPackage\Models\Crud;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class CrudRoutes
 {
@@ -36,7 +37,19 @@ class CrudRoutes
         Route::post('/reset-send', [\crudPackage\Http\Controllers\AuthController::class,'passwordResetUpdate'])->name('auth.password.reset.update');
         Route::get('cikis-yap', [\crudPackage\Http\Controllers\AuthController::class,'logout'])->name('logout');
 
-        Route::fallback(function () {return abort(404);})->middleware('variables');
+        Route::fallback(function () {
+
+            throw new HttpResponseException(
+                response()->view(
+                    'crudPackage::errors.404',
+                    [
+                        'message' => 'Aradığınız sayfa bulunamadı.'
+                    ],
+                    404
+                )
+            );
+
+        })->middleware('variables');
 
         Route::middleware(['auth','variables'])->group(function ()
         {
@@ -59,6 +72,11 @@ class CrudRoutes
 
             Route::get('logs/datatable', [\crudPackage\Http\Controllers\LogController::class, 'datatable'])->name('logs.datatables');
             Route::resource('logs', \crudPackage\Http\Controllers\LogController::class)->middleware('checkPermission');
+
+            Route::get('media/{path?}', [\crudPackage\Http\Controllers\MediaController::class, 'index'])->where('path', '.*')->name('media.index')->middleware('checkPermission');
+            Route::post('media/upload', [\crudPackage\Http\Controllers\MediaController::class, 'upload'])->name('media.upload');
+            Route::post('media/folder', [\crudPackage\Http\Controllers\MediaController::class, 'createFolder'])->name('media.createFolder');
+            Route::delete('media/delete/{path?}/{file?}', [\crudPackage\Http\Controllers\MediaController::class, 'delete'])->where('path', '.*')->name('media.delete');
 
             Route::put('cruds/repeater/store/{crud}', [\crudPackage\Http\Controllers\CrudController::class, 'repeaterStore'])->name('cruds.repeater.store');
             Route::delete('cruds/repeater/delete/{crud_item}', [\crudPackage\Http\Controllers\CrudController::class, 'repeaterDestroy'])->name('cruds.repeater.destroy');

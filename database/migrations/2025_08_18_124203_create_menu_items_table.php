@@ -82,6 +82,15 @@ return new class extends Migration
                     'order'         => 6,
                     'dynamic_route' => 1,
                     'main'          => 1,
+                ],
+                [
+                    'title'         => 'Media',
+                    'route'         => 'media.index',
+                    'icon'          => '<i class="bi bi-images fs-2"></i>',
+                    'menu_id'       => 1,
+                    'order'         => 7,
+                    'dynamic_route' => 1,
+                    'main'          => 1,
                 ]
             ]
         );

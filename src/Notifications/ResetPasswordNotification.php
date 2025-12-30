@@ -45,7 +45,7 @@ class ResetPasswordNotification extends Notification
             ->view('crudPackage::emails.customResetPassword',
                 [
                     'name_surname' => '',
-                    'actionUrl'    => url(route('password.reset', $this->token, false))
+                    'actionUrl'    => url(route('password.reset', ['token' => $this->token], false))
                 ])
             ->line('Eğer bu talebi siz yapmadıysanız, bu e-postayı dikkate almayın.');
     }

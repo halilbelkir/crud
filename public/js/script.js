@@ -121,6 +121,12 @@ $('#repeaterForm').submit(function (e)
     formSend('#repeaterForm',this);
 });
 
+$('#mediaUploadForm').submit(function (e)
+{
+    e.preventDefault();
+    formSend('#mediaUploadForm',this);
+});
+
 $('#addUpdateForm').submit(function (e)
 {
     e.preventDefault();
@@ -486,7 +492,7 @@ function statusUpdate(bu)
     });
 }
 
-function destroy(bu)
+function destroyOld(bu)
 {
     let route  = $(bu).data('route');
     let title  = $(bu).data('title');
@@ -545,6 +551,66 @@ function destroy(bu)
     });
 }
 
+function destroy(bu)
+{
+    let route  = $(bu).data('route');
+    let title  = $(bu).data('title');
+
+    Swal.fire({
+        text: title + " silmek istediğinize emin misiniz?",
+        icon: "warning",
+        showCancelButton: true,
+        showLoaderOnConfirm: true,
+        confirmButtonText: "Evet",
+        cancelButtonText: "Hayır",
+        buttonsStyling: false,
+        customClass:
+            {
+                confirmButton: "btn btn-primary",
+                cancelButton: "btn btn-active-light"
+            },
+        preConfirm: () =>
+        {
+            return $.ajax(
+                {
+                    type: 'DELETE',
+                    url: route,
+                    dataType: "json",
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
+                })
+                .then(response => {
+                    return response;
+                })
+                .catch(xhr =>
+                {
+                    Swal.showValidationMessage(
+                        xhr.responseJSON?.message || 'İşlem başarısız'
+                    );
+                });
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    })
+    .then((result) =>
+    {
+        if (result.isConfirmed)
+        {
+            messageAlert(1, result.value.message);
+
+            if (result.value.route !== undefined)
+            {
+                setTimeout(() => { location.href = result.value.route; }, 1500);
+            }
+            else
+            {
+                setTimeout(() => { location.reload(); }, 1500);
+            }
+        }
+    });
+
+}
+
 function modalWithSwal(modalName)
 {
     let modalSelector = $(modalName);
@@ -587,6 +653,11 @@ $(function()
     if ($('#insertModal').length > 0)
     {
         modalWithSwal('#insertModal');
+    }
+
+    if ($('#fileModal').length > 0)
+    {
+        modalWithSwal('#fileModal');
     }
 
     if ($('#repeaterModal').length > 0)

@@ -20,8 +20,9 @@
     <style>
         :root
         {
-            --primaryColor   : {{ settings('color_1') }};
-            --secondaryColor : {{ settings('color_2') }};
+            --primaryColor      : {{ settings('color_1') }};
+            --primaryLightColor : color-mix(in srgb, var(--primaryColor) 2ƒ0%, white 100%);;
+            --secondaryColor    : {{ settings('color_2') }};
         }
     </style>
 </head>
@@ -68,7 +69,7 @@
 
                             @if(count($menus) > 0)
                                 @foreach($menus as $menu)
-                                    @if(auth()->user()->hasPermission($menu->route) || $menu->dynamic_route == 0)
+                                    @if(auth()->user()->hasPermission($menu->route) || $menu->dynamic_route == 0 || auth()->user()->roleGroup->id == 1)
                                         {!! menuGenerate($menu) !!}
                                     @endif
                                 @endforeach
@@ -77,7 +78,7 @@
                             <div class="separator separator-gray-300 separator-dashed my-3"></div>
 
                             @foreach($mainMenus as $mainMenu)
-                                @if(auth()->user()->hasPermission($mainMenu->route) || $mainMenu->dynamic_route == 0)
+                                @if(auth()->user()->hasPermission($mainMenu->route) || $mainMenu->dynamic_route == 0 || auth()->user()->roleGroup->id == 1)
                                     {!! menuGenerate($mainMenu) !!}
                                 @endif
                             @endforeach

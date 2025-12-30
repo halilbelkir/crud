@@ -141,3 +141,21 @@ function diffFields(array $old, array $new): array
 
     return $diff;
 }
+
+function shortFilename(string $filename, int $limit = 8): string
+{
+    $ext  = pathinfo($filename, PATHINFO_EXTENSION);
+    $name = pathinfo($filename, PATHINFO_FILENAME);
+
+    if (mb_strlen($name) <= $limit)
+    {
+        return $filename;
+    }
+
+    return mb_substr($name, 0, $limit) . '....' . $ext;
+}
+
+function getExtension(string $filename): string
+{
+    return pathinfo($filename, PATHINFO_EXTENSION);
+}

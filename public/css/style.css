@@ -197,6 +197,10 @@
   color: var(--primaryColor) !important;
 }
 
+.color-secondary {
+  color: var(--secondaryColor) !important;
+}
+
 .CodeMirror {
   background-color: #f6f6f6 !important;
   border-color: #cecece !important;
@@ -307,6 +311,99 @@
 #columns.tab-pane .border-danger .card-title,
 #columns.tab-pane .border-danger .card-toolbar i {
   color: #ffffff !important;
+}
+
+.media .lists {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.media .lists .item {
+  border: 1px solid var(--primaryColor);
+  padding: 10px;
+  color: var(--primaryColor);
+  display: block;
+  text-align: center;
+  border-radius: 10px;
+  width: 80px;
+  height: 80px;
+  align-content: space-around;
+}
+.media .lists .item span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.media .lists .item i {
+  font-size: 30px;
+  color: var(--primaryColor);
+}
+.media .lists .item.active {
+  background-color: var(--secondaryColor);
+  color: #ffffff;
+}
+.media .lists .item.active i {
+  color: #ffffff;
+}
+.media .lists .item:hover {
+  background-color: var(--primaryColor);
+  color: #ffffff;
+}
+.media .lists .item:hover i {
+  color: #ffffff;
+}
+.media .preview img {
+  height: 155px;
+  width: 100%;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.media .preview .content ul {
+  display: flex;
+  gap: 5px;
+  flex-direction: column;
+  width: 100%;
+}
+.media .preview .content ul li {
+  display: flex;
+  column-gap: 5px;
+  align-items: center;
+}
+.media .preview .content ul li .copy {
+  padding: 0;
+  height: auto;
+  border: none;
+  background-color: transparent;
+}
+.media .preview .content ul li .copy i {
+  color: var(--secondaryColor);
+}
+.media .preview .content ul li .copy:hover i {
+  color: var(--primaryColor);
+}
+.media .preview .content ul li .copy.success i {
+  color: #42804f;
+}
+.media .preview .content .icon {
+  width: 100%;
+  border-radius: 10px;
+  height: 155px;
+  text-align: center;
+  background-color: #999999;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+.media .preview .content .icon i {
+  font-size: 90px;
+  color: #cecece;
+}
+
+@media (max-width: 992px) {
+  #kt_app_main {
+    margin-left: 0px;
+  }
 }
 
 /*# sourceMappingURL=style.css.map */

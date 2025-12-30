@@ -29,7 +29,7 @@
                             @foreach($permissions as $permissionKey => $permission)
                                 <div class="form-check form-check-sm mb-3">
                                     <input class="form-check-input role_{{$crud->id}}"
-                                           @if($crud->roles($value->id)->{$permission['column']} == 1) checked @endif
+                                           @if(!empty($crud->roles($value->id)) && $crud->roles($value->id)->{$permission['column']} == 1) checked @endif
                                            id="role_{{$permissionKey}}" name="permissions[{{$crud->id}}][{{$permissionKey}}]" type="checkbox" value="1"/>
                                     <label class="form-check-label text-gray-700 fw-semibold" for="role_{{$permissionKey}}">
                                         {{$permission['title']}}

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class CheckPermission
 {
@@ -19,8 +20,9 @@ class CheckPermission
     public function handle(Request $request, Closure $next): Response
     {
         $routeName = Route::currentRouteName();
+        $user      = auth()->user();
 
-        if (!auth()->user()->hasPermission($routeName))
+        if (!$user->hasPermission($routeName) && $user->roleGroup->id != 1)
         {
             $mainMenus = MenuItem::where('menu_id',1)->where('main',1)->where('parent_id',0)->orderBy('order')->get();
             $menus     = MenuItem::where('menu_id',1)->where('main',0)->where('parent_id',0)->orderBy('order')->get();
@@ -30,7 +32,13 @@ class CheckPermission
                 'menus'     => $menus,
             ]);
 
-            abort(401, 'Maalesef bu işlem için yetkiniz yok!');
+            throw new HttpResponseException(
+                response()->view(
+                    'crudPackage::errors.401',
+                    ['message' => 'Maalesef bu işlem için yetkiniz yok!'],
+                    401
+                )
+            );
         }
 
         return $next($request);

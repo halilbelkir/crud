@@ -28540,7 +28540,7 @@ textarea.form-control-lg {
   --bs-warning-active: #f1bc00;
   --bs-danger-active: #d9214e;
   --bs-dark-active: #111318;
-  --bs-primary-light: #EEF6FF;
+  --bs-primary-light: var(--primaryLightColor);
   --bs-secondary-light: #F9F9F9;
   --bs-success-light: #e8fff3;
   --bs-info-light: #f8f5ff;
@@ -28700,7 +28700,7 @@ textarea.form-control-lg {
   --bs-warning-active: #D9AA00;
   --bs-danger-active: #FF3767;
   --bs-dark-active: #F9F9F9;
-  --bs-primary-light: #212E48;
+  --bs-primary-light: var(--primaryLightColor);
   --bs-secondary-light: #363843;
   --bs-success-light: #1c3238;
   --bs-info-light: #2f264f;
