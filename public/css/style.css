@@ -370,6 +370,12 @@
   column-gap: 5px;
   align-items: center;
 }
+.media .preview .content ul li strong {
+  min-width: 20%;
+}
+.media .preview .content ul li span, .media .preview .content ul li a {
+  word-break: break-all;
+}
 .media .preview .content ul li .copy {
   padding: 0;
   height: auto;

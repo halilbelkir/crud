@@ -96,7 +96,7 @@
                                 <button class="copy" data-clipboard-target="#p-url"> <i class="bi bi-copy fs-4"></i> </button>
                             </li>
                             <li>
-                                <button id="p-delete" class="btn btn-sm btn-danger w-100" onclick="destroy(this)" data-route="{{ route('media.delete',['path' => $path]) }}" data-title=""> </button>
+                                <button id="p-delete" class="btn btn-sm btn-danger w-100" onclick="destroy(this)" data-route="#" data-title=""> </button>
                             </li>
                         </ul>
                     </div>
@@ -221,7 +221,7 @@
                 document.getElementById('p-modified').innerText    = modified;
                 document.getElementById('p-url').href             = url;
                 document.getElementById('p-delete').dataset.title = name + ' isimli dosyayı';
-                document.getElementById('p-delete').dataset.route = document.getElementById('p-delete').dataset.route + '/' + name;
+                document.getElementById('p-delete').dataset.route = '{{ route('media.delete',['path' => $path]) }}' + '/' + name;
 
                 const img  = document.getElementById('preview-image');
                 const icon = document.getElementById('preview-icon-selector');
