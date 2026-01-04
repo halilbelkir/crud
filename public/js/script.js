@@ -416,7 +416,7 @@ function messageToast(formSelector,status,message)
         '  </div>\n' +
         '</div>';
 
-    $(formSelector).closest('div').prepend(html);
+    $(formSelector).closest('#kt_app_content').prepend(html);
     const toastLiveExample = document.getElementById('messageToast')
     const toast = new bootstrap.Toast(toastLiveExample)
 

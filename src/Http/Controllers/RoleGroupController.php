@@ -3,6 +3,7 @@
 namespace crudPackage\Http\Controllers;
 
 use crudPackage\Models\Crud;
+use crudPackage\Models\MenuItem;
 use crudPackage\Models\Role;
 use crudPackage\Models\RoleGroup;
 use Illuminate\Http\Request;
@@ -49,16 +50,18 @@ class RoleGroupController extends Controller
      */
     public function index()
     {
-        $cruds       = Crud::where('status',1)->orderBy('main','desc')->get();
-        $permissions = $this->permissions;
-        $user        = Auth::user();
+        $cruds        = Crud::where('status',1)->orderBy('main','desc')->get();
+        $specialMenus = MenuItem::where('special',1)->orderBy('title','asc')->get();
+        $permissions  = $this->permissions;
+        $user         = Auth::user();
 
         if ($user->role_group_id != 1)
         {
-            $cruds = Crud::where('status',1)->withRolePermissions($user->role_group_id)->orderBy('main','desc')->get();
+            $cruds        = Crud::where('status',1)->withRolePermissions($user->role_group_id)->orderBy('main','desc')->get();
+            $specialMenus = MenuItem::where('special',1)->withSpecialItemRolePermissions($user->role_group_id)->orderBy('title','asc')->get();
         }
 
-        return view('crudPackage::roleGroups.index',compact('cruds','permissions'));
+        return view('crudPackage::roleGroups.index',compact('cruds','permissions','specialMenus'));
     }
 
     /**
@@ -106,8 +109,10 @@ class RoleGroupController extends Controller
             $data->title  = $request->get('title');
             $data->save();
 
-            $crudsSql = Crud::where('status',1)->orderBy('main','desc')->get();
-            $cruds    = $request->get('permissions');
+            $crudsSql           = Crud::where('status',1)->orderBy('main','desc')->get();
+            $cruds              = $request->get('permissions');
+            $specialPermissions = $request->get('special_permissions');
+            $specialMenus       = MenuItem::where('special',1)->orderBy('title','asc')->get();
 
             foreach ($crudsSql as $key => $crud)
             {
@@ -125,6 +130,31 @@ class RoleGroupController extends Controller
                 else
                 {
                     foreach ($cruds[$crud->id] as $index => $permission)
+                    {
+                        $permission = (int) $permission;
+                        $roles->{$this->permissions[$index]['column']} = $permission;
+                    }
+                }
+
+                $roles->save();
+            }
+
+            foreach ($specialMenus as $specialMenuKey => $specialMenu)
+            {
+                $roles                = new Role;
+                $roles->role_group_id = $data->id;
+                $roles->menu_item_id  = $specialMenu->id;
+
+                if (!isset($specialPermissions[$specialMenu->id]))
+                {
+                    foreach ($this->permissions as $permission)
+                    {
+                        $roles->{$permission['column']} = 0;
+                    }
+                }
+                else
+                {
+                    foreach ($specialPermissions[$specialMenu->id] as $index => $permission)
                     {
                         $permission = (int) $permission;
                         $roles->{$this->permissions[$index]['column']} = $permission;
@@ -157,11 +187,18 @@ class RoleGroupController extends Controller
      */
     public function show(RoleGroup $roleGroup)
     {
-        $value       = $roleGroup;
-        $cruds       = Crud::where('status',1)->orderBy('main','desc')->get();
-        $permissions = $this->permissions;
+        $value        = $roleGroup;
+        $cruds        = Crud::where('status',1)->orderBy('main','desc')->get();
+        $specialMenus = MenuItem::where('special',1)->orderBy('title','asc')->get();
+        $permissions  = $this->permissions;
 
-        return view('crudPackage::roleGroups.show',compact('cruds','permissions','value'));
+        if (Auth::user()->role_group_id != 1)
+        {
+            $cruds        = Crud::where('status',1)->withRolePermissions($value->id)->orderBy('main','desc')->get();
+            $specialMenus = MenuItem::where('special',1)->withSpecialItemRolePermissions($value->id)->orderBy('title','asc')->get();
+        }
+
+        return view('crudPackage::roleGroups.show',compact('cruds','permissions','value','specialMenus'));
     }
 
     /**
@@ -169,16 +206,18 @@ class RoleGroupController extends Controller
      */
     public function edit(RoleGroup $roleGroup)
     {
-        $value       = $roleGroup;
-        $cruds       = Crud::where('status',1)->orderBy('main','desc')->get();
-        $permissions = $this->permissions;
+        $value        = $roleGroup;
+        $cruds        = Crud::where('status',1)->orderBy('main','desc')->get();
+        $specialMenus = MenuItem::where('special',1)->orderBy('title','asc')->get();
+        $permissions  = $this->permissions;
 
         if (Auth::user()->role_group_id != 1)
         {
-            $cruds = Crud::where('status',1)->withRolePermissions($value->id)->orderBy('main','desc')->get();
+            $cruds        = Crud::where('status',1)->withRolePermissions($value->id)->orderBy('main','desc')->get();
+            $specialMenus = MenuItem::where('special',1)->withSpecialItemRolePermissions($value->id)->orderBy('title','asc')->get();
         }
 
-        return view('crudPackage::roleGroups.edit',compact('cruds','permissions','value'));
+        return view('crudPackage::roleGroups.edit',compact('cruds','permissions','value','specialMenus'));
     }
 
     /**
@@ -218,8 +257,10 @@ class RoleGroupController extends Controller
             $data->title = $request->get('title');
             $data->save();
 
-            $crudsSql = Crud::where('status',1)->orderBy('main','desc')->get();
-            $cruds    = $request->get('permissions');
+            $crudsSql           = Crud::where('status',1)->orderBy('main','desc')->get();
+            $cruds              = $request->get('permissions');
+            $specialPermissions = $request->get('special_permissions');
+            $specialMenus       = MenuItem::where('special',1)->orderBy('title','asc')->get();
 
             foreach ($crudsSql as $key => $crud)
             {
@@ -237,6 +278,42 @@ class RoleGroupController extends Controller
                     foreach ($this->permissions as $permissionKey => $permission)
                     {
                         if (isset($cruds[$crud->id][$permissionKey]))
+                        {
+                            $roles->{$permission['column']} = 1;
+                        }
+                        else
+                        {
+                            $roles->{$permission['column']} = 0;
+                        }
+                    }
+                }
+
+                $roles->save();
+            }
+
+            foreach ($specialMenus as $specialMenuKey => $specialMenu)
+            {
+                $roles = Role::where('role_group_id', $data->id)->where('menu_item_id', $specialMenu->id)->first();
+
+                if (empty($roles))
+                {
+                    $roles                = new Role;
+                    $roles->role_group_id = $data->id;
+                    $roles->menu_item_id  = $specialMenu->id;
+                }
+
+                if (!isset($specialPermissions[$specialMenu->id]))
+                {
+                    foreach ($this->permissions as $permission)
+                    {
+                        $roles->{$permission['column']} = 0;
+                    }
+                }
+                else
+                {
+                    foreach ($this->permissions as $permissionKey => $permission)
+                    {
+                        if (isset($specialPermissions[$specialMenu->id][$permissionKey]))
                         {
                             $roles->{$permission['column']} = 1;
                         }

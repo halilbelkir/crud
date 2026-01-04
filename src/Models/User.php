@@ -65,12 +65,19 @@ class User extends Authenticatable
         $routeExplode   = explode('.',$routeName);
         $route          = $routeExplode[0];
         $cacheName      = Auth::id() . '_' .implode('_', $routeExplode);
+        $response       = false;
+        $role           = $this->roleGroup->roles()->forRoute($route)->first();
 
-        $role = $this->roleGroup->roles()
-            ->whereHas('crud', fn($query) => $query->whereLike('slug', '%' . $route . '%'))
-            ->first();
+        if (isset($role) && !empty($role->crud_id) && $role->{$permissionType} == 1)
+        {
+            $response = true;
+        }
+        else if (isset($role) && !empty($role->menu_item_id) && $role->browse == 1)
+        {
+            $response = true;
+        }
 
-        return $role ? $role->{$permissionType} == 1 : false;
+        return $response;
     }
 
     private function getPermissionTypeFromRoute(string $routeName): string

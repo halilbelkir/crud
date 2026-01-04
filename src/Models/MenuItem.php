@@ -20,4 +20,21 @@ class MenuItem extends Model
     {
         return $this->belongsTo(MenuItem::class, 'parent_id');
     }
+
+    public function scopeWithSpecialItemRolePermissions($query, int $roleGroupId)
+    {
+        return $query
+            ->join('roles', 'roles.menu_item_id', '=', 'menu_items.id')
+            ->where('roles.role_group_id', $roleGroupId)
+            ->whereAny([
+                'roles.browse'
+            ], '!=', 0)
+            ->select('menu_items.*')
+            ->distinct();
+    }
+
+    public function roles($roleGroupId)
+    {
+        return $this->hasMany(Role::class)->where('role_group_id',$roleGroupId)->first();
+    }
 }

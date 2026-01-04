@@ -77,7 +77,7 @@
                                                                 </select>
                                                             </div>
 
-                                                            <div class="col-md-3 form-group">
+                                                            <div class="col-md-2 form-group">
                                                                 <label class="fw-semibold fs-6 mb-2">Başlık</label>
                                                                 <input name="title" type="text" class="form-control form-control-solid" placeholder="Başlık">
                                                             </div>
@@ -91,7 +91,7 @@
                                                                 <label class="fw-semibold fs-6 mb-2">
                                                                     İkon
                                                                     <i data-bs-toggle="tooltip" data-bs-placement="top" title='Örnek : <i class="bi bi-0-circle"></i>' data-bs-custom-class="tooltip-inverse" class="ki-outline color-primary fs-4 ki-information-5"></i>
-                                                                    (<small><a href="https://icons.getbootstrap.com/#content" target="_blank">İkon Kütüphanesi</a></small>)
+                                                                    ( <small><a href="https://icons.getbootstrap.com/#content" class="color-secondary text-decoration-underline" target="_blank">Kütüphane <i class="bi bi-box-arrow-up-right color-secondary"></i></a></small> )
                                                                 </label>
                                                                 <input name="icon" type="text" class="form-control form-control-solid" placeholder="İkon">
                                                             </div>
@@ -112,6 +112,16 @@
                                                                         Dinamik Route
                                                                     </div>
                                                                     <input class="form-check-input mt-4" name="dynamic_route" type="checkbox"
+                                                                           value="1"/>
+                                                                </label>
+                                                            </div>
+
+                                                            <div class="col-12 col-lg-1 pb-4">
+                                                                <label class="form-check form-switch form-switch-sm form-check-custom form-check-solid flex-stack d-block">
+                                                                    <div class="form-check-label text-gray-700 w-100 mx-0 fs-6 fw-semibold mb-2">
+                                                                        Özel Link
+                                                                    </div>
+                                                                    <input class="form-check-input mt-4" name="special" type="checkbox"
                                                                            value="1"/>
                                                                 </label>
                                                             </div>

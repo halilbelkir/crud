@@ -18,48 +18,118 @@
                     <div class="separator separator-content border-dark my-15"><span class="w-250px h2">Menü Linkleri</span></div>
                     <div class="form-group">
                         <div data-repeater-list="items">
-                            @foreach($value->items as $key => $item)
+                            @if(count($value->noMainItems) > 0)
+                                @foreach($value->noMainItems as $key => $item)
 
-                                @php $itemCrud = null; @endphp
+                                    @php $itemCrud = null; @endphp
 
-                                @if($item->dynamic_route == 1)
-                                    @php
-                                        $route    = $item->route;
-                                        $route    = explode('.',$route);
-                                        $route    = $route[0];
-                                        $itemCrud = $item->crud($route);
-                                    @endphp
-                                @endif
+                                    @if($item->dynamic_route == 1)
+                                        @php
+                                            $route    = $item->route;
+                                            $route    = explode('.',$route);
+                                            $route    = $route[0];
+                                            $itemCrud = $item->crud($route);
+                                        @endphp
+                                    @endif
 
-                                <div data-item-no="{{$key}}" data-repeater-item>
+                                    <div data-item-no="{{$key}}" data-repeater-item>
+                                        <div class="form-group row">
+                                            <div class="col-md-2 form-group">
+                                                <label class="fw-semibold fs-6 mb-2">Ekranlar</label>
+                                                <select onchange="getCrud(this)" name="item" data-action="{{route('single.crud')}}" class="form-control form-control-solid">
+                                                    <option value="">Seçiniz</option>
+                                                    @foreach($cruds as $crud)
+                                                        <option value="{{$crud->id}}" @if(isset($itemCrud) && $itemCrud->id == $crud->id) selected @endif>{{$crud->title}}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-2 form-group">
+                                                <label class="fw-semibold fs-6 mb-2">Başlık</label>
+                                                <input name="title" type="text" class="form-control form-control-solid" value="{{$item->title}}" placeholder="Başlık">
+                                            </div>
+
+                                            <div class="col-md-2 form-group">
+                                                <label class="fw-semibold fs-6 mb-2">Url / Route</label>
+                                                <input name="route" type="text" class="form-control form-control-solid" value="{{$item->route}}" placeholder="Url / Route">
+                                            </div>
+
+                                            <div class="col-md-2 form-group">
+                                                <label class="fw-semibold fs-6 mb-2">
+                                                    İkon
+                                                    <i data-bs-toggle="tooltip" data-bs-placement="top" title='Örnek : <i class="bi bi-0-circle"></i>' data-bs-custom-class="tooltip-inverse" class="ki-outline color-primary fs-4 ki-information-5"></i>
+                                                    ( <small><a href="https://icons.getbootstrap.com/#content" class="color-secondary text-decoration-underline" target="_blank">Kütüphane <i class="bi bi-box-arrow-up-right color-secondary"></i></a></small> )
+                                                </label>
+                                                <input name="icon" type="text" class="form-control form-control-solid" value="{{$item->icon}}" placeholder="İkon">
+                                            </div>
+
+                                            <div class="col-12 col-lg-1 pb-4">
+                                                <label class="form-check form-switch form-switch-sm form-check-custom form-check-solid flex-stack d-block">
+                                                    <div class="form-check-label text-gray-700 w-100 mx-0 fs-6 fw-semibold mb-2">
+                                                        Yeni Sekme
+                                                    </div>
+                                                    <input class="form-check-input mt-4" name="target" type="checkbox" value="1" @if($item->target == 1) checked @endif />
+                                                </label>
+                                            </div>
+
+                                            <div class="col-12 col-lg-1 pb-4">
+                                                <label class="form-check form-switch form-switch-sm form-check-custom form-check-solid flex-stack d-block">
+                                                    <div class="form-check-label text-gray-700 w-100 mx-0 fs-6 fw-semibold mb-2">
+                                                        Dinamik Route
+                                                    </div>
+                                                    <input class="form-check-input mt-4" name="dynamic_route" type="checkbox" value="1" @if($item->dynamic_route == 1) checked @endif />
+                                                </label>
+                                            </div>
+
+                                            <input type="hidden" name="id" value="{{$item->id}}">
+                                            <div class="col-12 col-lg-1 pb-4">
+                                                <label class="form-check form-switch form-switch-sm form-check-custom form-check-solid flex-stack d-block">
+                                                    <div class="form-check-label text-gray-700 w-100 mx-0 fs-6 fw-semibold mb-2">
+                                                        Özel Link
+                                                    </div>
+                                                    <input class="form-check-input mt-4" name="special" type="checkbox" value="1" @if($item->special == 1) checked @endif />
+                                                </label>
+                                            </div>
+
+                                            <div class="col-md-1 form-group">
+                                                <a href="javascript:;" data-repeater-delete class="btn btn-flex btn-tertiary mt-6">
+                                                    <i class="ki-outline ki-trash  fs-3"></i>
+                                                    Sil
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @else
+                                <div data-item-no="0" data-repeater-item>
                                     <div class="form-group row">
                                         <div class="col-md-2 form-group">
                                             <label class="fw-semibold fs-6 mb-2">Ekranlar</label>
                                             <select onchange="getCrud(this)" name="item" data-action="{{route('single.crud')}}" class="form-control form-control-solid">
                                                 <option value="">Seçiniz</option>
                                                 @foreach($cruds as $crud)
-                                                    <option value="{{$crud->id}}" @if(isset($itemCrud) && $itemCrud->id == $crud->id) selected @endif>{{$crud->title}}</option>
+                                                    <option value="{{$crud->id}}">{{$crud->title}}</option>
                                                 @endforeach
                                             </select>
                                         </div>
 
-                                        <div class="col-md-3 form-group">
+                                        <div class="col-md-2 form-group">
                                             <label class="fw-semibold fs-6 mb-2">Başlık</label>
-                                            <input name="title" type="text" class="form-control form-control-solid" value="{{$item->title}}" placeholder="Başlık">
+                                            <input name="title" type="text" class="form-control form-control-solid" placeholder="Başlık">
                                         </div>
 
                                         <div class="col-md-2 form-group">
                                             <label class="fw-semibold fs-6 mb-2">Url / Route</label>
-                                            <input name="route" type="text" class="form-control form-control-solid" value="{{$item->route}}" placeholder="Url / Route">
+                                            <input name="route" type="text" class="form-control form-control-solid" placeholder="Url / Route">
                                         </div>
 
                                         <div class="col-md-2 form-group">
                                             <label class="fw-semibold fs-6 mb-2">
                                                 İkon
                                                 <i data-bs-toggle="tooltip" data-bs-placement="top" title='Örnek : <i class="bi bi-0-circle"></i>' data-bs-custom-class="tooltip-inverse" class="ki-outline color-primary fs-4 ki-information-5"></i>
-                                                (<small><a href="https://icons.getbootstrap.com/#content" target="_blank">İkon Kütüphanesi</a></small>)
+                                                ( <small><a href="https://icons.getbootstrap.com/#content" class="color-secondary text-decoration-underline" target="_blank">Kütüphane <i class="bi bi-box-arrow-up-right color-secondary"></i></a></small> )
                                             </label>
-                                            <input name="icon" type="text" class="form-control form-control-solid" value="{{$item->icon}}" placeholder="İkon">
+                                            <input name="icon" type="text" class="form-control form-control-solid" placeholder="İkon">
                                         </div>
 
                                         <div class="col-12 col-lg-1 pb-4">
@@ -67,7 +137,8 @@
                                                 <div class="form-check-label text-gray-700 w-100 mx-0 fs-6 fw-semibold mb-2">
                                                     Yeni Sekme
                                                 </div>
-                                                <input class="form-check-input mt-4" name="target" type="checkbox" value="1" @if($item->target == 1) checked @endif />
+                                                <input class="form-check-input mt-4" name="target" type="checkbox"
+                                                       value="1"/>
                                             </label>
                                         </div>
 
@@ -76,22 +147,30 @@
                                                 <div class="form-check-label text-gray-700 w-100 mx-0 fs-6 fw-semibold mb-2">
                                                     Dinamik Route
                                                 </div>
-                                                <input class="form-check-input mt-4" name="dynamic_route" type="checkbox" value="1" @if($item->dynamic_route == 1) checked @endif />
+                                                <input class="form-check-input mt-4" name="dynamic_route" type="checkbox"
+                                                       value="1"/>
                                             </label>
                                         </div>
 
-                                        <input type="hidden" name="id" value="{{$item->id}}">
-                                        @if($item->main == 0)
-                                            <div class="col-md-1 form-group">
-                                                <a href="javascript:;" data-repeater-delete class="btn btn-flex btn-tertiary mt-6">
-                                                    <i class="ki-outline ki-trash  fs-3"></i>
-                                                    Sil
-                                                </a>
-                                            </div>
-                                        @endif
+                                        <div class="col-12 col-lg-1 pb-4">
+                                            <label class="form-check form-switch form-switch-sm form-check-custom form-check-solid flex-stack d-block">
+                                                <div class="form-check-label text-gray-700 w-100 mx-0 fs-6 fw-semibold mb-2">
+                                                    Özel Link
+                                                </div>
+                                                <input class="form-check-input mt-4" name="special" type="checkbox"
+                                                       value="1"/>
+                                            </label>
+                                        </div>
+
+                                        <div class="col-md-1 form-group">
+                                            <a href="javascript:;" data-repeater-delete class="btn btn-flex btn-tertiary mt-6">
+                                                <i class="ki-outline ki-trash  fs-3"></i>
+                                                Sil
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
-                            @endforeach
+                            @endif
                         </div>
                     </div>
                     <div class="form-group">

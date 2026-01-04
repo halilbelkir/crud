@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('role_group_id')->index()->constrained('role_groups');
-            $table->foreignId('crud_id')->index()->constrained('cruds');
+            $table->foreignId('crud_id')->nullable()->index()->constrained('cruds')->nullOnDelete();
             $table->smallInteger('browse')->index()->default(0)->nullable();
             $table->smallInteger('read')->index()->default(0)->nullable();
             $table->smallInteger('edit')->index()->default(0)->nullable();

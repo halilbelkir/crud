@@ -83,6 +83,20 @@
                                                     @endforeach
                                                 </div>
                                             @endforeach
+                                            @if(count($specialMenus) > 0)
+                                                @php $permission = $permissions[1]; $permissionKey = 1; @endphp
+                                                @foreach($specialMenus as $specialMenu)
+                                                    <div class="col-12 col-lg-6 col-xl-4 pb-4">
+                                                        <label class="fw-bold fs-6 mb-5">{{$specialMenu->title}}</label>
+                                                        <div class="form-check form-check-sm mb-3">
+                                                            <input class="form-check-input special_role_{{$specialMenu->id}}" id="special_role_{{$permissionKey}}" name="special_permissions[{{$specialMenu->id}}][{{$permissionKey}}]" type="checkbox" value="1"/>
+                                                            <label class="form-check-label text-gray-700 fw-semibold" for="special_role_{{$permissionKey}}">
+                                                                {{$permission['title']}}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            @endif
                                         </div>
 
                                     </div>

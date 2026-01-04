@@ -1,6 +1,6 @@
 <div class="tab-pane fade show active" id="billingInformation" role="tabpanel">
     <ul id="menu" class="nested-sortable">
-        @foreach($value->parentItems as $parentItem)
+        @foreach($value->noMainParentItems as $parentItem)
             <li class="parent" data-id="{{$parentItem->id}}">
                 {{$parentItem->title}}
                 <small> - {{$parentItem->route}}</small>

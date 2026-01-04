@@ -5,6 +5,7 @@ namespace crudPackage\Http\Controllers;
 use crudPackage\Models\Crud;
 use crudPackage\Models\Menu;
 use crudPackage\Models\MenuItem;
+use crudPackage\Models\Role;
 use Illuminate\Http\Request;
 use Mockery\Exception;
 use Session;
@@ -165,7 +166,7 @@ class MenuController extends Controller
             $data->title  = $request->get('title');
             $data->save();
 
-            $menuItemsSql = MenuItem::where('menu_id',$data->id)->orderBy('order','asc')->get();
+            $menuItemsSql = MenuItem::where('menu_id',$data->id)->orderBy('order','asc')->where('main',0)->get();
             $menuItems    = $request->get('items');
 
             foreach ($menuItemsSql as $item)
@@ -223,7 +224,22 @@ class MenuController extends Controller
         $menuItem->icon          = $item['icon'];
         $menuItem->dynamic_route = isset($item['dynamic_route']) ? 1 : 0;
         $menuItem->target        = isset($item['target']) ? 1 : 0;
+        $menuItem->special       = isset($item['special']) ? 1 : 0;
         $menuItem->save();
+
+        if($menuItem->special == 1)
+        {
+            $role = Role::where('menu_item_id',$menuId)->first();
+
+            if(empty($role))
+            {
+                $role                = new Role;
+                $role->role_group_id = 1;
+                $role->menu_item_id  = $menuId;
+                $role->browse        = 1;
+                $role->save();
+            }
+        }
 
         return $menuItem;
     }
