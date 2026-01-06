@@ -327,6 +327,8 @@ class RoleGroupController extends Controller
                 $roles->save();
             }
 
+            $data->roles()->whereNull('roles.crud_id')->whereNull('roles.menu_item_id')->delete();
+
             return response()->json(
                 [
                     'result' => 1,
