@@ -104,6 +104,11 @@ function settings($column)
         }
     });
 
+    if ($column == 'languages' && !empty($cache))
+    {
+        return $cache->languageModels();
+    }
+
     $columns =
         [
             'logo'     => 'crud/images/logo.svg',
@@ -158,4 +163,34 @@ function shortFilename(string $filename, int $limit = 8): string
 function getExtension(string $filename): string
 {
     return pathinfo($filename, PATHINFO_EXTENSION);
+}
+
+function multipleLanguages($status = 0,$locale = null)
+{
+    if ($status == 1)
+    {
+        return multipleLanguages()[$locale];
+    }
+    else if ($status == 2)
+    {
+        $keys = array_keys(multipleLanguages());
+
+        return array_search($locale, $keys);
+    }
+    else
+    {
+        if (count(settings('languages')) > 0)
+        {
+            $languages = [];
+
+            foreach (settings('languages') as $key => $value)
+            {
+                $languages[$value->code] = (object) [ 'title' => $value->title,'code' => $value->code];
+            }
+
+            return $languages;
+        }
+    }
+
+    return false;
 }

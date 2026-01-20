@@ -2,78 +2,65 @@
 
 namespace crudPackage\Library\Relationships;
 
-use Illuminate\Database\Eloquent\Model;
-
 class CrudRelationships
 {
+    protected static array $registry = [];
+    protected static array $slugRegistry = [];
+
     private $crud;
-    private $relationshipNames = [];
 
     public function __construct($crud)
     {
-        $this->setCrud($crud);
+        $this->crud = $crud;
     }
 
-    public  function create()
+    public function create(): void
     {
-        $crud      = $this->getCrud();
+        $crud      = $this->crud;
         $relations = $crud->getRelationships;
+        $model     = $crud->model;
+
+        if (!$relations || $relations->count() === 0)
+        {
+            return;
+        }
+
+        self::$slugRegistry[$model] = $crud->slug;
 
         foreach ($relations as $relation)
         {
             $detail  = json_decode($relation->detail);
-            $name    = $this->nameGenerate($relation->column_name);
-            $model   = $crud->model;
+            $name    = self::generateName($model, $relation->column_name);
             $type    = $detail->type;
             $related = $detail->model;
 
-            $this->setRelationshipNames($name);
+            if (in_array($name, self::$registry[$model] ?? [], true))
+            {
+                continue;
+            }
+
+            self::$registry[$model][] = $name;
 
             $model::resolveRelationUsing($name, function ($instance) use ($type, $related, $detail)
             {
-                return $instance->{$type}($related, $detail->column_name, $detail->match_column);
+                return $instance->{$type}(
+                    $related,
+                    $detail->column_name,
+                    $detail->match_column
+                );
             });
         }
     }
 
-
-    public function nameGenerate($columnName)
+    public static function getModelRelations(string $model): array
     {
-        $crud = $this->getCrud();
-
-        return $crud->slug.'_'.$columnName.'_relationship';
+        return self::$registry[$model] ?? [];
     }
 
-
-    /**
-     * @return mixed
-     */
-    public function getRelationshipNames()
+    public static function generateName(string $model, string $columnName): string
     {
-        return $this->relationshipNames;
-    }
+        $slug = self::$slugRegistry[$model] ?? class_basename($model);
 
-    /**
-     * @param mixed $relationshipNames
-     */
-    private function setRelationshipNames($relationshipNames): void
-    {
-        $this->relationshipNames[] = $relationshipNames;
-    }
-
-    /**
-     * @return mixed
-     */
-    private function getCrud()
-    {
-        return $this->crud;
-    }
-
-    /**
-     * @param mixed $crud
-     */
-    private function setCrud($crud): void
-    {
-        $this->crud = $crud;
+        return $slug . '_' . $columnName . '_relationship';
     }
 }

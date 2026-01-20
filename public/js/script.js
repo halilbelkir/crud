@@ -320,7 +320,7 @@ function formSend(formSelector,bu)
 
             if (response.responseJSON.result == 2)
             {
-                let errorLists = '<ul class="list-group">';
+                let errorLists = '<ul class="list-group list-unstyled">';
 
                 $.each(response.responseJSON.message, function(i, item)
                 {
@@ -346,7 +346,10 @@ function formSend(formSelector,bu)
                         $(formSelector+' [name="' + newName + '"]').addClass('is-invalid');
                         $(formSelector+' [name="' + newName + '"]').closest('div.form-group').append('<div class="invalid-feedback">'+errorMessage+'</div>');
 
-                        errorMessage = (parseInt(index[1]) + 1) + '. sıradaki ' + errorMessage;
+                        if (typeof parseInt(index[1]) == "number" && !isNaN(parseInt(index[1])))
+                        {
+                            errorMessage = (parseInt(index[1]) + 1) + '. sıradaki ' + errorMessage;
+                        }
                     }
                     else
                     {
@@ -354,7 +357,7 @@ function formSend(formSelector,bu)
                         $(formSelector+' [name="'+i+'"]').closest('div.form-group').append('<div class="invalid-feedback">'+errorMessage+'</div>');
                     }
 
-                    errorLists += '<li class="list-group-item list-group-item-danger">' + errorMessage + '</li>';
+                    errorLists += '<li>' + errorMessage + '</li>';
                 });
 
                 errorLists += '</ul>';
@@ -377,7 +380,7 @@ function alertMessage(status,title,message)
 {
     let statusClass = status == 1 ? 'success' : 'danger';
     let html =
-        '        <div class="alert alert-' + statusClass + ' d-flex align-items-center p-5">\n' +
+        '        <div class="alert alert-' + statusClass + ' d-flex align-items-center">\n' +
         '            <i class="ki-outline ki-shield-tick fs-2hx text-' + statusClass + ' me-4"></i>\n' +
         '            <div class="d-flex flex-column">\n' +
         '                <h4 class="mb-1 text-' + statusClass + '">'+ title +'</h4>\n' +
@@ -551,10 +554,10 @@ function destroyOld(bu)
     });
 }
 
-function destroy(bu)
+function destroy(self,copy = 0)
 {
-    let route  = $(bu).data('route');
-    let title  = $(bu).data('title');
+    let route  = $(self).data('route');
+    let title  = $(self).data('title');
 
     Swal.fire({
         text: title + " silmek istediğinize emin misiniz?",
@@ -571,6 +574,11 @@ function destroy(bu)
             },
         preConfirm: () =>
         {
+            if (copy == 1)
+            {
+                return { copy : true };
+            }
+
             return $.ajax(
                 {
                     type: 'DELETE',
@@ -580,13 +588,14 @@ function destroy(bu)
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     }
                 })
-                .then(response => {
+                .then(response =>
+                {
                     return response;
                 })
                 .catch(xhr =>
                 {
                     Swal.showValidationMessage(
-                        xhr.responseJSON?.message || 'İşlem başarısız'
+                        xhr.responseJSON?.message || 'İşlem Başarısız. Lütfen daha sonra tekrar deneyiniz.'
                     );
                 });
         },
@@ -594,21 +603,43 @@ function destroy(bu)
     })
     .then((result) =>
     {
-        if (result.isConfirmed)
+        if (result.value.copy)
         {
-            messageAlert(1, result.value.message);
+            let imageInputGroup = $(self).closest('.form-group');
+            let imageInput= imageInputGroup.find('input[type="hidden"]');
+            let images = imageInput.val();
+            let newImages = {};
+            let imageOrder = $(self).data('order');
 
-            if (result.value.route !== undefined)
+            $.each(JSON.parse(images), function(i, item)
             {
-                setTimeout(() => { location.href = result.value.route; }, 1500);
-            }
-            else
+                if (i != imageOrder)
+                {
+                    newImages[i] = item;
+                }
+            });
+
+            imageInput.val(JSON.stringify(newImages));
+
+            $(self).closest('.multipleImage').remove();
+        }
+        else
+        {
+            if (result.isConfirmed)
             {
-                setTimeout(() => { location.reload(); }, 1500);
+                messageAlert(1, result.value.message);
+
+                if (result.value.route !== undefined)
+                {
+                    setTimeout(() => { location.href = result.value.route; }, 1500);
+                }
+                else
+                {
+                    setTimeout(() => { location.reload(); }, 1500);
+                }
             }
         }
     });
-
 }
 
 function modalWithSwal(modalName)
@@ -672,7 +703,7 @@ $(function()
             {
                 jsonEditors = $('[data-modal-json="true"]');
                 let jsonEditorFirstValue = $('#' + modalSelector).find('[data-modal-json="true"]').eq(0).data('value');
-                jsonEditorFirstValue = JSON.stringify(jsonEditorFirstValue,null, 2);
+                    jsonEditorFirstValue = JSON.stringify(jsonEditorFirstValue,null, 2);
                 jsonOrganizers(jsonEditors,jsonEditorFirstValue);
             }
 

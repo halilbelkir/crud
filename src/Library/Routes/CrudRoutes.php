@@ -18,10 +18,11 @@ class CrudRoutes
         {
             $route = $crud->slug;
 
-            Route::delete($route .'/fileDestroy/{id}/{order}/{column_name}', [ModuleController::class, 'fileDestroy'])->name($route .'.fileDestroy');
-            Route::post($route .'/realtime/{'.Str::singular($crud->table_name).'}', [ModuleController::class, 'realtime'])->name($route .'.realtime')->middleware('checkPermission');
-            Route::post($route .'/orderable', [ModuleController::class, 'orderable'])->name($route .'.orderable');
-            Route::get($route .'/datatable', [ModuleController::class, 'datatable'])->name($route .'.datatables');
+            Route::delete($route .'/fileDestroy/{id}/{order}/{column_name}/{language_code?}/{language_order?}', [ModuleController::class, 'fileDestroy'])->name($route .'.fileDestroy');
+            Route::post($route .'/realtime/{'.Str::singular($crud->table_name).'}/{locale?}', [ModuleController::class, 'realtime'])->name($route .'.realtime')->middleware('checkPermission');
+            Route::post($route .'/orderable/{locale?}', [ModuleController::class, 'orderable'])->name($route .'.orderable');
+            Route::get($route .'/datatable/{locale?}', [ModuleController::class, 'datatable'])->name($route .'.datatables');
+            Route::get($route .'/language/{locale?}', [ModuleController::class, 'index'])->name($route .'.locale');
             Route::get($route .'/copy/{'.Str::singular($crud->table_name).'}', [ModuleController::class, 'copy'])->name($route .'.copy')->middleware('checkPermission');
             Route::resource($route, ModuleController::class)->middleware('checkPermission');
         }

@@ -1,7 +1,9 @@
 @php
-    $options = '';
-    $details = json_decode($column->detail,true);
-    $name    = $column->column_name;
+    $options     = '';
+    $details     = json_decode($column->detail,true);
+    $name        = $column->column_name;
+    $elementName = !empty($language) ? $language->code.'['.$name.']' : $name;
+    $elementId   = !empty($language) ? ($column->repeater == 1 ? 'repeater_'.$name.'_'.$language->code : $name.'_'.$language->code) : ($column->repeater == 1 ? 'repeater_'.$name : $name);
 
     if($column->relationship == 1)
     {
@@ -52,8 +54,8 @@
 <select
         @if($type == 'select2') data-control="select2"  data-placeholder="{{$column->title}} Seçiniz" data-allow-clear="true" @endif
         class="form-control form-control-solid"
-        id="{{$column->repeater == 1 ? 'repeater_'.$name : $name}}"
-        @if($column->required == 1) required @endif
+        id="{{ $elementId }}"
+        @if($column->required == 1 && $languageKey == 0) required @endif
         @if(isset($dt))
             data-route="{{route($crud->slug. '.realtime',$value->id)}}"
             onclick="crudRealtime(this)"
@@ -61,9 +63,9 @@
         @if(isset($details['multiple']))
             data-select-multiple="true"
             multiple="multiple"
-            name="{{$name}}[]"
+            name="{{$elementName}}[]"
         @else
-            name="{{$name}}"
+            name="{{$elementName}}"
         @endif
 >
 

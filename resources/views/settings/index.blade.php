@@ -18,6 +18,21 @@
                            class="form-control form-control-solid mb-3 mb-lg-0" placeholder="Karşılama Mesajı">
                 </div>
 
+                <div class="form-group col-12 mb-7 fv-plugins-icon-container">
+                    <label class="fw-semibold fs-6 mb-2">Dil Seçiniz</label>
+                    <select data-control="select2"  data-placeholder="Dil Seçiniz" data-allow-clear="true"
+                        class="form-control form-control-solid"
+                        data-select-multiple="true"
+                        multiple="multiple"
+                        name="languages[]"
+                    >
+                        <option value="">Dil Seçiniz</option>
+                        @foreach($languages as $language)
+                            <option {{ in_array((string)$language->id, $value->languages ?? []) ? 'selected' : '' }} value="{{ $language->id }}">{{ $language->title }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="form-group col-12 col-lg-6 mb-7 fv-plugins-icon-container">
                     <label class="required fw-semibold fs-6 mb-2">Logo</label>
                     @if(empty($value->logo))
@@ -100,4 +115,32 @@
             </form>
         </div>
     </div>
+@endsection
+@section('js')
+    <script>
+        $('[data-select-multiple="true"]').each(function() {
+            const el = $(this);
+
+            el.select2({
+                minimumResultsForSearch: 0,
+                closeOnSelect: false,
+                allowClear: true,
+            }).on('select2:select', function (e)
+            {
+                let max      = 4;
+                let selected = $(this).select2('data').length;
+
+                if (selected > max)
+                {
+                    let id     = e.params.data.id;
+                    let values = $(this).val().filter(v => v !== id);
+
+                    $(this).val(values).trigger('change');
+
+                    let message = 'En fazla ' + max + ' seçim yapabilirsiniz.';
+                    messageAlert(2,message);
+                }
+            });
+        });
+    </script>
 @endsection

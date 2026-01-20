@@ -5,6 +5,23 @@
             <div class="fw-bold">{!! $crud->content !!}</div>
         </div>
     @endif
+    @if(count(settings('languages')) > 0)
+        <div class="card mb-5">
+            <div class="card-header card-header-stretch">
+                <div id="formResponse" class="mt-4"></div>
+                <div class="card-toolbar">
+                    <ul class="nav nav-tabs nav-line-tabs nav-stretch fs-6 border-0">
+                        @foreach(settings('languages') as $languageKey => $language)
+                            <li class="nav-item">
+                                <a class="nav-link @if(isset($locale) && $locale == $language->code || !isset($locale) && $languageKey == 0) active @endif" href="{{ $languageKey == 0 ? route($crud->slug.'.index') : route($crud->slug.'.locale',['locale' => $language->code]) }}">{{ $language->title }}</a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-header border-0 pt-6">
             <div class="card-title">
@@ -34,7 +51,6 @@
                             <i class="ki-duotone ki-plus fs-2"></i> Ekle
                         </a>
                     @endif
-
                 </div>
             </div>
         </div>
@@ -43,7 +59,7 @@
                 <div class="table-responsive">
                     <table class="table align-middle @if(isset($area1) && $area1->order_column_name) moduleSortable @endif  table-row-dashed fs-6 gy-4 dataTable no-footer"
                            id="data-tables"
-                           @if(isset($area1) && $area1->order_column_name) data-link="{{route($crud->slug . '.orderable')}}" @endif
+                           @if(isset($area1) && $area1->order_column_name) data-link="{{route($crud->slug . '.orderable',['locale' => $language->code ?? null])}}" @endif
                            @if(isset($area1) && $area1->order_column_name) data-order-column="{{$area1->order_column_name}}" @endif
                            @if(isset($area1) && $area1->order_column_name) data-order-direction="{{$area1->order_direction}}" @endif
                     >
@@ -75,7 +91,8 @@
     </div>
 
 @endsection
-@section('datatables.ajax.url'){{route( $crud->slug .'.datatables')}}@stop
+
+@section('datatables.ajax.url'){{route( $crud->slug .'.datatables',['locale' => $locale])}}@stop
 @section('datatables.files.title') {{$crud->display_plural}} @stop
 @section('datatables.files.columns') {!! json_encode(array_keys($datatableColumns)) !!} @stop
 @section('datatables.columns')

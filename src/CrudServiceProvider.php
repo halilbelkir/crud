@@ -2,27 +2,111 @@
 
 namespace crudPackage;
 
+use crudPackage\Exceptions\ForeignKeyConstraintException;
+use crudPackage\Library\Translation\ModelTranslate;
+use crudPackage\Models\DataTranslate;
+use crudPackage\Services\ForeignKeyInspectorService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Database\Eloquent\Model;
 use crudPackage\Listeners\GlobalCrudListener;
 use Illuminate\Support\Facades\Event;
-
+use \Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\QueryException;
+use crudPackage\Models\Crud;
+use crudPackage\Library\Relationships\CrudRelationships;
 
 class CrudServiceProvider extends ServiceProvider
 {
-    public function boot()
+    public function boot(): void
     {
-        Event::listen('eloquent.created: *', function (string $event, array $data) {
+        Crud::with('getRelationships')->get()->each(function ($crud)
+        {
+            (new CrudRelationships($crud))->create();
+        });
+
+        Builder::macro('getTranslate', function (string $locale)
+        {
+            return new ModelTranslate($this->getModel(), $locale);
+        });
+
+        Builder::macro('orderByTranslate', function (
+            string $column,
+            string $direction = 'asc',
+            ?string $locale = null
+        ) {
+
+            $model  = $this->getModel();
+            $table  = $model->getTable();
+            $locale = $locale ?? app()->getLocale();
+
+            $this->select("{$table}.*");
+
+            return $this->leftJoin('data_translates as dt_order', function ($join) use (
+                $table, $model, $column, $locale
+            ) {
+                $join->on('dt_order.foreign_key', '=', "{$table}.id")
+                    ->where('dt_order.model', get_class($model))
+                    ->where('dt_order.column_name', $column)
+                    ->where('dt_order.locale', $locale);
+            })
+                ->orderBy('dt_order.value', $direction);
+        });
+
+        Builder::macro('deleteTranslation', function ()
+        {
+            $model = $this->getModel();
+
+            DataTranslate::where('model', get_class($model))
+                ->where('foreign_key', $model->getKey())
+                ->delete();
+
+            return true;
+        });
+
+        Builder::macro('safeDelete', function ()
+        {
+            $model = $this->getModel();
+
+            try
+            {
+                return $model->delete();
+            }
+            catch (\Exception $e)
+            {
+                if ($e->errorInfo[1] == 1451)
+                {
+                    $service   = app(ForeignKeyInspectorService::class);
+                    $relations = $service->getDependentTables($model->getTable());
+
+                    throw new ForeignKeyConstraintException(
+                        'Bu kayıt başka verilerle ilişkili olduğu için silinemiyor.',
+                        $relations,
+                        $e->errorInfo
+                    );
+                }
+
+                throw new ForeignKeyConstraintException(
+                    $e->getMessage(),
+                    [],
+                    $e->errorInfo
+                );
+            }
+        });
+
+        Event::listen('eloquent.created: *', function (string $event, array $data)
+        {
             app(GlobalCrudListener::class)->created($data[0]);
         });
 
-        Event::listen('eloquent.updated: *', function (string $event, array $data) {
+        Event::listen('eloquent.updated: *', function (string $event, array $data)
+        {
             app(GlobalCrudListener::class)->updated($data[0]);
         });
 
-        Event::listen('eloquent.deleted: *', function (string $event, array $data) {
+        Event::listen('eloquent.deleted: *', function (string $event, array $data)
+        {
             app(GlobalCrudListener::class)->deleted($data[0]);
         });
 

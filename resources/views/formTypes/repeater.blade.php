@@ -1,6 +1,12 @@
-<div id="{{$column->column_name}}_repeater" data-repeater-crud>
-    <div class="separator separator-content border-dark my-15"><span class="w-250px h2">{{$column->title}}</span></div>
-    <div data-repeater-list="{{$column->column_name}}">
+@php
+    $langTitle = isset($language) ? ' ('. $language->title.')' : null;
+    $langCode  = isset($language) ? '_'.$language->code : null;
+    $repeaterList  = isset($language) ? $language->code.'['. $column->column_name .']' : $column->column_name;
+@endphp
+
+<div id="{{$column->column_name}}_repeater{{$langCode}}" data-repeater-crud>
+    <div class="separator separator-content border-dark my-15"><span class="w-250px h2">{{$column->title.$langTitle}}</span></div>
+    <div data-repeater-list="{{$repeaterList}}">
         {!! $elements !!}
     </div>
     <div class="form-group mt-5">

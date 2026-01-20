@@ -6,20 +6,46 @@
         </div>
     @endif
     <div class="card">
-        <div class="card-body py-4">
-            <div id="formResponse"></div>
-            <form id="addUpdateForm" class="form row justify-content-center fv-plugins-bootstrap5 fv-plugins-framework"
-                  method="post" action="{{route($crud->slug .'.update',$value->id)}}">
-                @method('PUT')
+        <form id="addUpdateForm" class="form row m-0 p-0 justify-content-center " method="post" action="{{route($crud->slug .'.update',$value->id)}}">
+            @method('PUT')
+            <div class="card-header card-header-stretch">
+                <div id="formResponse" class="mt-4"></div>
+                <div class="card-toolbar">
+                    @if(count(settings('languages')) > 0)
+                        <ul class="nav nav-tabs nav-line-tabs nav-stretch fs-6 border-0">
+                            @foreach(settings('languages') as $languageKey => $language)
+                                <li class="nav-item">
+                                    <a class="nav-link @if($languageKey == 0) active @endif" data-bs-toggle="tab" href="#{{ $language->code }}">{{ $language->title }}</a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
+            </div>
+            <div class="card-body card-scroll h-450px py-4">
+                @if(count(settings('languages')) > 0)
+                    <div class="tab-content" id="myTabContent">
+                        @foreach(settings('languages') as $languageKey => $language)
+                            <div class="tab-pane fade @if($languageKey == 0) show active @endif " id="{{ $language->code }}" role="tabpanel">
+                                {!! $elementTabs[$language->code] !!}
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    {!! $elements !!}
+                @endif
 
-                {!! $elements !!}
+                <div class="clear"></div>
 
-                <div class="pt-5 col-lg-4 col-xl-2 text-center">
+            </div>
+            <div class="card-footer justify-content-center d-flex p-3">
+                <div class="col-lg-4 col-xl-2 text-center">
                     <button type="submit" class="btn btn-primary buttonForm w-100"> Kaydet</button>
                     @include('crudPackage::components.loading')
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
+
     </div>
 @endsection
 @section('js')

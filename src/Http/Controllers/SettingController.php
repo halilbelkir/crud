@@ -6,6 +6,7 @@ use crudPackage\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use crudPackage\Models\Language;
 use Validator;
 use crudPackage\Library\ImageUpload\ImageUpload;
 class SettingController extends Controller
@@ -15,9 +16,10 @@ class SettingController extends Controller
      */
     public function index()
     {
-        $value = Setting::find(1);
+        $value     = Setting::first();
+        $languages = Language::orderBy('order','asc')->get();
 
-        return view('crudPackage::settings.index',compact('value'));
+        return view('crudPackage::settings.index',compact('value','languages'));
     }
 
     /**
@@ -123,10 +125,11 @@ class SettingController extends Controller
                 $data->bg_image = $fileName;
             }
 
-            $data->title    = $request->get('title');
-            $data->subtitle = $request->get('subtitle');
-            $data->color_1  = $request->get('color_1');
-            $data->color_2  = $request->get('color_2');
+            $data->title     = $request->get('title');
+            $data->subtitle  = $request->get('subtitle');
+            $data->color_1   = $request->get('color_1');
+            $data->color_2   = $request->get('color_2');
+            $data->languages = $request->get('languages');
             $data->save();
 
             Cache::forget('settings');
