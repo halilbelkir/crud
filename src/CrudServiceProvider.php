@@ -21,6 +21,42 @@ class CrudServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->runMigrations();
+
+        $packagePublic = __DIR__ . '/../public';
+        $laravelPublic = public_path('crud');
+
+        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'crudPackage');
+        $this->loadHelpers();
+
+
+        if (!file_exists($laravelPublic))
+        {
+            mkdir($laravelPublic, 0777, true);
+        }
+
+        $this->removeDirectory($laravelPublic);
+
+        if (!is_link($laravelPublic)) {
+            File::link($packagePublic, $laravelPublic);
+        }
+
+        $this->replaceWebRoutes();
+
+        config(['auth.providers.users.model' => \crudPackage\Models\User::class]);
+
+        $this->app['router']->aliasMiddleware('variables', \crudPackage\Http\Middleware\Variables::class);
+        $this->app['router']->aliasMiddleware('checkPermission', \crudPackage\Http\Middleware\CheckPermission::class);
+
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../routes/web.php' => base_path('routes/web.php'),
+                __DIR__.'/../resources/lang' => base_path('resources/lang'),
+            ], 'all');
+        }
+
         Crud::with('getRelationships')->get()->each(function ($crud)
         {
             (new CrudRelationships($crud))->create();
@@ -109,42 +145,6 @@ class CrudServiceProvider extends ServiceProvider
         {
             app(GlobalCrudListener::class)->deleted($data[0]);
         });
-
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        $this->runMigrations();
-
-        $packagePublic = __DIR__ . '/../public';
-        $laravelPublic = public_path('crud');
-
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'crudPackage');
-        $this->loadHelpers();
-
-
-        if (!file_exists($laravelPublic))
-        {
-            mkdir($laravelPublic, 0777, true);
-        }
-
-        $this->removeDirectory($laravelPublic);
-
-        if (!is_link($laravelPublic)) {
-            File::link($packagePublic, $laravelPublic);
-        }
-
-        $this->replaceWebRoutes();
-
-        config(['auth.providers.users.model' => \crudPackage\Models\User::class]);
-
-        $this->app['router']->aliasMiddleware('variables', \crudPackage\Http\Middleware\Variables::class);
-        $this->app['router']->aliasMiddleware('checkPermission', \crudPackage\Http\Middleware\CheckPermission::class);
-
-        if ($this->app->runningInConsole()) {
-            $this->publishes([
-                __DIR__.'/../routes/web.php' => base_path('routes/web.php'),
-                __DIR__.'/../resources/lang' => base_path('resources/lang'),
-            ], 'all');
-        }
     }
 
     protected function runMigrations()
