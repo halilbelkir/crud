@@ -33,7 +33,14 @@
 
         if (isset($value))
         {
-            $inputValue = $value->{$column->column_name};
+            if ($formType->key == 'image')
+            {
+                $inputValue = Storage::disk('upload')->url($value->{$column->column_name});
+            }
+            else
+            {
+                $inputValue = $value->{$column->column_name};
+            }
         }
         else
         {
@@ -68,7 +75,7 @@
             @endif
             @if(isset($dt))
                 data-route="{{route($crud->slug. '.realtime',$value->id)}}"
-                onkeyup="crudRealtime(this)"
+            onkeyup="crudRealtime(this)"
             @endif
             @if(isset($details['maxlength'])) maxlength="{{ $details['maxlength'] }}" @endif
             @if($column->required == 1 && $formType->key != 'image' && $languageKey == 0) required @endif
@@ -82,6 +89,7 @@
             @endif
 
             @foreach(json_decode($inputValue) as $order => $image)
+                @php $image = Storage::disk('upload')->url($image); @endphp
                 <div class="col multipleImage">
                     <a class="d-block overlay" data-fslightbox="lightbox-hot-sales" href="{{$image}}">
                         <div class="overlay-wrapper bgi-no-repeat bgi-position-center bgi-size-cover card-rounded h-175px"
