@@ -21,10 +21,10 @@
                 <div class="form-group col-12 mb-7 fv-plugins-icon-container">
                     <label class="fw-semibold fs-6 mb-2">Dil Seçiniz</label>
                     <select data-control="select2"  data-placeholder="Dil Seçiniz" data-allow-clear="true"
-                        class="form-control form-control-solid"
-                        data-select-multiple="true"
-                        multiple="multiple"
-                        name="languages[]"
+                            class="form-control form-control-solid"
+                            data-select-multiple="true"
+                            multiple="multiple"
+                            name="languages[]"
                     >
                         <option value="">Dil Seçiniz</option>
                         @foreach($languages as $language)
@@ -43,7 +43,7 @@
                                 <i class="ki-outline ki-pencil fs-7"></i>
                                 <input type="file" class="imageUpdate" value="{{ $value->logo }}" name="logo">
                             </label>
-                            <img src="{{$value->logo}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
+                            <img src="{{Storage::disk('upload')->url($value->logo)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
                         </div>
                     @endif
                 </div>
@@ -58,7 +58,7 @@
                                 <i class="ki-outline ki-pencil fs-7"></i>
                                 <input type="file" class="imageUpdate" value="{{ $value->icon }}" name="icon">
                             </label>
-                            <img src="{{$value->icon}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
+                            <img src="{{Storage::disk('upload')->url($value->icon)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
                         </div>
                     @endif
                 </div>
@@ -73,7 +73,7 @@
                                 <i class="ki-outline ki-pencil fs-7"></i>
                                 <input type="file" class="imageUpdate" value="{{ $value->loader }}" name="loader">
                             </label>
-                            <img src="{{$value->loader}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
+                            <img src="{{Storage::disk('upload')->url($value->loader)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
                         </div>
                     @endif
                 </div>
@@ -89,7 +89,7 @@
                                 <i class="ki-outline ki-pencil fs-7"></i>
                                 <input type="file" class="imageUpdate" value="{{ $value->bg_image }}" name="bg_image">
                             </label>
-                            <img src="{{$value->bg_image}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
+                            <img src="{{Storage::disk('upload')->url($value->bg_image)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
                         </div>
                     @endif
                 </div>

@@ -7,7 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{ settings('title') }}</title>
     <meta name="description" content="{{ settings('subtitle') }}">
-    <link rel="shortcut icon" href="{{ asset(settings('icon')) }}" type="image/png">
+    <link rel="shortcut icon" href="{{ strstr(settings('icon'),'crud') ? asset(settings('icon')) : Storage::disk('upload')->url(settings('icon')) }}" type="image/png">
     <meta name="msapplication-TileColor" content="{{ settings('color_1') }}">
     <meta name="theme-color" content="{{ settings('color_1') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -52,11 +52,11 @@
 <div class="d-flex flex-column flex-root" id="kt_app_root">
     <style>
         body {
-            background-image: url('{{ asset(settings('bg_image')) }}');
+            background-image: url('{{ strstr(settings('bg_image'),'crud') ? asset(settings('bg_image')) : Storage::disk('upload')->url(settings('bg_image')) }}');
         }
 
         [data-bs-theme="dark"] body {
-            background-image: url('{{ asset(settings('bg_image')) }}');
+            background-image: url('{{ strstr(settings('bg_image'),'crud') ? asset(settings('bg_image')) : Storage::disk('upload')->url(settings('bg_image')) }}');
         }
     </style>
 

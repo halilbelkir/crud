@@ -48,7 +48,7 @@ class ImageUpload
 
         $this->getStorage()->put($fileName, $encode->toString());
 
-        return $this->getStorage()->url($fileName);
+        return $fileName;
     }
 
     public function delete($image)
