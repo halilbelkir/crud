@@ -247,7 +247,7 @@ class CrudController extends Controller
         $columns      = Schema::getConnection()->getSchemaBuilder()->getColumns($value->table_name);
         $columns      = json_decode(json_encode($columns));
         $visibilities = $this->visibility;
-        $tables       = $this->getTablesSql(2,$value->table_name);
+        $tables       = $this->getTablesSql(1);
         $crudItems    = CrudItem::where('crud_id',$crud->id)->orderBy('order','asc')->get();
         $area1        = isset($value->area_1) ? json_decode($value->area_1) : null;
         $newColumns   = [];
