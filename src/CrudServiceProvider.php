@@ -43,8 +43,6 @@ class CrudServiceProvider extends ServiceProvider
             File::link($packagePublic, $laravelPublic);
         }
 
-        $this->replaceWebRoutes();
-
         config(['auth.providers.users.model' => \crudPackage\Models\User::class]);
 
         $this->app['router']->aliasMiddleware('variables', \crudPackage\Http\Middleware\Variables::class);
