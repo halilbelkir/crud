@@ -15,6 +15,7 @@ use Mockery\Exception;
 use Session;
 use Validator;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\DB;
 
 class ModuleController extends Controller
 {
@@ -64,6 +65,7 @@ class ModuleController extends Controller
         $languageTitle     = $language != null ? ' ('.$language->title.') ' : null;
         $languageForAttr   = $language != null ? '_'.$language->code : null;
         $columns           = empty($status) ? $crud->addColumns : $crud->editColumns;
+        $originalValue     = $value;
         $value             = isset($value) ? ( isset($language) ? $value->getTranslate($language->code) : $value ) : null;
 
         foreach($columns as $column)
@@ -117,7 +119,7 @@ class ModuleController extends Controller
                         $elementsView .= '</div>';
                     }
 
-                    $elements .= view('crudPackage::formTypes.'. $formType->group,['elements' => $elementsView],compact('column','type','crud','formType','language','languageKey','value'))->render();
+                    $elements .= view('crudPackage::formTypes.'. $formType->group,['elements' => $elementsView],compact('column','type','crud','formType','language','languageKey','value','originalValue'))->render();
                 }
                 else
                 {
@@ -153,15 +155,21 @@ class ModuleController extends Controller
             }
             else
             {
-                if (isset($column->detail))
+                $details = json_decode($column->detail);
+
+                if (count((array)$details) > 0)
                 {
-                    $details = json_decode($column->detail);
-                    $info    = isset($details->info) ? ' (<small>' .$details->info. '</small>)' : null;
+                    $info = isset($details->info) ? ' (<small>' .$details->info. '</small>)' : null;
+
+                    if (isset($details->type) && $details->type == 'belongsToMany' && !empty($languageKey))
+                    {
+                        break;
+                    }
                 }
 
                 $elements .= '<div class="form-group '.($column->form_type_id == 13 ? 'd-none' : null) .' col-12 mb-7 fv-plugins-icon-container">';
                 $elements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="'.$column->column_name.$languageForAttr.'">'.$column->title.$languageTitle.$info.'</label>';
-                $elements .= view('crudPackage::formTypes.'. $formType->group,compact('column','type','crud','formType','language','languageKey','value','copy'))->render();
+                $elements .= view('crudPackage::formTypes.'. $formType->group,compact('column','type','crud','formType','language','languageKey','value','copy','originalValue'))->render();
                 $elements .= '</div>';
             }
         }
@@ -342,10 +350,11 @@ class ModuleController extends Controller
 
     public function insertAndUpdate($request,$allData,$allFiles = null,$language = null, $orderLanguage = null,$data = null)
     {
-        $crud      = $this->crud;
-        $images    = [];
-        $oldImages = [];
-        $columns   = isset($data) ? $crud->editColumns : $crud->addColumns;
+        $crud          = $this->crud;
+        $images        = [];
+        $oldImages     = [];
+        $belongsToMany = [];
+        $columns       = isset($data) ? $crud->editColumns : $crud->addColumns;
 
         foreach ($columns as $columnKey => $column)
         {
@@ -368,6 +377,21 @@ class ModuleController extends Controller
             if ($column->repeater == 1)
             {
                 $allData[$column->column_name] = json_encode($allData[$column->column_name]);
+            }
+
+            if ($column->relationship == 1 && isset($allData[$column->column_name]))
+            {
+                $detail = json_decode($column->detail);
+
+                if ($detail->type == 'belongsToMany')
+                {
+                    $belongsToMany[] =
+                        [
+                            'detail' => $column->detail,
+                            'values' => $allData[$column->column_name]
+                        ];
+                    $allData[$column->column_name]['belongsToMany'] = 1;
+                }
             }
 
             if (isset($allData['crud_copy_id']))
@@ -482,6 +506,28 @@ class ModuleController extends Controller
                 $newData->locale      = $language->code;
                 $newData->value       = is_array($otherValue) ? json_encode($otherValue) : $otherValue;
                 $newData->save();
+
+                if (count($belongsToMany) > 0)
+                {
+                    foreach ($belongsToMany as $key => $belongsTo)
+                    {
+                        $detail = json_decode($belongsTo['detail']);
+
+                        if (isset($data))
+                        {
+                            DB::table($detail->pivot_table)->where($detail->foreign_key,$newData->id)->delete();
+                        }
+
+                        foreach ($belongsTo['values'] as $k => $v)
+                        {
+                            DB::table($detail->pivot_table)->insert(
+                                [
+                                    $detail->foreign_key => $newData->id,
+                                    $detail->related_key => $v
+                                ]);
+                        }
+                    }
+                }
             }
         }
         else
@@ -490,12 +536,37 @@ class ModuleController extends Controller
 
             foreach ($allData as $key => $value)
             {
-                $newData->$key = is_array($value) ? json_encode($value) : $value;
+                if (!isset($value['belongsToMany']))
+                {
+                    $newData->$key = is_array($value) ? json_encode($value) : $value;
+                }
             }
 
             $newData->save();
 
             $this->foreignKey = $newData->id;
+
+            if (count($belongsToMany) > 0)
+            {
+                foreach ($belongsToMany as $key => $belongsTo)
+                {
+                    $detail = json_decode($belongsTo['detail']);
+
+                    if (isset($data))
+                    {
+                        DB::table($detail->pivot_table)->where($detail->foreign_key,$this->foreignKey)->delete();
+                    }
+
+                    foreach ($belongsTo['values'] as $k => $v)
+                    {
+                        DB::table($detail->pivot_table)->insert(
+                            [
+                                $detail->foreign_key => $this->foreignKey,
+                                $detail->related_key => $v
+                            ]);
+                    }
+                }
+            }
         }
     }
 
@@ -778,6 +849,16 @@ class ModuleController extends Controller
                         }
                     }
                 }
+
+                if ($column->relationship == 1)
+                {
+                    $detail = json_decode($column->detail);
+
+                    if ($detail->type == 'belongsToMany')
+                    {
+                        DB::table($detail->pivot_table)->where($detail->foreign_key,$id)->delete();
+                    }
+                }
             }
 
             $value->safeDelete();
@@ -942,9 +1023,9 @@ class ModuleController extends Controller
                     {
                         $relationship = CrudRelationships::generateName($model, $column->column_name);
 
-                        $dtColumns[$columnName] = function ($value) use ($relationship, $columnName, $details, $locale)
+                        $dtColumns[$columnName] = function ($columnValue) use ($relationship, $columnName, $details, $locale)
                         {
-                            $value = isset($locale) ? $value->getTranslate($locale) : $value;
+                            $value = isset($locale) ? $columnValue->getTranslate($locale) : $columnValue;
 
                             if (!$value)
                             {
@@ -958,14 +1039,27 @@ class ModuleController extends Controller
                                 $values     = json_decode($value->{$columnName}, true) ?? [];
                                 $showValues = [];
 
-                                foreach ($values as $item)
+                                if ($details['type'] == 'belongsToMany' && isset($columnValue))
                                 {
-                                    $query = $details['model']::where($details['match_column'],$item)->first();
+                                    $values = isset($locale) && multipleLanguages(2,$locale) > 0 ? $columnValue->{$relationship} : $value->{$relationship};
 
-                                    if ($query)
+                                    foreach ($values as $item)
                                     {
-                                        $translated   = $locale ? $query->getTranslate($locale) : $query;
+                                        $translated   = $locale ? $item->getTranslate($locale) : $item;
                                         $showValues[] = $translated->{$showColumn};
+                                    }
+                                }
+                                else
+                                {
+                                    foreach ($values as $item)
+                                    {
+                                        $query = $details['model']::where($details['match_column'],$item)->first();
+
+                                        if ($query)
+                                        {
+                                            $translated   = $locale ? $query->getTranslate($locale) : $query;
+                                            $showValues[] = $translated->{$showColumn};
+                                        }
                                     }
                                 }
 

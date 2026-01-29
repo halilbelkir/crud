@@ -163,7 +163,6 @@
 
 #menu,
 #columns {
-  padding-left: 0;
   list-style: none !important;
   position: relative;
 }
@@ -221,9 +220,9 @@
   background-color: #f6f6f6;
 }
 #columns [data-repeater-item].ribbon .ribbon-label {
-  z-index: 999999;
-  left: 5px;
-  top: 70%;
+  z-index: 999;
+  left: -6px;
+  top: 85%;
   font-size: 14px;
   font-weight: bold;
 }

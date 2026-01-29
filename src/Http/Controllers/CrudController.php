@@ -2,6 +2,7 @@
 
 namespace crudPackage\Http\Controllers;
 
+use crudPackage\Library\Relationships\CrudRelationships;
 use crudPackage\Models\Crud;
 use crudPackage\Models\CrudItem;
 use crudPackage\Models\FormType;
@@ -17,7 +18,7 @@ use Mockery\Exception;
 use Session;
 use Validator;
 use Yajra\DataTables\Facades\DataTables;
-
+use Illuminate\Validation\Rule;
 class CrudController extends Controller
 {
     public $visibility =
@@ -255,6 +256,22 @@ class CrudController extends Controller
         foreach ($crudItems as $crudItem)
         {
             $newColumns[$crudItem->column_name]['item'] = $crudItem;
+
+            if($crudItem->relationship == 1)
+            {
+                $detail = json_decode($crudItem->detail);
+
+                if ($detail->type == 'belongsToMany')
+                {
+                    $newColumns[$crudItem->column_name]['attribute'] = (object)
+                    [
+                        "name"      => $crudItem->column_name,
+                        "type_name" => "bigint",
+                        "type"      => "bigint",
+                        "nullable"  => false,
+                    ];
+                }
+            }
         }
 
         foreach ($columns as $column)
@@ -601,24 +618,34 @@ class CrudController extends Controller
         {
             $attribute =
                 [
-                    'relationship_title'       => 'Görünecek İsim',
-                    'relationship'             => 'İlişki',
-                    'relationship_column_name' => 'Referans Alınacak Alan',
-                    'relationship_table_name'  => 'Referans Tablo',
-                    'relationship_table_model' => 'Referans Tablo Model',
-                    'show_column'              => 'Görüntülenecek Alan',
-                    'match_column'             => 'Eşleşecek Alan',
+                    'relationship_title'             => 'Görünecek İsim',
+                    'relationship'                   => 'İlişki',
+                    'relationship_column_name'       => 'Referans Alınacak Alan',
+                    'relationship_table_name'        => 'Referans Tablo',
+                    'relationship_pivot_table_name'  => 'Pivot Tablo',
+                    'relationship_table_model'       => 'Referans Tablo Model',
+                    'show_column'                    => 'Görüntülenecek Alan',
+                    'match_column'                   => 'Eşleşecek Alan',
                 ];
 
             $rules =
                 [
-                    'relationship_title'       => 'required',
-                    'relationship'             => 'required',
-                    'relationship_column_name' => 'required',
-                    'relationship_table_name'  => 'required',
-                    'show_column'              => 'required',
-                    'match_column'             => 'required',
-                    'relationship_table_model' => [
+                    'relationship_title'             => 'required',
+                    'relationship'                   => 'required',
+                    'relationship_table_name'        => 'required',
+                    'relationship_column_name'       => [
+                        Rule::requiredIf(
+                            fn () => $request->relationship !== 'belongsToMany'
+                        ),
+                    ],
+                    'relationship_pivot_table_name'  => [
+                        Rule::requiredIf(
+                            fn () => $request->relationship === 'belongsToMany'
+                        ),
+                    ],
+                    'show_column'                    => 'required',
+                    'match_column'                   => 'required',
+                    'relationship_table_model'       => [
                         'required',
                         function ($attribute, $value, $fail)
                         {
@@ -658,14 +685,35 @@ class CrudController extends Controller
                     'type'           => $request->get('relationship'),
                     'table_name'     => $request->get('relationship_table_name'),
                     'model'          => $request->get('relationship_table_model'),
-                    'column_name'    => $request->get('relationship_column_name'),
+                    'column_name'    => $request->get('relationship_column_name') ?? null,
+                    'pivot_table'    => $request->get('relationship_pivot_table_name') ?? null,
                     'show_column'    => $request->get('show_column'),
                     'match_column'   => $request->get('match_column'),
+                    'multiple'       => $request->has('relationship_pivot_table_name') ? true : false,
                 ];
 
-            $crudItem               = CrudItem::where('column_name',$request->get('relationship_column_name'))->where('crud_id',$crud->id)->first();
+            if ($request->has('relationship_pivot_table_name'))
+            {
+                $columnName = CrudRelationships::generateColumnName($request->get('relationship_table_model'),$request->get('relationship_pivot_table_name'));
+                $detailMany =
+                    [
+                        'related_key' => Str::singular($request->get('relationship_table_name')) . '_id',
+                        'foreign_key' => Str::singular($crud->table_name) . '_id',
+                        'column_name' => $columnName
+                    ];
+
+                $detail                = array_merge($detail, $detailMany);
+                $crudItem              = CrudItem::where('column_name',$columnName)->where('crud_id',$crud->id)->first() ?? new CrudItem();
+                $crudItem->column_name = $columnName;
+                $crudItem->crud_id     = $crud->id;
+            }
+            else
+            {
+                $crudItem               = CrudItem::where('column_name',$request->get('relationship_column_name'))->where('crud_id',$crud->id)->first();
+                $crudItem->column_name  = $request->get('relationship_column_name');
+            }
+
             $crudItem->title        = $request->get('relationship_title');
-            $crudItem->column_name  = $request->get('relationship_column_name');
             $crudItem->detail       = json_encode($detail);
             $crudItem->form_type_id = 16;
             $crudItem->relationship = 1;
@@ -694,9 +742,18 @@ class CrudController extends Controller
     {
         try
         {
-            $crudItem->relationship = 0;
-            $crudItem->detail       = '{}';
-            $crudItem->save();
+            $details = json_decode($crudItem->detail);
+
+            if ($details->type === 'belongsToMany')
+            {
+                $crudItem->delete();
+            }
+            else
+            {
+                $crudItem->relationship = 0;
+                $crudItem->detail       = '{}';
+                $crudItem->save();
+            }
 
             return response()->json(
                 [

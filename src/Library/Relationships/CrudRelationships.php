@@ -43,6 +43,16 @@ class CrudRelationships
 
             $model::resolveRelationUsing($name, function ($instance) use ($type, $related, $detail)
             {
+                if ($type === 'belongsToMany')
+                {
+                    return $instance->belongsToMany(
+                        $related,
+                        $detail->pivot_table,
+                        $detail->foreign_key,
+                        $detail->related_key
+                    );
+                }
+
                 return $instance->{$type}(
                     $related,
                     $detail->column_name,
@@ -62,5 +72,12 @@ class CrudRelationships
         $slug = self::$slugRegistry[$model] ?? class_basename($model);
 
         return $slug . '_' . $columnName . '_relationship';
+    }
+
+    public static function generateColumnName(string $model, string $pivotTable): string
+    {
+        $slug = self::$slugRegistry[$model] ?? class_basename($model);
+
+        return $slug . '_' . $pivotTable . '_column';
     }
 }

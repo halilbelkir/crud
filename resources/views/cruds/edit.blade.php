@@ -112,7 +112,7 @@
                                 <div class="form-group row">
                                     <div class="col-md-2 handle form-group">
                                         <i class="bi text-dark me-3 fs-4 bi-arrows-move"></i>
-                                        <label class="fw-semibold fs-6 mb-2">Alan Adı : {{$column->name}}</label>
+                                        <label class="fw-semibold fs-6 mb-2 d-block">Alan Adı : {{$column->name}}</label>
                                         <ul class="d-flex flex-column p-0">
                                             <li class="d-flex align-items-center py-2">
                                                 <strong class="me-3">Tipi :</strong> {{$column->type_name}}
@@ -227,6 +227,7 @@
                              data-kt-scroll-wrappers="#repeaterModalScroll"
                              data-kt-scroll-offset="300px" style="max-height: 281px;">
 
+
                             <div class="col-12 form-group">
                                 <label class="required fw-semibold fs-6 mb-2">Görünecek İsim</label>
                                 <input name="relationship_title" type="text" class="form-control form-control-solid" placeholder="Görünecek İsim">
@@ -234,7 +235,7 @@
 
                             <div class="form-group col-12 col-lg-6">
                                 <label class="required fw-semibold fs-6 mb-2">İlişki</label>
-                                <select name="relationship" class="form-control form-control-solid">
+                                <select name="relationship" onchange="relationshipPivotTable(this)" class="form-control form-control-solid">
                                     <option value="">Seçiniz</option>
                                     <option value="hasOne">Has One</option>
                                     <option value="hasMany">Has Many</option>
@@ -243,7 +244,17 @@
                                 </select>
                             </div>
 
-                            <div class="form-group col-12 col-lg-6">
+                            <div class="form-group col-12 col-lg-6 d-none" id="relationship_pivot_table">
+                                <label class="required fw-semibold fs-6 mb-2">Pivot Tablo</label>
+                                <select name="relationship_pivot_table_name" data-control="select2" data-placeholder="Pivot Tablo Seçiniz" data-allow-clear="true" class="form-control form-control-solid ">
+                                    <option value="">Seçiniz</option>
+                                    @foreach($tables as $table)
+                                        <option value="{{$table->title}}">{{$table->title}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="form-group col-12 col-lg-6" id="relationship_column_name">
                                 <label class="required fw-semibold fs-6 mb-2">Referans Alınacak Alan</label>
                                 <select name="relationship_column_name" data-control="select2" data-placeholder="Referans Alınacak Alan Seçiniz" data-allow-clear="true" class="form-control form-control-solid ">
                                     <option value="">Seçiniz</option>
@@ -390,6 +401,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/format/formatting.min.js"></script>
 
     <script>
+        function relationshipPivotTable(self)
+        {
+            let select = $(self);
+            let value  = select.val();
+
+            if (value == 'belongsToMany')
+            {
+                $('#relationship_column_name').addClass('d-none');
+                $('#relationship_pivot_table').removeClass('d-none');
+            }
+            else
+            {
+                $('#relationship_pivot_table').addClass('d-none');
+                $('#relationship_column_name').removeClass('d-none');
+            }
+        }
+
         function getColumns(self,showColumn = null, matchColumn = null )
         {
             let showColumnSelector  = $('[name="show_column"]');

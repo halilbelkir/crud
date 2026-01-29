@@ -1,6 +1,14 @@
 @php
+    use crudPackage\Library\Relationships\CrudRelationships;
+
     $options     = '';
     $details     = json_decode($column->detail,true);
+
+    if (isset($details['type']) && $details['type'] == 'belongsToMany' && !empty($languageKey))
+    {
+        return true;
+    }
+
     $name        = $column->column_name;
     $elementName = !empty($language) ? $language->code.'['.$name.']' : $name;
     $elementId   = !empty($language) ? ($column->repeater == 1 ? 'repeater_'.$name.'_'.$language->code : $name.'_'.$language->code) : ($column->repeater == 1 ? 'repeater_'.$name : $name);
@@ -25,16 +33,32 @@
 
         foreach ($data as $option)
         {
-            if (isset($details['multiple']) && isset($value->{$name}))
+            if (isset($details['multiple']))
             {
-                $values = json_decode($value->{$name});
-
-                foreach ($values as $newValue)
+                if ($details['type'] == 'belongsToMany' && isset($value))
                 {
-                    $selected[$newValue] = $option->$matchColumn == $newValue ? true : false;
+                    $relationship = CrudRelationships::generateName($crud->model, $column->column_name);
+                    $values       = $originalValue->{$relationship};
+
+                    foreach ($values as $newValue)
+                    {
+                        $selected[$newValue->$matchColumn] = $option->$matchColumn == $newValue->$matchColumn ? true : false;
+                    }
+                }
+                else if (isset($value->{$name}))
+                {
+                    $values = json_decode($value->{$name});
+
+                    foreach ($values as $newValue)
+                    {
+                        $selected[$newValue] = $option->$matchColumn == $newValue ? true : false;
+                    }
                 }
 
-                $options .= '<option value="'. $option->$matchColumn .'" '.( isset($value) && isset($selected[$option->$matchColumn]) &&  $selected[$option->$matchColumn] == true ? 'selected' : null ).'> '. $option->$showColumn .' </option>';
+                if ($details['type'] == 'belongsToMany' || isset($value->{$name}))
+                {
+                    $options .= '<option value="'. $option->$matchColumn .'" '.( isset($value) && isset($selected[$option->$matchColumn]) &&  $selected[$option->$matchColumn] == true ? 'selected' : null ).'> '. $option->$showColumn .' </option>';
+                }
             }
             else
             {
@@ -52,18 +76,19 @@
 @endphp
 
 <select
-        @if($type == 'select2') data-control="select2"  data-placeholder="{{$column->title}} Seçiniz" data-allow-clear="true" @endif
+        @if($type == 'select2') data-control="select2" data-placeholder="{{$column->title}} Seçiniz"
+        data-allow-clear="true" @endif
         class="form-control form-control-solid"
         id="{{ $elementId }}"
         @if($column->required == 1 && $languageKey == 0) required @endif
         @if(isset($dt))
             data-route="{{route($crud->slug. '.realtime',$value->id)}}"
-            onclick="crudRealtime(this)"
+        onclick="crudRealtime(this)"
         @endif
         @if(isset($details['multiple']))
             data-select-multiple="true"
-            multiple="multiple"
-            name="{{$elementName}}[]"
+        multiple="multiple"
+        name="{{$elementName}}[]"
         @else
             name="{{$elementName}}"
         @endif
