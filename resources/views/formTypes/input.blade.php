@@ -35,11 +35,11 @@
         {
             if ($formType->key == 'image')
             {
-                $inputValue = Storage::disk('upload')->url($value->{$column->column_name});
+                $inputValue = !empty($value->{$column->column_name}) ? Storage::disk('upload')->url($value->{$column->column_name}) : null;
             }
             else
             {
-                $inputValue = $value->{$column->column_name};
+                $inputValue = $value->{$column->column_name} ?? null;
             }
         }
         else
@@ -59,7 +59,7 @@
             <i class="ki-outline ki-pencil fs-7"></i>
             <input type="file" class="imageUpdate" value="{{ $inputValue }}" name="{{$elementName}}">
         </label>
-        <img src="{{ empty($inputValue) ? asset('crud/images/no-image.png') : $inputValue }}"  class="mb-7 imageUpdatePreview w-100 object-fit-contain h-175px">
+        <img src="{{ $inputValue }}"  class="mb-7 imageUpdatePreview w-100 object-fit-contain h-175px">
         <div id="preview"></div>
     </div>
 @else
