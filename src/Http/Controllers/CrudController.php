@@ -401,13 +401,17 @@ class CrudController extends Controller
                 }
             }
 
-            $previousData            = $data->getPrevious()['slug'] ?? $data->slug;
-            $menuItem                = MenuItem::whereLike('route','%'.$previousData.'%')->where('menu_id',1)->first();
-            $menuItem->title         = $data->title;
-            $menuItem->route         = $route;
-            $menuItem->icon          = $data->icon;
-            $menuItem->dynamic_route = isset($data->only_edit) ? 1 : $menuItem->dynamic_route;
-            $menuItem->save();
+            $previousData = $data->getPrevious()['slug'] ?? $data->slug;
+            $menuItem     = MenuItem::whereLike('route','%'.$previousData.'%')->where('menu_id',1)->first();
+
+            if ($menuItem)
+            {
+                $menuItem->title         = $data->title;
+                $menuItem->route         = $route;
+                $menuItem->icon          = $data->icon;
+                $menuItem->dynamic_route = isset($data->only_edit) ? 1 : $menuItem->dynamic_route;
+                $menuItem->save();
+            }
 
             return response()->json(
                 [
