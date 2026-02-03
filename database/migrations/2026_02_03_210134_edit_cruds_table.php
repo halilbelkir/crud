@@ -19,7 +19,7 @@ return new class extends Migration
 
         DB::table('cruds')->update(
             [
-                "other_route" => json_encode([]),
+                "other_route" => '{}',
             ]
         );
     }
