@@ -695,7 +695,7 @@ class CrudController extends Controller
                     'pivot_table'    => $request->get('relationship_pivot_table_name') ?? null,
                     'show_column'    => $request->get('show_column'),
                     'match_column'   => $request->get('match_column'),
-                    'multiple'       => $request->has('relationship_pivot_table_name') ? true : false,
+                    'multiple'       => !empty($request->get('relationship_pivot_table_name')) ? true : false,
                 ];
 
             if (!empty($request->get('relationship_pivot_table_name')))
