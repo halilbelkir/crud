@@ -163,7 +163,7 @@ class ModuleController extends Controller
 
                     if (isset($details->type) && $details->type == 'belongsToMany' && !empty($languageKey))
                     {
-                        break;
+                        continue;
                     }
                 }
 
