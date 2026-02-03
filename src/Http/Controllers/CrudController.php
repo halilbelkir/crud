@@ -137,6 +137,7 @@ class CrudController extends Controller
             $data->model           = $request->get('model');
             $data->content         = $request->get('content');
             $data->icon            = $request->get('icon');
+            $data->other_route     = $request->get('other_route');
             $data->table_name      = $request->get('table_name');
             $data->only_edit       = $request->has('only_edit') ? 1 : 0;
             $data->area_1          = isset($area1) ? json_encode($area1) : null;
@@ -189,7 +190,7 @@ class CrudController extends Controller
                 [
                     'result'  => 1,
                     'message' => 'İşlem Başarılı.',
-                    'route'   => $request->has('other_route') ? $request->get('other_route') : route('cruds.index')
+                    'route'   => route('cruds.index')
                 ]
             );
 
@@ -364,6 +365,7 @@ class CrudController extends Controller
             $data->model           = $request->get('model');
             $data->content         = $request->get('content');
             $data->icon            = $request->get('icon');
+            $data->other_route     = $request->get('other_route');
             $data->only_edit       = $request->has('only_edit') ? 1 : 0;
             $data->area_1          = isset($area1) ? json_encode($area1) : null;
             $data->save();
@@ -417,7 +419,7 @@ class CrudController extends Controller
                 [
                     'result'  => 1,
                     'message' => 'İşlem Başarılı.',
-                    'route'   => $request->has('other_route') ? $request->get('other_route') : route('cruds.index')
+                    'route'   => route('cruds.index')
                 ]
             );
 
@@ -696,7 +698,7 @@ class CrudController extends Controller
                     'multiple'       => $request->has('relationship_pivot_table_name') ? true : false,
                 ];
 
-            if ($request->has('relationship_pivot_table_name'))
+            if (!empty($request->get('relationship_pivot_table_name')))
             {
                 $columnName = CrudRelationships::generateColumnName($request->get('relationship_table_model'),$request->get('relationship_pivot_table_name'));
                 $detailMany =

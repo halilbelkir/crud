@@ -1,0 +1,6 @@
+{
+  "route": "deneme.index",
+  "params": [
+    "param_1"
+  ]
+}

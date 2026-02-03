@@ -62,9 +62,17 @@
                     </select>
                 </div>
 
-                <div class="form-group col-12">
+                <div class="form-group col-12 col-md-6 mb-7 fv-plugins-icon-container">
                     <label class="required fw-semibold fs-6 mb-2">Açıklama</label>
-                    <textarea name="content" cols="30" rows="3" placeholder="Açıklama" class="form-control form-control-solid mb-3 mb-lg-0">{{$value->content}}</textarea>
+                    <textarea name="content" cols="30" rows="7" placeholder="Açıklama" class="form-control form-control-solid mb-3 mb-lg-0">{{$value->content}}</textarea>
+                </div>
+
+                <div class="form-group col-12 col-md-6 mb-7 fv-plugins-icon-container">
+                    <label class="fw-semibold fs-6 mb-2">Diğer Route</label>
+                    <i data-bs-toggle="tooltip" data-bs-placement="top" title="Crud işlemlerinden sonra gidilecek route bilgilerinin tutulduğu alandır. Örnek : Ekleme işlemi başarılı olduktan sonra buradaki bilgilere göre yönlendirilecektir. Burası isteğe bağlıdır." data-bs-custom-class="tooltip-inverse" class="ki-outline color-primary fs-4 ki-information-5"></i>
+                    (<small><a href="{{ asset('crud/json/crud_other_route.json') }}" target="_blank">Örnek JSON</a></small>)
+                    <textarea id="other_route" name="other_route" data-json="true" rows="2" class="form-control form-control-solid">{{$value->other_route}}</textarea>
+                    <div id="other_route_json_organizer" class="btn jsonOrganizerButton btn-secondary mt-3">JSON'u Düzenle</div>
                 </div>
 
                 <div class="form-group col-12 mb-7 fv-plugins-icon-container">

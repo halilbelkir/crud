@@ -33,7 +33,7 @@
 
         foreach ($data as $option)
         {
-            if (isset($details['multiple']))
+            if (!empty($details['multiple']))
             {
                 if ($details['type'] == 'belongsToMany' && isset($value))
                 {
@@ -85,7 +85,7 @@
             data-route="{{route($crud->slug. '.realtime',$value->id)}}"
         onclick="crudRealtime(this)"
         @endif
-        @if(isset($details['multiple']))
+        @if(!empty($details['multiple']))
             data-select-multiple="true"
         multiple="multiple"
         name="{{$elementName}}[]"

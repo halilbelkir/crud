@@ -628,11 +628,34 @@ class ModuleController extends Controller
 
             self::cacheClear();
 
+            $otherRoute = $crud->other_route;
+            $otherRoute = json_decode($otherRoute);
+
+            if (isset($otherRoute->route))
+            {
+                $params  = [];
+                $allData = (count($this->languages) > 0) ? $allData[$this->languages[0]->code] : $allData;
+
+                if (isset($otherRoute->params))
+                {
+                    foreach ($otherRoute->params as $param)
+                    {
+                        $params[$param] = $allData[$param];
+                    }
+                }
+
+                $otherRoute = route($otherRoute->route,$params);
+            }
+            else
+            {
+                $otherRoute = route($crud->slug .'.index');
+            }
+
             return response()->json(
                 [
                     'result'  => 1,
                     'message' => 'İşlem Başarılı.',
-                    'route'   => $request->has('other_route') ? $request->get('other_route') : route($crud->slug .'.index')
+                    'route'   => $otherRoute
                 ]
             );
 
@@ -693,7 +716,29 @@ class ModuleController extends Controller
                 $this->insertAndUpdate($request,$allData,$allFiles,null,null,$data);
             }
 
-            $route = $crud->only_edit == 1 ? route($crud->slug.'.edit',$data->id) : route($crud->slug .'.index');
+            $route      = $crud->only_edit == 1 ? route($crud->slug.'.edit',$data->id) : route($crud->slug .'.index');
+            $otherRoute = $crud->other_route;
+            $otherRoute = json_decode($otherRoute);
+
+            if (isset($otherRoute->route))
+            {
+                $params  = [];
+                $allData = (count($this->languages) > 0) ? $allData[$this->languages[0]->code] : $allData;
+
+                if (isset($otherRoute->params))
+                {
+                    foreach ($otherRoute->params as $param)
+                    {
+                        $params[$param] = $allData[$param];
+                    }
+                }
+
+                $otherRoute = route($otherRoute->route,$params);
+            }
+            else
+            {
+                $otherRoute = $route;
+            }
 
             self::cacheClear();
 
@@ -701,7 +746,7 @@ class ModuleController extends Controller
                 [
                     'result'  => 1,
                     'message' => 'İşlem Başarılı.',
-                    'route'   => $request->has('other_route') ? $request->get('other_route') : $route
+                    'route'   => $otherRoute
                 ]
             );
 
@@ -1051,14 +1096,17 @@ class ModuleController extends Controller
                                 }
                                 else
                                 {
-                                    foreach ($values as $item)
+                                    if (!empty($values))
                                     {
-                                        $query = $details['model']::where($details['match_column'],$item)->first();
-
-                                        if ($query)
+                                        foreach ($values as $item)
                                         {
-                                            $translated   = $locale ? $query->getTranslate($locale) : $query;
-                                            $showValues[] = $translated->{$showColumn};
+                                            $query = $details['model']::where($details['match_column'],$item)->first();
+
+                                            if ($query)
+                                            {
+                                                $translated   = $locale ? $query->getTranslate($locale) : $query;
+                                                $showValues[] = $translated->{$showColumn};
+                                            }
                                         }
                                     }
                                 }
