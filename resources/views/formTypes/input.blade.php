@@ -34,9 +34,10 @@
 
         if (isset($value))
         {
-            if ($formType->key == 'image' || $formType->key == 'file' && $multiple != 'multiple')
+            if (($formType->key == 'image' || $formType->key == 'file') && $multiple != 'multiple')
             {
-                $inputValue = !empty($value->{$column->column_name}) ? Storage::disk('upload')->url($value->{$column->column_name}) : null;
+                $inputValue = $value->{$column->column_name} ?? null;
+                $inputValue = ($inputValue !== null && $inputValue !== '') ? Storage::disk('upload')->url($inputValue) : null;
             }
             else
             {
