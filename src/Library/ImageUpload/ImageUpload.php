@@ -41,12 +41,21 @@ class ImageUpload
     }
     public function set($image,$imageName)
     {
-        $manager = new ImageManager(new Driver());
-        $img     = $manager->read(file_get_contents($image));
-        $encode  = $img->encodeByExtension($image->extension());
         $fileName = $imageName[0];
+        $filePath = $imageName[1];
 
-        $this->getStorage()->put($fileName, $encode->toString());
+        if (strstr($image->getMimeType(),"image"))
+        {
+            $manager = new ImageManager(new Driver());
+            $img     = $manager->read(file_get_contents($image));
+            $encode  = $img->encodeByExtension($image->extension());
+
+            $this->getStorage()->put($fileName, $encode->toString());
+        }
+        else
+        {
+            $this->getStorage()->put($fileName, file_get_contents($image));
+        }
 
         return $fileName;
     }

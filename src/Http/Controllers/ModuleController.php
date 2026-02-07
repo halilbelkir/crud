@@ -459,7 +459,16 @@ class ModuleController extends Controller
                     {
                         if (isset($data->$inputName))
                         {
-                            $merge               = array_merge($images,json_decode($data->$inputName,true));
+                            if (!is_array(json_decode($data->$inputName,true)))
+                            {
+                                $inputValues = [$data->$inputName];
+                            }
+                            else
+                            {
+                                $inputValues = json_decode($data->$inputName,true);
+                            }
+
+                            $merge               = array_merge($images,$inputValues);
                             $allData[$inputName] = json_encode($merge,JSON_UNESCAPED_UNICODE,true);
                         }
                         else
@@ -1070,7 +1079,8 @@ class ModuleController extends Controller
 
                         $dtColumns[$columnName] = function ($columnValue) use ($relationship, $columnName, $details, $locale)
                         {
-                            $value = isset($locale) ? $columnValue->getTranslate($locale) : $columnValue;
+                            $languageOrder = isset($locale) ? multipleLanguages(2,$locale) : 0;
+                            $value         = $languageOrder > 0 ? $columnValue->getTranslate($locale) : $columnValue;
 
                             if (!$value)
                             {
@@ -1086,12 +1096,15 @@ class ModuleController extends Controller
 
                                 if ($details['type'] == 'belongsToMany' && isset($columnValue))
                                 {
-                                    $values = isset($locale) && multipleLanguages(2,$locale) > 0 ? $columnValue->{$relationship} : $value->{$relationship};
+                                    $values = $languageOrder > 0 ? $value->{$relationship} : $columnValue->{$relationship};
 
-                                    foreach ($values as $item)
+                                    if (!empty($values))
                                     {
-                                        $translated   = $locale ? $item->getTranslate($locale) : $item;
-                                        $showValues[] = $translated->{$showColumn};
+                                        foreach ($values as $item)
+                                        {
+                                            $translated   = $locale ? $item->getTranslate($locale) : $item;
+                                            $showValues[] = $translated->{$showColumn};
+                                        }
                                     }
                                 }
                                 else
@@ -1116,13 +1129,12 @@ class ModuleController extends Controller
 
                             $relationModel = $value->{$relationship};
 
-
-                            if (!$relationModel)
+                            if (!$relationModel && !$columnValue->{$relationship})
                             {
                                 return null;
                             }
 
-                            $translated = $locale ? $relationModel->getTranslate($locale) : $relationModel;
+                            $translated = $languageOrder > 0 ? ($relationModel ? $relationModel->getTranslate($locale) : $columnValue->{$relationship}) : $columnValue->{$relationship};
 
                             return $translated->{$showColumn};
                         };
@@ -1183,6 +1195,7 @@ class ModuleController extends Controller
 
                 return $actions;
             });
+
             $datatable->rawColumns(array_merge(array_keys($dtColumns), $rawColumns));
 
             return $datatable->toJson();

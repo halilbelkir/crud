@@ -13,6 +13,11 @@
         {
             $inputValue = $values->{$column->column_name};
         }
+
+        if (isset($details['type']) && $details['type'] == 'belongsToMany' && !empty($languageKey))
+        {
+            continue;
+        }
     @endphp
 
     <div class="card mb-5 mb-xl-10">
@@ -34,6 +39,11 @@
                         {
                             $inputValue = html_entity_decode($inputValue);
                             $images     = json_decode($inputValue);
+
+                            if (!is_array($images) && !empty($images))
+                            {
+                                $images = [$inputValue];
+                            }
                         }
                     @endphp
 
@@ -47,6 +57,42 @@
                                         </div>
                                         <div class="overlay-layer card-rounded bg-dark bg-opacity-25">
                                             <i class="ki-outline ki-eye fs-3x text-white"></i>
+                                        </div>
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                @elseif($formType->key == 'file')
+                    @php
+                        if ($multiple != 'multiple')
+                        {
+                            $files = [$inputValue];
+                        }
+                        else
+                        {
+                            $inputValue = html_entity_decode($inputValue);
+                            $files       = json_decode($inputValue);
+
+                            if (!is_array($files) && !empty($files))
+                            {
+                                $files = [$inputValue];
+                            }
+                        }
+                    @endphp
+
+                    @if(!empty($files))
+                        <div class="row g-10 row-cols-2 row-cols-lg-5">
+                            @foreach($files as $order => $file)
+                                @php
+                                    $disk = Storage::disk('upload');
+                                    $url  = $disk->url($file);
+                                @endphp
+                                <div class="col multipleImage">
+                                    <a href="{{ $url }}" target="_blank" class="mb-5 d-block text-decoration-underline color-primary"> {{ basename($file) }} </a>
+                                    <a class="d-block overlay">
+                                        <div class="shadow" style="border: 1px solid #0000003b; border-radius: 20px; padding: 20px;text-align: center;">
+                                            <i style="font-size: 70px;" class="bi imageUpdatePreview bi-filetype-{{getExtension($file)}}"></i>
                                         </div>
                                     </a>
                                 </div>

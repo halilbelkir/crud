@@ -835,12 +835,38 @@ if ($('.showImage').length > 0)
 
         image.addEventListener('change', function()
         {
-            [...this.files].map(file => {
-                const reader = new FileReader();
-                reader.addEventListener('load', function(){
-                    preview.src = this.result;
-                });
-                reader.readAsDataURL(file);
+            [...this.files].map(file =>
+            {
+                if (file.type.includes('image'))
+                {
+                    const reader = new FileReader();
+                    reader.addEventListener('load', function()
+                    {
+                        preview.src = this.result;
+                    });
+                    reader.readAsDataURL(file);
+                }
+                else
+                {
+                    let lastClass = preview.classList[preview.classList.length - 1];
+                    let ext       = file.name.split('.').pop();
+                    let newClass= 'bi-filetype-' + ext;
+
+                    preview.classList.forEach((className) =>
+                    {
+                        if (className.includes('bi-filetype-'))
+                        {
+                            preview.classList.remove(className);
+                        }
+                    });
+
+                    preview.classList.add(newClass);
+
+                    if(showImage.querySelector('.newTab'))
+                    {
+                        showImage.querySelector('.newTab').remove();
+                    }
+                }
             })
         })
     });

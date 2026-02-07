@@ -2,6 +2,7 @@
     $inputValue      = null;
     $multiple        = null;
     $onKeyUpFunction = null;
+    $languageTitle   = $language != null ? ' ('.$language->title.') ' : null;
     $name            = $column->column_name;
     $elementName     = !empty($language) ? $language->code.'['.$name.']' : $name;
     $elementId       = !empty($language) ? ($column->repeater == 1 ? 'repeater_'.$name.'_'.$language->code : $name.'_'.$language->code) : ($column->repeater == 1 ? 'repeater_'.$name : $name);
@@ -18,7 +19,7 @@
         {
             $type = 'datetime-local';
         }
-        else if ($type == 'image')
+        else if ($type == 'image' || $type == 'file')
         {
             $type     = 'file';
             $multiple = isset($details['multiple']) && $details['multiple'] == true ? 'multiple' : null;
@@ -33,7 +34,7 @@
 
         if (isset($value))
         {
-            if ($formType->key == 'image')
+            if ($formType->key == 'image' || $formType->key == 'file' && $multiple != 'multiple')
             {
                 $inputValue = !empty($value->{$column->column_name}) ? Storage::disk('upload')->url($value->{$column->column_name}) : null;
             }
@@ -55,12 +56,31 @@
 
 @if($formType->key == 'image' && !empty($inputValue) && isset($value) && $multiple != 'multiple')
     <div class="image-input image-input-outline showImage">
-        <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" style="top: 0;left: 50%;" data-kt-image-input-action="change" data-bs-toggle="tooltip" data-bs-trigger="hover" title="Resmi Değiştir">
+        <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" style="top: 0;left: 50%;" data-kt-image-input-action="change" data-bs-toggle="tooltip" data-bs-trigger="hover" title="{{$column->title.$languageTitle}} Değiştir">
             <i class="ki-outline ki-pencil fs-7"></i>
             <input type="file" class="imageUpdate" value="{{ $inputValue }}" name="{{$elementName}}">
         </label>
-        <img src="{{ $inputValue }}"  class="mb-7 imageUpdatePreview w-100 object-fit-contain h-175px">
-        <div id="preview"></div>
+        <img src="{{ $inputValue }}" class="mb-7 imageUpdatePreview w-100 object-fit-contain h-175px">
+    </div>
+@elseif($formType->key == 'file' && !empty($inputValue) && isset($value) && $multiple != 'multiple')
+    @php
+        $disk = Storage::disk('upload');
+        $url  = $disk->url($inputValue);
+    @endphp
+    <div class="text-center w-auto d-inline-block">
+        <a href="{{ $url }}" target="_blank" class="mb-5 d-block text-decoration-underline color-primary"> {{ basename($inputValue) }} </a>
+        <div class="image-input image-input-outline showImage">
+            <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" style="top: 0;left: 50%;" data-kt-image-input-action="change" data-bs-toggle="tooltip" data-bs-trigger="hover" title="{{$column->title.$languageTitle}} Değiştir">
+                <i class="ki-outline ki-pencil fs-7"></i>
+                <input type="file" class="imageUpdate" value="{{ $inputValue }}" name="{{$elementName}}">
+            </label>
+            <a href="{{ $url }}" target="_blank" class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body newTab shadow" style="right: 0;top: 50%;" data-kt-image-input-action="change" data-bs-toggle="tooltip" data-bs-trigger="hover" title="Yeni Sekmede Aç">
+                <i class="bi bi-box-arrow-in-up-right"></i>
+            </a>
+            <div class="shadow" style="border: 1px solid #0000003b; border-radius: 20px; padding: 20px;text-align: center;">
+                <i style="font-size: 70px;" class="bi imageUpdatePreview bi-filetype-{{getExtension($inputValue)}}"></i>
+            </div>
+        </div>
     </div>
 @else
     <input
@@ -82,30 +102,62 @@
             {{$multiple}}
     >
 
-    @if($formType->key == 'image' && isset($inputValue) && isset($value) && $multiple == 'multiple')
+    @if(($formType->key == 'image' || $formType->key == 'file') && isset($inputValue) && isset($value) && $multiple == 'multiple')
         <div class="row g-10 row-cols-2 row-cols-lg-5 mt-5">
             @if($copy == 1)
                 <input type="hidden" value="{{ $inputValue }}" name="{{ $multiple == 'multiple' ? $elementName.'_copy[]' : $elementName.'_copy' }}" disabled>
             @endif
 
-            @foreach(json_decode($inputValue) as $order => $image)
-                @php $image = Storage::disk('upload')->url($image); @endphp
-                <div class="col multipleImage">
-                    <a class="d-block overlay" data-fslightbox="lightbox-hot-sales" href="{{$image}}">
-                        <div class="overlay-wrapper bgi-no-repeat bgi-position-center bgi-size-cover card-rounded h-175px"
-                             style="background-image:url({{$image}}">
-                        </div>
-                        <div class="overlay-layer card-rounded bg-dark bg-opacity-25">
-                            <i class="ki-outline ki-eye fs-3x text-white"></i>
-                        </div>
-                    </a>
+            @php
+                if (!is_array(json_decode($inputValue)))
+                {
+                    $files = [$inputValue];
+                }
+                else
+                {
+                    $files = json_decode($inputValue);
+                }
+            @endphp
 
-                    <div class="text-center mt-2">
-                        <a data-route="{{route($crud->slug.'.fileDestroy',['id' => $value->id,'order' => $order,'column_name' => $column->column_name,'language_code' => $language->code ?? null,'language_order' => $languageKey ?? null])}}" onclick="destroy(this,{{$copy}})" data-title="{{($order+1).'. sıradaki resmi'}}" data-order="{{$order}}" class="btn btn-sm btn-light-danger" data-bs-toggle="tooltip" data-bs-trigger="hover" title="{{($order+1).'. sıradaki resmi sil'}}">
-                            <i class="ki-outline ki-trash-square fs-2x"></i>
+            @foreach($files as $order => $file)
+                @php $image = Storage::disk('upload')->url($file); @endphp
+                @if($formType->key == 'image')
+                    <div class="col multipleImage">
+                        <a class="d-block overlay" data-fslightbox="lightbox-hot-sales" href="{{$image}}">
+                            <div class="overlay-wrapper bgi-no-repeat bgi-position-center bgi-size-cover card-rounded h-175px"
+                                 style="background-image:url({{$image}}">
+                            </div>
+                            <div class="overlay-layer card-rounded bg-dark bg-opacity-25">
+                                <i class="ki-outline ki-eye fs-3x text-white"></i>
+                            </div>
                         </a>
+
+                        <div class="text-center mt-2">
+                            <a data-route="{{route($crud->slug.'.fileDestroy',['id' => $value->id,'order' => $order,'column_name' => $column->column_name,'language_code' => $language->code ?? null,'language_order' => $languageKey ?? null])}}" onclick="destroy(this,{{$copy}})" data-title="{{($order+1).'. sıradaki resmi'}}" data-order="{{$order}}" class="btn btn-sm btn-light-danger" data-bs-toggle="tooltip" data-bs-trigger="hover" title="{{($order+1).'. sıradaki resmi sil'}}">
+                                <i class="ki-outline ki-trash-square fs-2x"></i>
+                            </a>
+                        </div>
                     </div>
-                </div>
+                @else
+                    @php
+                        $disk = Storage::disk('upload');
+                        $url  = $disk->url($file);
+                    @endphp
+                    <div class="col multipleImage">
+                        <a href="{{ $url }}" target="_blank" class="mb-5 d-block text-decoration-underline color-primary"> {{ basename($file) }} </a>
+                        <a class="d-block overlay">
+                            <div class="shadow" style="border: 1px solid #0000003b; border-radius: 20px; padding: 20px;text-align: center;">
+                                <i style="font-size: 70px;" class="bi imageUpdatePreview bi-filetype-{{getExtension($file)}}"></i>
+                            </div>
+                        </a>
+                        <div class="text-center mt-5">
+                            <a data-route="{{route($crud->slug.'.fileDestroy',['id' => $value->id,'order' => $order,'column_name' => $column->column_name,'language_code' => $language->code ?? null,'language_order' => $languageKey ?? null])}}" onclick="destroy(this,{{$copy}})" data-title="{{($order+1).'. sıradaki dosyayı'}}" data-order="{{$order}}" class="btn btn-sm btn-light-danger" data-bs-toggle="tooltip" data-bs-trigger="hover" title="{{($order+1).'. sıradaki dosyayı sil'}}">
+                                <i class="ki-outline ki-trash-square fs-2x"></i>
+                            </a>
+                        </div>
+                    </div>
+                @endif
+
             @endforeach
         </div>
     @endif
