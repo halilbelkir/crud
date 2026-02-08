@@ -957,27 +957,23 @@ class ModuleController extends Controller
             $crud      = $this->crud;
             $model     = $crud->model;
             $slug      = $crud->slug;
-            $modelName = explode('\\', $model);
-            $modelName = end($modelName);
             $columns   = isset($id) ? $crud->readColumns : $crud->browseColumns;
             $area1     = isset($crud->area_1) ? json_decode($crud->area_1) : null;
 
-            // Tüm ilişkileri önceden yükle
+            // Sadece model ilişkilerini yükle
             $relationshipsToLoad = $this->relationshipNames;
-
-            // Çeviri ilişkilerini de ekle
-            if ($locale) {
-                $relationshipsToLoad[] = 'translations';
-            }
 
             if (isset($id))
             {
-                $query = $model::with($relationshipsToLoad)
-                    ->where($crud->table_name .'.id', $id);
+                $query = count($relationshipsToLoad) > 0
+                    ? $model::with($relationshipsToLoad)->where($crud->table_name .'.id', $id)
+                    : $model::where($crud->table_name .'.id', $id);
             }
             else
             {
-                $query = $model::with($relationshipsToLoad);
+                $query = count($relationshipsToLoad) > 0
+                    ? $model::with($relationshipsToLoad)
+                    : $model::select('*');
             }
 
             if (isset($area1->order_column_name) && empty($id))
@@ -1025,7 +1021,15 @@ class ModuleController extends Controller
         }
         catch (\Exception $e)
         {
-            return response()->json(['result' => 0, 'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'], 403);
+            // Debug için hata mesajını göster (geliştirme ortamında)
+            if (config('app.debug')) {
+                dd($e->getMessage(), $e->getTrace());
+            }
+
+            return response()->json([
+                'result' => 0,
+                'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
+            ], 403);
         }
     }
 
