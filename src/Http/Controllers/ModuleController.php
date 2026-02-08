@@ -950,7 +950,173 @@ class ModuleController extends Controller
         }
     }
 
-    public function datatable($locale = null,$id = null)
+    public function datatable($locale = null, $id = null)
+    {
+        try
+        {
+            $crud      = $this->crud;
+            $model     = $crud->model;
+            $slug      = $crud->slug;
+            $modelName = explode('\\', $model);
+            $modelName = end($modelName);
+            $columns   = isset($id) ? $crud->readColumns : $crud->browseColumns;
+            $area1     = isset($crud->area_1) ? json_decode($crud->area_1) : null;
+
+            // Tüm ilişkileri önceden yükle
+            $relationshipsToLoad = $this->relationshipNames;
+
+            // Çeviri ilişkilerini de ekle
+            if ($locale) {
+                $relationshipsToLoad[] = 'translations';
+            }
+
+            if (isset($id))
+            {
+                $query = $model::with($relationshipsToLoad)
+                    ->where($crud->table_name .'.id', $id);
+            }
+            else
+            {
+                $query = $model::with($relationshipsToLoad);
+            }
+
+            if (isset($area1->order_column_name) && empty($id))
+            {
+                $query->orderByTranslate($area1->order_column_name, $area1->order_direction, $locale);
+            }
+
+            // DataTables oluştur
+            $datatable = Datatables::eloquent($query);
+
+            // Her kolon için işlem
+            foreach ($columns as $column) {
+                $columnName = $column->column_name;
+
+                $datatable->editColumn($columnName, function ($value) use ($column, $locale, $crud, $columnName) {
+                    $details = json_decode($column->detail, true);
+                    $translatedValue = $locale ? $value->getTranslate($locale) : $value;
+
+                    // Realtime render
+                    if (isset($details['realtime']) && !request()->has('id')) {
+                        return $this->renderRealtimeColumn($translatedValue, $column, $details, $locale, $crud);
+                    }
+
+                    // Standart render
+                    return $this->renderStandardColumn($translatedValue, $column, $details, $columnName);
+                });
+            }
+
+            // Actions kolonu
+            $datatable->addColumn('actions', function ($value) use ($slug) {
+                return $this->renderActions($value, $slug);
+            });
+
+            // Orderable kolon (varsa)
+            if (isset($area1->order_column_name)) {
+                $datatable->addColumn('orderable', function ($value) {
+                    return '<i data-id="'. $value->id .'" class="bi text-dark fs-3 bi-arrows-move cursor-move"></i>';
+                });
+            }
+
+            // Raw columns
+            $datatable->rawColumns($this->getRawColumns($columns, $area1));
+
+            return $datatable->toJson();
+        }
+        catch (\Exception $e)
+        {
+            return response()->json(['result' => 0, 'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'], 403);
+        }
+    }
+
+    private function getRawColumns($columns, $area1 = null)
+    {
+        $rawColumns = ['actions'];
+
+        // Orderable varsa ekle
+        if (isset($area1->order_column_name)) {
+            $rawColumns[] = 'orderable';
+        }
+
+        foreach ($columns as $column) {
+            $details = json_decode($column->detail, true);
+
+            // HTML içeren kolonları belirle
+            if ($column->form_type_id == 15 ||  // Boolean
+                $column->form_type_id == 1 ||   // Tags/Array
+                isset($details['realtime'])) {   // Realtime
+                $rawColumns[] = $column->column_name;
+            }
+        }
+
+        return $rawColumns;
+    }
+
+    private function renderRelationshipColumn($value, $column, $details, $columnName)
+    {
+        $relationship = CrudRelationships::generateName($this->crud->model, $column->column_name);
+        $showColumn = $details['show_column'] ?? 'name';
+
+        // Multiple relationship (belongsToMany veya multiple select)
+        if (!empty($details['multiple']) && $details['multiple'] === true) {
+            $showValues = [];
+
+            if ($details['type'] == 'belongsToMany') {
+                // İlişki zaten eager load edildi
+                $relationData = $value->{$relationship};
+
+                if ($relationData && $relationData->isNotEmpty()) {
+                    foreach ($relationData as $item) {
+                        $showValues[] = $item->{$showColumn};
+                    }
+                }
+            } else {
+                // JSON array olarak kaydedilmiş değerler
+                $values = json_decode($value->{$columnName}, true) ?? [];
+
+                if (!empty($values)) {
+                    // Toplu sorgu ile tüm ilişkili kayıtları çek
+                    $relatedModel = $details['model'];
+                    $matchColumn = $details['match_column'];
+
+                    $relatedItems = $relatedModel::whereIn($matchColumn, $values)
+                        ->get()
+                        ->keyBy($matchColumn);
+
+                    foreach ($values as $itemId) {
+                        if (isset($relatedItems[$itemId])) {
+                            $showValues[] = $relatedItems[$itemId]->{$showColumn};
+                        }
+                    }
+                }
+            }
+
+            return implode(', ', $showValues);
+        }
+
+        // Single relationship
+        $relationModel = $value->{$relationship};
+
+        if (!$relationModel) {
+            return '';
+        }
+
+        return $relationModel->{$showColumn} ?? '';
+    }
+
+    private function renderRealtimeColumn($value, $column, $details, $locale, $crud)
+    {
+        $formType = $column->type;
+        $type = $formType->key;
+        $dt = 1;
+        $language = $locale ? multipleLanguages(1, $locale) : null;
+        $languageKey = $locale ? multipleLanguages(2, $locale) : null;
+
+        return view('crudPackage::formTypes.'. $formType->group,
+            compact('column', 'type', 'crud', 'value', 'formType', 'dt', 'language', 'languageKey')
+        )->render();
+    }
+    public function datatableOld($locale = null,$id = null)
     {
         try
         {
