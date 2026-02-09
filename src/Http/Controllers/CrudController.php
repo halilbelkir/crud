@@ -404,7 +404,13 @@ class CrudController extends Controller
             }
 
             $previousData = $data->getPrevious()['slug'] ?? $data->slug;
-            $menuItem     = MenuItem::whereLike('route','%'.$previousData.'%')->where('menu_id',1)->first();
+            $menuItem = MenuItem::where('menu_id', 1)
+                ->where(function($query) use ($previousData) {
+                    $query->where('route', $previousData . '.index')
+                        ->orWhere('route', 'LIKE', $previousData . '.index,%')
+                        ->orWhere('route', 'LIKE', $previousData . '.edit,%');
+                })
+                ->first();
 
             if ($menuItem)
             {
