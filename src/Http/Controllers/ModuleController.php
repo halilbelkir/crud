@@ -1164,11 +1164,12 @@ class ModuleController extends Controller
 
     private function renderStandardColumn($value, $column, $details, $columnName)
     {
-        $formType = $column->form_type_id;
+        $formType    = $column->form_type_id;
+        $columnValue = $value->$columnName;
 
         if ($formType == 15)
         {
-            return $value->$columnName == 1
+            return $columnValue == 1
                 ? '<span class="badge badge-lg badge-success">'. ($details['on'] ?? 'Aktif') .'</span>'
                 : '<span class="badge badge-lg badge-danger">'. ($details['off'] ?? 'Pasif') .'</span>';
         }
@@ -1177,8 +1178,6 @@ class ModuleController extends Controller
         {
             if (isset($details['items']) && is_array($details['items']))
             {
-                $columnValue = $value->$columnName;
-
                 if (is_array($columnValue) || is_string($columnValue) && json_decode($columnValue))
                 {
                     $selectedValues = is_array($columnValue) ? $columnValue : json_decode($columnValue, true);
@@ -1197,20 +1196,20 @@ class ModuleController extends Controller
 
                 foreach ($details['items'] as $keyItem => $item)
                 {
-                    if ($keyItem == $value->$columnName)
+                    if ($keyItem == $columnValue)
                     {
                         return $item;
                     }
                 }
             }
 
-            return $value->$columnName ?? '';
+            return $columnValue ?? '';
         }
 
 
         if ($formType == 1)
         {
-            $values = json_decode($value->$columnName);
+            $values = json_decode($columnValue);
 
             if (is_array($values))
             {
@@ -1224,7 +1223,7 @@ class ModuleController extends Controller
                 return $badges;
             }
 
-            return $value->$columnName ?? '';
+            return $columnValue ?? '';
         }
 
 
@@ -1234,11 +1233,11 @@ class ModuleController extends Controller
             {
                 try
                 {
-                    return Carbon::parse($value->$columnName)->format($details['format']);
+                    return Carbon::parse($columnValue)->format($details['format']);
                 }
                 catch (\Exception $e)
                 {
-                    return $value->$columnName ?? '';
+                    return $columnValue ?? '';
                 }
             }
         }
@@ -1248,7 +1247,7 @@ class ModuleController extends Controller
             return $this->renderRelationshipColumn($value, $column, $details, $columnName);
         }
 
-        return $value->$columnName ?? '';
+        return $columnValue ?? '';
     }
     public function datatableOld($locale = null,$id = null)
     {
