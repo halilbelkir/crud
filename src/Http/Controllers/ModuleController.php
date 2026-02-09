@@ -960,7 +960,7 @@ class ModuleController extends Controller
             $columns   = isset($id) ? $crud->readColumns : $crud->browseColumns;
             $area1     = isset($crud->area_1) ? json_decode($crud->area_1) : null;
 
-            // Sadece model ilişkilerini yükle
+
             $relationshipsToLoad = $this->relationshipNames;
 
             if (isset($id))
@@ -981,35 +981,37 @@ class ModuleController extends Controller
                 $query->orderByTranslate($area1->order_column_name, $area1->order_direction, $locale);
             }
 
-            // DataTables oluştur
             $datatable = Datatables::eloquent($query);
 
-            // Her kolon için işlem
-            foreach ($columns as $column) {
+
+            foreach ($columns as $column)
+            {
                 $columnName = $column->column_name;
 
-                $datatable->editColumn($columnName, function ($value) use ($column, $locale, $crud, $columnName) {
-                    $details = json_decode($column->detail, true);
+                $datatable->editColumn($columnName, function ($value) use ($column, $locale, $crud, $columnName)
+                {
+                    $details         = json_decode($column->detail, true);
                     $translatedValue = $locale ? $value->getTranslate($locale) : $value;
 
-                    // Realtime render
-                    if (isset($details['realtime']) && !request()->has('id')) {
+
+                    if (isset($details['realtime']) && !request()->has('id'))
+                    {
                         return $this->renderRealtimeColumn($translatedValue, $column, $details, $locale, $crud);
                     }
 
-                    // Standart render
                     return $this->renderStandardColumn($translatedValue, $column, $details, $columnName);
                 });
             }
 
-            // Actions kolonu
-            $datatable->addColumn('actions', function ($value) use ($slug) {
+            $datatable->addColumn('actions', function ($value) use ($slug)
+            {
                 return $this->renderActions($value, $slug);
             });
 
-            // Orderable kolon (varsa)
-            if (isset($area1->order_column_name)) {
-                $datatable->addColumn('orderable', function ($value) {
+            if (isset($area1->order_column_name))
+            {
+                $datatable->addColumn('orderable', function ($value)
+                {
                     return '<i data-id="'. $value->id .'" class="bi text-dark fs-3 bi-arrows-move cursor-move"></i>';
                 });
             }
@@ -1021,8 +1023,9 @@ class ModuleController extends Controller
         }
         catch (\Exception $e)
         {
-            // Debug için hata mesajını göster (geliştirme ortamında)
-            if (config('app.debug')) {
+
+            if (config('app.debug'))
+            {
                 dd($e->getMessage(), $e->getTrace());
             }
 
@@ -1037,18 +1040,17 @@ class ModuleController extends Controller
     {
         $rawColumns = ['actions'];
 
-        // Orderable varsa ekle
-        if (isset($area1->order_column_name)) {
+        if (isset($area1->order_column_name))
+        {
             $rawColumns[] = 'orderable';
         }
 
-        foreach ($columns as $column) {
+        foreach ($columns as $column)
+        {
             $details = json_decode($column->detail, true);
 
-            // HTML içeren kolonları belirle
-            if ($column->form_type_id == 15 ||  // Boolean
-                $column->form_type_id == 1 ||   // Tags/Array
-                isset($details['realtime'])) {   // Realtime
+            if ($column->form_type_id == 15 || $column->form_type_id == 1 || isset($details['realtime']))
+            {
                 $rawColumns[] = $column->column_name;
             }
         }
@@ -1059,36 +1061,40 @@ class ModuleController extends Controller
     private function renderRelationshipColumn($value, $column, $details, $columnName)
     {
         $relationship = CrudRelationships::generateName($this->crud->model, $column->column_name);
-        $showColumn = $details['show_column'] ?? 'name';
+        $showColumn   = $details['show_column'] ?? 'name';
 
-        // Multiple relationship (belongsToMany veya multiple select)
-        if (!empty($details['multiple']) && $details['multiple'] === true) {
+        if (!empty($details['multiple']) && $details['multiple'] === true)
+        {
             $showValues = [];
 
-            if ($details['type'] == 'belongsToMany') {
-                // İlişki zaten eager load edildi
+            if ($details['type'] == 'belongsToMany')
+            {
                 $relationData = $value->{$relationship};
 
-                if ($relationData && $relationData->isNotEmpty()) {
-                    foreach ($relationData as $item) {
+                if ($relationData && $relationData->isNotEmpty())
+                {
+                    foreach ($relationData as $item)
+                    {
                         $showValues[] = $item->{$showColumn};
                     }
                 }
-            } else {
-                // JSON array olarak kaydedilmiş değerler
+            }
+            else
+            {
+
                 $values = json_decode($value->{$columnName}, true) ?? [];
 
-                if (!empty($values)) {
-                    // Toplu sorgu ile tüm ilişkili kayıtları çek
+                if (!empty($values))
+                {
                     $relatedModel = $details['model'];
-                    $matchColumn = $details['match_column'];
+                    $matchColumn  = $details['match_column'];
 
-                    $relatedItems = $relatedModel::whereIn($matchColumn, $values)
-                        ->get()
-                        ->keyBy($matchColumn);
+                    $relatedItems = $relatedModel::whereIn($matchColumn, $values)->get()->keyBy($matchColumn);
 
-                    foreach ($values as $itemId) {
-                        if (isset($relatedItems[$itemId])) {
+                    foreach ($values as $itemId)
+                    {
+                        if (isset($relatedItems[$itemId]))
+                        {
                             $showValues[] = $relatedItems[$itemId]->{$showColumn};
                         }
                     }
@@ -1098,10 +1104,10 @@ class ModuleController extends Controller
             return implode(', ', $showValues);
         }
 
-        // Single relationship
         $relationModel = $value->{$relationship};
 
-        if (!$relationModel) {
+        if (!$relationModel)
+        {
             return '';
         }
 
@@ -1110,43 +1116,44 @@ class ModuleController extends Controller
 
     private function renderRealtimeColumn($value, $column, $details, $locale, $crud)
     {
-        $formType = $column->type;
-        $type = $formType->key;
-        $dt = 1;
-        $language = $locale ? multipleLanguages(1, $locale) : null;
+        $formType    = $column->type;
+        $type        = $formType->key;
+        $dt          = 1;
+        $language    = $locale ? multipleLanguages(1, $locale) : null;
         $languageKey = $locale ? multipleLanguages(2, $locale) : null;
 
-        return view('crudPackage::formTypes.'. $formType->group,
-            compact('column', 'type', 'crud', 'value', 'formType', 'dt', 'language', 'languageKey')
-        )->render();
+        return view('crudPackage::formTypes.'. $formType->group,compact('column', 'type', 'crud', 'value', 'formType', 'dt', 'language', 'languageKey'))->render();
     }
 
     private function renderActions($value, $slug)
     {
         $user = auth()->user();
 
-        if (!($user->hasPermission($slug . '.destroy') ||
-            $user->hasPermission($slug . '.edit') ||
-            $user->hasPermission($slug . '.show'))) {
+        if (!($user->hasPermission($slug . '.destroy') || $user->hasPermission($slug . '.edit') || $user->hasPermission($slug . '.show')))
+        {
             return '';
         }
 
-        $actions = '<a href="#" class="btn btn-sm btn-light btn-active-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end" data-kt-menu-target="action-'.$value->id.'"> Aksiyon <i class="ki-duotone ki-down fs-5 ms-1"></i> </a>';
+        $actions  = '<a href="#" class="btn btn-sm btn-light btn-active-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end" data-kt-menu-target="action-'.$value->id.'"> Aksiyon <i class="ki-duotone ki-down fs-5 ms-1"></i> </a>';
         $actions .= '<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-primary fw-semibold fs-7 w-125px py-4" data-kt-menu="true" id="action-'.$value->id.'">';
 
-        if ($user->hasPermission($slug . '.create')) {
+        if ($user->hasPermission($slug . '.create'))
+        {
             $actions .= '<div class="menu-item px-3"><a href="' . route($slug . '.copy', $value->id) . '" class="menu-link px-3">Kopyala</a></div>';
         }
 
-        if ($user->hasPermission($slug . '.show')) {
+        if ($user->hasPermission($slug . '.show'))
+        {
             $actions .= '<div class="menu-item px-3"><a href="' . route($slug . '.show', $value->id) . '" class="menu-link px-3">Detay</a></div>';
         }
 
-        if ($user->hasPermission($slug . '.edit')) {
+        if ($user->hasPermission($slug . '.edit'))
+        {
             $actions .= '<div class="menu-item px-3"><a href="'.route($slug . '.edit', $value->id).'" class="menu-link px-3">Düzenle</a></div>';
         }
 
-        if ($user->hasPermission($slug . '.destroy')) {
+        if ($user->hasPermission($slug . '.destroy'))
+        {
             $actions .= '<div class="menu-item px-3"><a href="#" data-title="Bu veriyi" data-route="'.route($slug . '.destroy', $value->id).'" class="menu-link px-3" onclick="destroy(this)">Sil</a></div>';
         }
 
@@ -1159,53 +1166,85 @@ class ModuleController extends Controller
     {
         $formType = $column->form_type_id;
 
-        // Boolean (15)
-        if ($formType == 15) {
+        if ($formType == 15)
+        {
             return $value->$columnName == 1
                 ? '<span class="badge badge-lg badge-success">'. ($details['on'] ?? 'Aktif') .'</span>'
                 : '<span class="badge badge-lg badge-danger">'. ($details['off'] ?? 'Pasif') .'</span>';
         }
 
-        // Select (12)
-        if ($formType == 12) {
-            if (isset($details['items']) && is_array($details['items'])) {
-                foreach ($details['items'] as $keyItem => $item) {
-                    if ($keyItem == $value->$columnName) {
+        if ($formType == 12 || $formType == 16)
+        {
+            if (isset($details['items']) && is_array($details['items']))
+            {
+                $columnValue = $value->$columnName;
+
+                if (is_array($columnValue) || is_string($columnValue) && json_decode($columnValue))
+                {
+                    $selectedValues = is_array($columnValue) ? $columnValue : json_decode($columnValue, true);
+                    $selectedItems  = [];
+
+                    foreach ($selectedValues as $selectedValue)
+                    {
+                        if (isset($details['items'][$selectedValue]))
+                        {
+                            $selectedItems[] = $details['items'][$selectedValue];
+                        }
+                    }
+
+                    return implode(', ', $selectedItems);
+                }
+
+                foreach ($details['items'] as $keyItem => $item)
+                {
+                    if ($keyItem == $value->$columnName)
+                    {
                         return $item;
                     }
                 }
             }
+
             return $value->$columnName ?? '';
         }
 
-        // Array/Tags (1)
-        if ($formType == 1) {
+
+        if ($formType == 1)
+        {
             $values = json_decode($value->$columnName);
 
-            if (is_array($values)) {
+            if (is_array($values))
+            {
                 $badges = '';
-                foreach ($values as $item) {
+
+                foreach ($values as $item)
+                {
                     $badges .= '<span class="badge badge-primary me-1">'. $item .'</span>';
                 }
+
                 return $badges;
             }
 
             return $value->$columnName ?? '';
         }
 
-        // Date format
-        if ($column->relationship == 0 && !empty($details)) {
-            if (isset($details['format'])) {
-                try {
+
+        if ($column->relationship == 0 && !empty($details))
+        {
+            if (isset($details['format']))
+            {
+                try
+                {
                     return Carbon::parse($value->$columnName)->format($details['format']);
-                } catch (\Exception $e) {
+                }
+                catch (\Exception $e)
+                {
                     return $value->$columnName ?? '';
                 }
             }
         }
 
-        // Relationship
-        if ($column->relationship == 1) {
+        if ($column->relationship == 1)
+        {
             return $this->renderRelationshipColumn($value, $column, $details, $columnName);
         }
 
