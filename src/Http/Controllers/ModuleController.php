@@ -11,9 +11,8 @@ use crudPackage\Models\FormType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
-use Mockery\Exception;
-use Session;
-use Validator;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 
@@ -669,7 +668,7 @@ class ModuleController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -760,7 +759,7 @@ class ModuleController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -1023,11 +1022,6 @@ class ModuleController extends Controller
         }
         catch (\Exception $e)
         {
-
-            if (config('app.debug'))
-            {
-                dd($e->getMessage(), $e->getTrace());
-            }
 
             return response()->json([
                 'result' => 0,
@@ -1501,7 +1495,6 @@ class ModuleController extends Controller
         }
         catch (\Exception $e)
         {
-            dd($e);
             return response()->json(['result' => 0,'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'],403);
         }
     }
@@ -1693,7 +1686,7 @@ class ModuleController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [

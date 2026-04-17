@@ -7,9 +7,8 @@ use crudPackage\Models\Menu;
 use crudPackage\Models\MenuItem;
 use crudPackage\Models\Role;
 use Illuminate\Http\Request;
-use Mockery\Exception;
-use Session;
-use Validator;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 
 
@@ -94,7 +93,7 @@ class MenuController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -205,7 +204,7 @@ class MenuController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -327,7 +326,7 @@ class MenuController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -393,7 +392,7 @@ class MenuController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -418,7 +417,7 @@ class MenuController extends Controller
                 ]
             );
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [

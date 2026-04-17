@@ -1,7 +1,7 @@
 # Zaurac CRUD Package
 
 Laravel projelerinde hızlı ve kolay şekilde CRUD işlemleri geliştirmek için hazırlanmış bir pakettir.  
-`Laravel 12` uyumludur.
+`Laravel 13` uyumludur. PHP 8.3+ gerektirir.
 
 ---
 

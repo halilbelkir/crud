@@ -4,9 +4,8 @@ namespace crudPackage\Http\Controllers;
 
 use crudPackage\Models\Crud;
 use Illuminate\Http\Request;
-use Mockery\Exception;
-use Session;
-use Validator;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 
 
 class MainController extends Controller
@@ -54,7 +53,7 @@ class MainController extends Controller
                 ]
             );
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -76,7 +75,7 @@ class MainController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [

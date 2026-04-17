@@ -14,9 +14,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Mockery\Exception;
-use Session;
-use Validator;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Validation\Rule;
 class CrudController extends Controller
@@ -195,7 +194,7 @@ class CrudController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -430,7 +429,7 @@ class CrudController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -461,7 +460,7 @@ class CrudController extends Controller
                 ]
             );
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -572,7 +571,7 @@ class CrudController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -597,7 +596,7 @@ class CrudController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -739,7 +738,7 @@ class CrudController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -774,7 +773,7 @@ class CrudController extends Controller
                 ]
             );
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -799,7 +798,7 @@ class CrudController extends Controller
                 ]
             );
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -868,7 +867,7 @@ class CrudController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [

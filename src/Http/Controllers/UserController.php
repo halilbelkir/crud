@@ -10,9 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Mockery\Exception;
-use Session;
-use Validator;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
@@ -92,7 +91,7 @@ class UserController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -178,7 +177,7 @@ class UserController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -205,7 +204,7 @@ class UserController extends Controller
                 ]
             );
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
