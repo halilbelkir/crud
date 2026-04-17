@@ -9,9 +9,8 @@ use crudPackage\Models\RoleGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Mockery\Exception;
-use Session;
-use Validator;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 
 class RoleGroupController extends Controller
@@ -172,7 +171,7 @@ class RoleGroupController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -337,7 +336,7 @@ class RoleGroupController extends Controller
                 ]
             );
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -376,7 +375,7 @@ class RoleGroupController extends Controller
                 ]
             );
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [

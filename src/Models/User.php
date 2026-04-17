@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Cache;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory, Notifiable;
 
     /**

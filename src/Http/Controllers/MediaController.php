@@ -2,11 +2,11 @@
 
 namespace crudPackage\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use crudPackage\Http\Controllers\Controller;
 use crudPackage\Library\ImageUpload\ImageUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 class MediaController extends Controller
 {
@@ -89,7 +89,7 @@ class MediaController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -136,7 +136,7 @@ class MediaController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [
@@ -169,7 +169,7 @@ class MediaController extends Controller
             );
 
         }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             return response()->json(
                 [

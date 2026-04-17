@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Session;
-use Validator;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -96,7 +96,6 @@ class AuthController extends Controller
         }
         catch (\Exception $e)
         {
-            dd($e);
             return response(
                 [
                     'response' => false,
@@ -168,7 +167,6 @@ class AuthController extends Controller
         }
         catch (\Exception $e)
         {
-            dd($e);
             return response()->json(['result' => 0,'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'],403);
         }
     }

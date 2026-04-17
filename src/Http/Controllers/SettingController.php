@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use crudPackage\Models\Language;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 use crudPackage\Library\ImageUpload\ImageUpload;
 class SettingController extends Controller
 {
