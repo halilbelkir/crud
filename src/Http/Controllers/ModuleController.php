@@ -441,6 +441,13 @@ class ModuleController extends Controller
             {
                 if (is_array($file))
                 {
+                    $file = array_filter($file, fn($f) => $f instanceof \Illuminate\Http\UploadedFile && $f->isValid());
+
+                    if (empty($file))
+                    {
+                        continue;
+                    }
+
                     foreach($file as $order => $mFile)
                     {
                         $name      = $crud->table_name.'-'.$order.'-'.random_int(100000000, 999999999999).time().(isset($language) ? '-'.$language->code : null);
@@ -456,7 +463,26 @@ class ModuleController extends Controller
                     }
                     else
                     {
-                        if (isset($data->$inputName))
+                        if (isset($language) && $orderLanguage > 0 && isset($data))
+                        {
+                            $existingTranslate = DataTranslate::where('foreign_key', $data->id)
+                                ->where('locale', $language->code)
+                                ->where('model', $crud->model)
+                                ->where('column_name', $inputName)
+                                ->first();
+
+                            if ($existingTranslate && !empty($existingTranslate->value))
+                            {
+                                $inputValues         = json_decode($existingTranslate->value, true) ?? [];
+                                $merge               = array_merge($images, $inputValues);
+                                $allData[$inputName] = json_encode($merge, JSON_UNESCAPED_UNICODE, true);
+                            }
+                            else
+                            {
+                                $allData[$inputName] = json_encode($images, JSON_UNESCAPED_UNICODE, true);
+                            }
+                        }
+                        else if (isset($data->$inputName))
                         {
                             if (!is_array(json_decode($data->$inputName,true)))
                             {
@@ -478,6 +504,11 @@ class ModuleController extends Controller
                 }
                 else
                 {
+                    if (!($file instanceof \Illuminate\Http\UploadedFile) || !$file->isValid())
+                    {
+                        continue;
+                    }
+
                     if (isset($data) && isset($language) && $orderLanguage > 0)
                     {
                         $newData = DataTranslate::where('foreign_key',$data->id)->where('locale',$language->code)->where('model',$crud->model)->where('column_name',$inputName)->first();
@@ -670,6 +701,12 @@ class ModuleController extends Controller
         }
         catch (\Exception $e)
         {
+            \Illuminate\Support\Facades\Log::error('ModuleController@store: ' . $e->getMessage(), [
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json(
                 [
                     'result'  => 0,
@@ -1161,6 +1198,11 @@ class ModuleController extends Controller
         $formType    = $column->form_type_id;
         $columnValue = $value->$columnName;
 
+        if ($column->relationship == 1)
+        {
+            return $this->renderRelationshipColumn($value, $column, $details, $columnName);
+        }
+
         if ($formType == 15)
         {
             return $columnValue == 1
@@ -1234,11 +1276,6 @@ class ModuleController extends Controller
                     return $columnValue ?? '';
                 }
             }
-        }
-
-        if ($column->relationship == 1)
-        {
-            return $this->renderRelationshipColumn($value, $column, $details, $columnName);
         }
 
         return $columnValue ?? '';

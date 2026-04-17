@@ -50,10 +50,14 @@
                     @if(!empty($images))
                         <div class="row g-10 row-cols-2 row-cols-lg-5">
                             @foreach($images as $order => $image)
+                                @php
+                                    $disk     = Storage::disk('upload');
+                                    $imageUrl = $disk->url($image);
+                                @endphp
                                 <div class="col">
-                                    <a class="d-block overlay" data-fslightbox="lightbox-hot-sales" href="{{$image}}">
+                                    <a class="d-block overlay" data-fslightbox="lightbox-hot-sales" href="{{$imageUrl}}">
                                         <div class="overlay-wrapper bgi-no-repeat bgi-position-center bgi-size-cover card-rounded h-175px"
-                                             style="background-image:url({{$image}}">
+                                             style="background-image:url({{$imageUrl}})">
                                         </div>
                                         <div class="overlay-layer card-rounded bg-dark bg-opacity-25">
                                             <i class="ki-outline ki-eye fs-3x text-white"></i>
@@ -113,9 +117,9 @@
                                 <tr>
                                     @foreach($details as $detail)
                                         @if($detail['form_type_id'] == 3)
-                                            <td>{{ \Carbon\Carbon::make($value->{$detail['column_name']})->format('d.m.Y') }}</td>
+                                            <td>{{ rescue(fn() => \Carbon\Carbon::parse($value->{$detail['column_name']})->format('d.m.Y'), '') }}</td>
                                         @elseif($detail['form_type_id'] == 4)
-                                            <td>{{ \Carbon\Carbon::make($value->{$detail['column_name']})->format('d.m.Y H:i:s') }}</td>
+                                            <td>{{ rescue(fn() => \Carbon\Carbon::parse($value->{$detail['column_name']})->format('d.m.Y H:i:s'), '') }}</td>
                                         @else
                                             <td>{!! $value->{$detail['column_name']} !!}</td>
                                         @endif

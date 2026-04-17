@@ -75,6 +75,11 @@ class CrudServiceProvider extends ServiceProvider
             $table  = $model->getTable();
             $locale = $locale ?? app()->getLocale();
 
+            if (empty($locale) || !function_exists('multipleLanguages') || !multipleLanguages())
+            {
+                return $this->orderBy("{$table}.{$column}", $direction);
+            }
+
             $this->select("{$table}.*");
 
             return $this->leftJoin('data_translates as dt_order', function ($join) use (
@@ -85,7 +90,7 @@ class CrudServiceProvider extends ServiceProvider
                     ->where('dt_order.column_name', $column)
                     ->where('dt_order.locale', $locale);
             })
-                ->orderBy('dt_order.value', $direction);
+                ->orderByRaw("COALESCE(dt_order.value, {$table}.{$column}) {$direction}");
         });
 
         Builder::macro('deleteTranslation', function ()

@@ -169,23 +169,21 @@ function menuGenerate($menu)
 function settings($column)
 {
     $cacheName = 'settings';
-    $cache     = Cache::remember($cacheName, Carbon::now()->addMinutes(480), function () use ($cacheName,$column)
+    $cache     = Cache::remember($cacheName, 480 * 60, function ()
     {
         $settings = Setting::find(1);
 
-        if($settings)
+        if ($settings)
         {
-            return $settings;
+            return $settings->toArray();
         }
-        else
-        {
-            return null;
-        }
+
+        return null;
     });
 
     if ($column == 'languages' && !empty($cache))
     {
-        return $cache->languageModels();
+        return Setting::find(1)?->languageModels() ?? [];
     }
 
     $columns =
@@ -199,7 +197,7 @@ function settings($column)
             'title'    => 'Zaurac Teknoloji',
         ];
 
-    return $cache->$column ?? $columns[$column];
+    return $cache[$column] ?? $columns[$column];
 }
 
 function diffFields(array $old, array $new): array
