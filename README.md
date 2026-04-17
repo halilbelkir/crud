@@ -88,6 +88,18 @@ Ana projenizin `config/filesystem.php` dosyasına aşağıdaki gibi **upload** a
 
 ---
 
+## 2️⃣ cache.php Düzenlemesi (Laravel 13)
+
+Laravel 13'te cache'te saklanan PHP nesneleri için izin listesi gereklidir. Ana projenizin `config/cache.php` dosyasındaki `serializable_classes` ayarını aşağıdaki gibi güncelleyin:
+
+```php
+'serializable_classes' => [
+    crudPackage\Models\Setting::class,
+],
+```
+
+---
+
 ✅ Artık paketiniz kullanıma hazırdır!
 
 ### Kullanıcı Bilgileri

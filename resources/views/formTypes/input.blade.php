@@ -11,15 +11,17 @@
     {
         $inputValue = $value->{$column->column_name} ?? null;
     }
-    else if (isset($column->detail))
+
+    if ($type == 'datetime')
+    {
+        $type = 'datetime-local';
+    }
+
+    if (isset($column->detail) && $column->repeater != 1)
     {
         $details  = json_decode($column->detail,true);
 
-        if ($type == 'datetime')
-        {
-            $type = 'datetime-local';
-        }
-        else if ($type == 'image' || $type == 'file')
+        if ($type == 'image' || $type == 'file')
         {
             $type     = 'file';
             $multiple = isset($details['multiple']) && $details['multiple'] == true ? 'multiple' : null;
@@ -37,6 +39,12 @@
             if (($formType->key == 'image' || $formType->key == 'file') && $multiple != 'multiple')
             {
                 $inputValue = $value->{$column->column_name} ?? null;
+
+                if (empty($inputValue) && isset($originalValue))
+                {
+                    $inputValue = $originalValue->{$column->column_name} ?? null;
+                }
+
                 $inputValue = ($inputValue !== null && $inputValue !== '') ? Storage::disk('upload')->url($inputValue) : null;
             }
             else

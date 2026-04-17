@@ -92,6 +92,6 @@ class ImageUpload
 
         $this->getStorage()->copy($oldFile, $newFile);
 
-        return $this->getStorage()->url($newFile);
+        return $newFile;
     }
 }

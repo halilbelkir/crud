@@ -720,8 +720,9 @@ class CrudController extends Controller
             }
             else
             {
-                $crudItem               = CrudItem::where('column_name',$request->get('relationship_column_name'))->where('crud_id',$crud->id)->first();
-                $crudItem->column_name  = $request->get('relationship_column_name');
+                $crudItem              = CrudItem::where('column_name',$request->get('relationship_column_name'))->where('crud_id',$crud->id)->first() ?? new CrudItem();
+                $crudItem->column_name = $request->get('relationship_column_name');
+                $crudItem->crud_id     = $crud->id;
             }
 
             $crudItem->title        = $request->get('relationship_title');
