@@ -81,13 +81,11 @@ class RoleGroupController extends Controller
             $attribute =
                 [
                     'title'           => 'Başlık',
-                    'permissions_all' => 'İzinler',
                 ];
 
             $rules =
                 [
                     'title'           => 'required',
-                    'permissions_all' => 'required',
                 ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -99,6 +97,16 @@ class RoleGroupController extends Controller
                     [
                         'result' => 2,
                         'message' => $validator->errors()
+                    ],403
+                );
+            }
+
+            if (empty($request->get('permissions')) && empty($request->get('special_permissions')))
+            {
+                return response()->json(
+                    [
+                        'result'  => 2,
+                        'message' => ['permissions' => ['En az bir rol izni seçilmelidir.']]
                     ],403
                 );
             }
@@ -229,13 +237,11 @@ class RoleGroupController extends Controller
             $attribute =
                 [
                     'title'           => 'Başlık',
-                    'permissions_all' => 'İzinler',
                 ];
 
             $rules =
                 [
                     'title'           => 'required',
-                    'permissions_all' => 'required',
                 ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -247,6 +253,16 @@ class RoleGroupController extends Controller
                     [
                         'result' => 2,
                         'message' => $validator->errors()
+                    ], 403
+                );
+            }
+
+            if (empty($request->get('permissions')) && empty($request->get('special_permissions')))
+            {
+                return response()->json(
+                    [
+                        'result'  => 2,
+                        'message' => ['permissions' => ['En az bir rol izni seçilmelidir.']]
                     ], 403
                 );
             }
