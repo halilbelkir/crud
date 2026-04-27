@@ -957,11 +957,34 @@ class ModuleController extends Controller
 
             self::cacheClear();
 
+            $otherRoute = $crud->other_route;
+            $otherRoute = json_decode($otherRoute);
+
+            if (isset($otherRoute->route))
+            {
+                $params  = [];
+                $allData = (count($this->languages) > 0) ? $allData[$this->languages[0]->code] : $allData;
+
+                if (isset($otherRoute->params))
+                {
+                    foreach ($otherRoute->params as $param)
+                    {
+                        $params[$param] = $allData[$param];
+                    }
+                }
+
+                $otherRoute = route($otherRoute->route,$params);
+            }
+            else
+            {
+                $otherRoute = route($crud->slug .'.index');
+            }
+
             return response()->json(
                 [
                     'result'  => 1,
                     'message' => 'İşlem Başarılı.',
-                    'route'   => route($crud->slug .'.index')
+                    'route'   => $otherRoute
                 ]
             );
         }
