@@ -221,11 +221,11 @@ class ModuleController extends Controller
 
             if ($column->required == 1 && isset($details->validation))
             {
-                $rules[$columnName] = ['required',explode('|',$details->validation)];
+                $rules[$columnName] = array_merge(['required'], explode('|',$details->validation));
             }
             else if ($column->required == 0 && isset($details->validation))
             {
-                $rules[$columnName] = [explode('|',$details->validation)];
+                $rules[$columnName] = explode('|',$details->validation);
             }
             else if ($column->required == 1 && !isset($details->validation))
             {
