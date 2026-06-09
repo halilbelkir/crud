@@ -30,19 +30,30 @@ composer require zaurac/crud:dev-main
 
 ---
 
-## 3️⃣ Publish İşlemleri
+## 3️⃣ Public Asset'lerin Kopyalanması
 
-Paketi yükledikten sonra gerekli publish komutlarını çalıştırın:
+Paket, `public` klasöründeki asset'leri (CSS, JS, görseller) projenizin `public/crud` dizinine **kopyalar** (symlink kullanılmaz; symlink production ortamlarında sorun çıkardığı için kopyalama tercih edilmiştir).
+
+İlk istekte `public/crud` yoksa otomatik kopyalanır. Ayrıca paketin `composer install` / `composer update` adımlarında `crudPackage\CrudServiceProvider::publishAssets` script'i çalışarak asset'leri yeniden (force) kopyalar.
+
+> **Önemli:** Composer yalnızca **root projenin** script'lerini çalıştırır; bir bağımlılık paketinin script'leri tüketici projede otomatik tetiklenmez. Bu nedenle paketi tüketen projede (ör. ana uygulamanız) `composer install/update` sonrası asset'lerin yenilenmesi için **ana projenin** `composer.json` dosyasına aşağıdaki script'leri ekleyin:
+
+```json
+"scripts": {
+    "post-install-cmd": [
+        "crudPackage\\CrudServiceProvider::publishAssets"
+    ],
+    "post-update-cmd": [
+        "crudPackage\\CrudServiceProvider::publishAssets"
+    ]
+}
+```
+
+> `routes` ve `lang` dosyalarını kopyalamak isterseniz ayrıca şu komutu çalıştırabilirsiniz:
 
 ```bash
 php artisan vendor:publish --provider="crudPackage\CrudServiceProvider" --tag=all
 ```
-
-Bu işlem ile:
-- `routes`
-- `views`
-- `public` asset’ler  
-projeye kopyalanır.
 
 ---
 

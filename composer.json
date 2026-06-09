@@ -23,7 +23,10 @@
   },
   "scripts": {
     "post-install-cmd": [
-      "@php artisan vendor:publish --provider=\"crudPackage\\CrudServiceProvider\", --tag=\"all\""
+      "crudPackage\\CrudServiceProvider::publishAssets"
+    ],
+    "post-update-cmd": [
+      "crudPackage\\CrudServiceProvider::publishAssets"
     ]
   }
 }

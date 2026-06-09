@@ -32,15 +32,14 @@ class CrudServiceProvider extends ServiceProvider
         $this->loadHelpers();
 
 
-        if (!file_exists($laravelPublic))
+        if (is_link($laravelPublic))
         {
-            mkdir($laravelPublic, 0777, true);
+            unlink($laravelPublic);
         }
 
-        $this->removeDirectory($laravelPublic);
-
-        if (!is_link($laravelPublic)) {
-            File::link($packagePublic, $laravelPublic);
+        if (!file_exists($laravelPublic))
+        {
+            self::copyDirectory($packagePublic, $laravelPublic);
         }
 
         config(['auth.providers.users.model' => \crudPackage\Models\User::class]);
@@ -155,6 +154,52 @@ class CrudServiceProvider extends ServiceProvider
         Artisan::call('migrate', [
             '--force' => true //
         ]);
+    }
+
+    public static function publishAssets()
+    {
+        $source      = __DIR__ . '/../public';
+        $destination = function_exists('public_path') ? public_path('crud') : getcwd() . '/public/crud';
+
+        if (is_link($destination))
+        {
+            unlink($destination);
+        }
+
+        self::copyDirectory($source, $destination);
+    }
+
+    public static function copyDirectory($source, $destination)
+    {
+        if (!is_dir($source))
+        {
+            return;
+        }
+
+        if (!is_dir($destination))
+        {
+            mkdir($destination, 0777, true);
+        }
+
+        foreach (scandir($source) as $item)
+        {
+            if ($item === '.' || $item === '..')
+            {
+                continue;
+            }
+
+            $sourcePath      = $source . DIRECTORY_SEPARATOR . $item;
+            $destinationPath = $destination . DIRECTORY_SEPARATOR . $item;
+
+            if (is_dir($sourcePath))
+            {
+                self::copyDirectory($sourcePath, $destinationPath);
+            }
+            else
+            {
+                copy($sourcePath, $destinationPath);
+            }
+        }
     }
 
 
