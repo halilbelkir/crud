@@ -56,7 +56,7 @@
                             }
 
                             $extension = getExtension($file);
-                            $url       = '/upload/'.$file;
+                            $url       = Storage::disk($disk)->url($file);
                             $isImage   = in_array($extension, ['jpg','jpeg','png','webp','gif']);
                             $modified   = Storage::disk($disk)->lastModified($file);
                             $fileName   = isset($path) ? str_replace($path.'/','',$file) :  $file;
