@@ -14,6 +14,59 @@
             </div>
             <div class="card-toolbar">
                 <div class="d-flex justify-content-end" id="exportButtons" data-kt-user-table-toolbar="base">
+                    <button type="button" class="btn btn-light-primary me-3" data-kt-menu-trigger="click"
+                            data-kt-menu-placement="bottom-end">
+                        <i class="ki-duotone ki-filter fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i> Filtre
+                    </button>
+                    <div class="menu menu-sub menu-sub-dropdown w-300px w-md-325px" data-kt-menu="true">
+                        <div class="px-7 py-5">
+                            <div class="fs-5 text-dark fw-bold">Filtreleme</div>
+                        </div>
+                        <div class="separator border-gray-200"></div>
+                        <div class="px-7 py-5">
+                            <div class="mb-5">
+                                <label class="form-label fs-6 fw-semibold">İşlem</label>
+                                <select class="form-select form-select-solid" data-dt-filter="description">
+                                    <option value="">Hepsi</option>
+                                    <option value="1">Ekleme</option>
+                                    <option value="2">Düzenleme</option>
+                                    <option value="3">Silme</option>
+                                </select>
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label fs-6 fw-semibold">Tablo</label>
+                                <select class="form-select form-select-solid" data-dt-filter="log_name">
+                                    <option value="">Hepsi</option>
+                                    @foreach($tables as $table)
+                                        <option value="{{$table}}">{{$table}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label fs-6 fw-semibold">Kullanıcı</label>
+                                <select class="form-select form-select-solid" data-dt-filter="causer_id">
+                                    <option value="">Hepsi</option>
+                                    @foreach($users as $user)
+                                        <option value="{{$user->id}}">{{$user->name}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label fs-6 fw-semibold">Başlangıç Tarihi</label>
+                                <input type="date" class="form-control form-control-solid" data-dt-filter="start_date">
+                            </div>
+                            <div class="mb-5">
+                                <label class="form-label fs-6 fw-semibold">Bitiş Tarihi</label>
+                                <input type="date" class="form-control form-control-solid" data-dt-filter="end_date">
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-light btn-active-light-primary" data-dt-filter-reset>Sıfırla</button>
+                            </div>
+                        </div>
+                    </div>
                     <button type="button" class="btn btn-secondary me-3" data-kt-menu-trigger="click"
                             data-kt-menu-placement="bottom-end">
                         <i class="ki-duotone ki-exit-up fs-2">

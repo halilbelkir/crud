@@ -16,7 +16,10 @@ class LogController extends Controller
      */
     public function index()
     {
-        return view('crudPackage::logs.index');
+        $tables = Activity::query()->select('log_name')->distinct()->orderBy('log_name')->pluck('log_name');
+        $users  = User::query()->orderBy('name')->get(['id','name']);
+
+        return view('crudPackage::logs.index', compact('tables','users'));
     }
 
     /**
@@ -88,9 +91,36 @@ class LogController extends Controller
         //
     }
 
-    public function datatable()
+    public function datatable(Request $request)
     {
-        return Datatables::of(Activity::query()->with('causer'))
+        $query = Activity::query()->with('causer');
+
+        if ($request->filled('description'))
+        {
+            $query->where('description', $request->input('description'));
+        }
+
+        if ($request->filled('log_name'))
+        {
+            $query->where('log_name', $request->input('log_name'));
+        }
+
+        if ($request->filled('causer_id'))
+        {
+            $query->where('causer_id', $request->input('causer_id'));
+        }
+
+        if ($request->filled('start_date'))
+        {
+            $query->whereDate('created_at', '>=', $request->input('start_date'));
+        }
+
+        if ($request->filled('end_date'))
+        {
+            $query->whereDate('created_at', '<=', $request->input('end_date'));
+        }
+
+        return Datatables::of($query)
             ->editColumn('description', function ($value) 
             {
                 $status  = $value->description;

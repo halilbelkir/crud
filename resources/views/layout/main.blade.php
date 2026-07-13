@@ -242,7 +242,16 @@
                     }
                 }
             ],
-            ajax : '@yield('datatables.ajax.url')',
+            ajax : {
+                url  : '@yield('datatables.ajax.url')',
+                data : function (d)
+                {
+                    document.querySelectorAll('[data-dt-filter]').forEach(function (element)
+                    {
+                        d[element.getAttribute('data-dt-filter')] = element.value;
+                    });
+                }
+            },
             columns : @yield('datatables.columns'),
             language:{"url":"{{asset('crud/vendor/datatables/turkish.json')}}"},
             drawCallback : function( settings )
@@ -280,6 +289,29 @@
         {
             datatables.search(e.target.value).draw();
         });
+
+        document.querySelectorAll('[data-dt-filter]').forEach(function (element)
+        {
+            element.addEventListener('change', function ()
+            {
+                datatables.draw();
+            });
+        });
+
+        let filterReset = document.querySelector('[data-dt-filter-reset]');
+
+        if (filterReset)
+        {
+            filterReset.addEventListener('click', function ()
+            {
+                document.querySelectorAll('[data-dt-filter]').forEach(function (element)
+                {
+                    element.value = '';
+                });
+
+                datatables.draw();
+            });
+        }
 
         const exportButtons = document.querySelectorAll('#exportButtons [data-table-export-button-name]');
         exportButtons.forEach(exportButton => {
