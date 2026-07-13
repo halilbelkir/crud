@@ -74,6 +74,7 @@ class CrudRoutes
             Route::get('logs/datatable', [\crudPackage\Http\Controllers\LogController::class, 'datatable'])->name('logs.datatables');
             Route::resource('logs', \crudPackage\Http\Controllers\LogController::class)->middleware('checkPermission');
 
+            Route::get('media/download/{path?}', [\crudPackage\Http\Controllers\MediaController::class, 'download'])->where('path', '.*')->name('media.download');
             Route::get('media/{path?}', [\crudPackage\Http\Controllers\MediaController::class, 'index'])->where('path', '.*')->name('media.index')->middleware('checkPermission');
             Route::post('media/upload', [\crudPackage\Http\Controllers\MediaController::class, 'upload'])->name('media.upload');
             Route::post('media/folder', [\crudPackage\Http\Controllers\MediaController::class, 'createFolder'])->name('media.createFolder');

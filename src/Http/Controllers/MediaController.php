@@ -27,11 +27,28 @@ class MediaController extends Controller
         abort_if(!preg_match('#^[a-zA-Z0-9/_-]*$#', $path), 403);
 
         $segments = $path ? explode('/', $path) : [];
-        $folders  = Storage::disk($this->disk)->directories($path);
-        $files     = Storage::disk($this->disk)->files($path);
-        $disk     = $this->disk;
+
+        $folders = collect(Storage::disk($this->disk)->directories($path))
+            ->sortBy(fn ($folder) => mb_strtolower(basename($folder)), SORT_NATURAL)
+            ->values()
+            ->all();
+
+        $files = collect(Storage::disk($this->disk)->files($path))
+            ->sortBy(fn ($file) => mb_strtolower(basename($file)), SORT_NATURAL)
+            ->values()
+            ->all();
+
+        $disk = $this->disk;
 
         return view('crudPackage::media.index', compact('folders', 'files', 'segments','path', 'disk'));
+    }
+
+    public function download($path = null)
+    {
+        abort_if(!$path || str_contains($path, '..'), 403);
+        abort_if(!Storage::disk($this->disk)->fileExists($path), 404);
+
+        return Storage::disk($this->disk)->download($path);
     }
 
     public function upload(Request $request)

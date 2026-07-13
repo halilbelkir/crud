@@ -96,6 +96,11 @@
                                 <button class="copy" data-clipboard-target="#p-url"> <i class="bi bi-copy fs-4"></i> </button>
                             </li>
                             <li>
+                                <a id="p-download" class="btn btn-sm btn-light-primary w-100 mb-2" download>
+                                    <i class="bi bi-download fs-4"></i> Dosyayı İndir
+                                </a>
+                            </li>
+                            <li>
                                 <button id="p-delete" class="btn btn-sm btn-danger w-100" onclick="destroy(this)" data-route="#" data-title=""> </button>
                             </li>
                         </ul>
@@ -202,6 +207,7 @@
                 document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
                 this.classList.add('active');
                 $('#p-url').closest('li').removeClass('d-none');
+                $('#p-download').closest('li').removeClass('d-none');
 
                 const panel = document.getElementById('preview-panel');
 
@@ -222,6 +228,7 @@
                 document.getElementById('p-url').href             = url;
                 document.getElementById('p-delete').dataset.title = name + ' isimli dosyayı';
                 document.getElementById('p-delete').dataset.route = '{{ route('media.delete',['path' => $path]) }}' + '/' + name;
+                document.getElementById('p-download').href        = '{{ route('media.download',['path' => $path]) }}' + '/' + name;
 
                 const img  = document.getElementById('preview-image');
                 const icon = document.getElementById('preview-icon-selector');
@@ -345,6 +352,7 @@
             document.getElementById('p-delete').dataset.route = document.getElementById('p-delete').dataset.route + '/' + name;
 
             $('#p-url').closest('li').addClass('d-none');
+            $('#p-download').closest('li').addClass('d-none');
 
             icon.getElementsByTagName('i')[0].className = 'bi bi-folder-fill';
             icon.classList.remove('d-none');
