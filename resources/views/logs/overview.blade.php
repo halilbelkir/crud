@@ -14,7 +14,7 @@
                             </div>
                             <div id="{{$oldKey}}" class="collapse show">
                                 <div class="card-body fs-4">
-                                    {{ $oldAttribute }}
+                                    {{ logAttributeValue($oldAttribute) }}
                                 </div>
                             </div>
                         </div>
@@ -35,7 +35,7 @@
                             </div>
                             <div id="{{$newKey}}" class="collapse show">
                                 <div class="card-body fs-4">
-                                    {{ $newAttribute }}
+                                    {{ logAttributeValue($newAttribute) }}
                                 </div>
                             </div>
                         </div>
@@ -55,7 +55,7 @@
                     </div>
                     <div id="{{$key}}" class="collapse show">
                         <div class="card-body fs-4">
-                            {{ $attribute }}
+                            {{ logAttributeValue($attribute) }}
                         </div>
                     </div>
                 </div>

@@ -224,6 +224,16 @@ function diffFields(array $old, array $new): array
     return $diff;
 }
 
+function logAttributeValue($value): string
+{
+    if (is_array($value) || is_object($value))
+    {
+        return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    }
+
+    return (string) ($value ?? '');
+}
+
 function shortFilename(string $filename, int $limit = 8): string
 {
     $ext  = pathinfo($filename, PATHINFO_EXTENSION);
