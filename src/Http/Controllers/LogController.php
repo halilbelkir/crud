@@ -90,7 +90,7 @@ class LogController extends Controller
 
     public function datatable()
     {
-        return Datatables::of(Activity::all())
+        return Datatables::of(Activity::query()->with('causer'))
             ->editColumn('description', function ($value) 
             {
                 $status  = $value->description;
@@ -117,9 +117,7 @@ class LogController extends Controller
             })
             ->editColumn('user', function ($value)
             {
-                $user    = User::find($value->causer_id);
-
-                return $user->name;
+                return $value->causer->name ?? '-';
             })
             ->addColumn('actions', function ($value)
             {
