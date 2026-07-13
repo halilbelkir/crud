@@ -15,13 +15,13 @@
             <div class="card-toolbar">
                 <div class="d-flex justify-content-end" id="exportButtons" data-kt-user-table-toolbar="base">
                     <button type="button" class="btn btn-light-primary me-3" data-kt-menu-trigger="click"
-                            data-kt-menu-placement="bottom-end">
+                            data-kt-menu-placement="bottom-end" data-kt-menu-target="#logFilterMenu">
                         <i class="ki-duotone ki-filter fs-2">
                             <span class="path1"></span>
                             <span class="path2"></span>
                         </i> Filtre
                     </button>
-                    <div class="menu menu-sub menu-sub-dropdown w-300px w-md-325px" data-kt-menu="true">
+                    <div class="menu menu-sub menu-sub-dropdown w-300px w-md-325px" data-kt-menu="true" id="logFilterMenu">
                         <div class="px-7 py-5">
                             <div class="fs-5 text-dark fw-bold">Filtreleme</div>
                         </div>
@@ -68,14 +68,14 @@
                         </div>
                     </div>
                     <button type="button" class="btn btn-secondary me-3" data-kt-menu-trigger="click"
-                            data-kt-menu-placement="bottom-end">
+                            data-kt-menu-placement="bottom-end" data-kt-menu-target="#logExportMenu">
                         <i class="ki-duotone ki-exit-up fs-2">
                             <span class="path1"></span>
                             <span class="path2"></span>
                         </i> Dışa Aktar
                     </button>
                     <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-primary fw-semibold fs-7 w-200px w-md-200px py-4"
-                         data-kt-menu="true" data-popper-placement="bottom-end">
+                         data-kt-menu="true" data-popper-placement="bottom-end" id="logExportMenu">
                         <div class="menu-item px-3">
                             <a href="#" class="menu-link px-3" data-table-export-button-name="excel"> Excel </a>
                         </div>
