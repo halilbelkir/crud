@@ -57,6 +57,7 @@ class CrudRoutes
             Route::get('/dashboard', function () {return view('crudPackage::dashboard');})->name('dashboard');
             Route::post('status-update', [\crudPackage\Http\Controllers\MainController::class, 'statusUpdate'])->name('statusUpdate');
             Route::post('single/crud/{crud?}', [\crudPackage\Http\Controllers\MainController::class, 'crud'])->name('single.crud');
+            Route::get('single/relation-options/{crud}/{column}', [\crudPackage\Http\Controllers\MainController::class, 'relationOptions'])->name('single.relationOptions');
             Route::post('ckeditor/image-upload', [\crudPackage\Http\Controllers\CkeditorImageUploadController::class, 'storeImage'])->name('ckeditor.imageUpload');
 
             Route::post('menus/orderable', [\crudPackage\Http\Controllers\MenuController::class, 'orderable'])->name('menus.orderable');

@@ -201,6 +201,52 @@
 @yield('js')
 <script src="{{asset('crud/js/script.min.js')}}"></script>
 <script>
+    // Bağımlı select alanları: data-depends-field tanımlı select'ler,
+    // bağlı oldukları alanın seçimi değişince seçeneklerini AJAX ile yeniler
+    $(document).on('change', 'form select', function ()
+    {
+        var name = $(this).attr('name');
+
+        if (!name)
+        {
+            return;
+        }
+
+        var form   = $(this).closest('form');
+        var parent = $(this);
+
+        form.find('select[data-depends-field="' + name.replace(/\[\]$/, '') + '"]').each(function ()
+        {
+            var child = $(this);
+            var url   = child.data('options-url');
+            var value = parent.val();
+
+            child.find('option:not([value=""])').remove();
+            child.val('').trigger('change.select2');
+
+            if (!url || !value)
+            {
+                return;
+            }
+
+            $.get(url, {parent: value}, function (response)
+            {
+                if (!response || response.result != 1)
+                {
+                    return;
+                }
+
+                response.options.forEach(function (option)
+                {
+                    child.append(new Option(option.text, option.value, false, false));
+                });
+
+                child.val('').trigger('change.select2');
+            });
+        });
+    });
+</script>
+<script>
     $(function()
     {
         @if (trim($__env->yieldContent('datatables.columns')))

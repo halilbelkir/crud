@@ -15,16 +15,22 @@
 
     if($column->relationship == 1)
     {
-        $model = $details['model'];
+        $model     = $details['model'];
+        $dependsOn = $details['depends_on'] ?? null;
+        $query     = isset($details['scope']) ? $model::{$details['scope']}() : $model::query();
 
-        if (isset($details['scope']))
+        if ($dependsOn)
         {
-            $scope = $details['scope'];
-            $data  = $model::{$scope}()->get();
+            // Bu alan formdaki başka bir alanın seçimine bağlı; sadece eşleşen seçenekler yüklenir
+            $parentValue = isset($value) ? ($value->{$dependsOn['field']} ?? null) : null;
+
+            $data = $parentValue !== null && $parentValue !== ''
+                ? $query->where($dependsOn['column'], $parentValue)->get()
+                : collect();
         }
         else
         {
-            $data = $model::get();
+            $data = $query->get();
         }
 
         $showColumn  = $details['show_column'];
@@ -84,6 +90,10 @@
         @if(isset($dt))
             data-route="{{route($crud->slug. '.realtime',$value->id)}}"
         onclick="crudRealtime(this)"
+        @endif
+        @if(!empty($dependsOn))
+            data-depends-field="{{ $dependsOn['field'] }}"
+        data-options-url="{{ route('single.relationOptions', ['crud' => $crud->id, 'column' => $column->column_name]) }}"
         @endif
         @if(!empty($details['multiple']))
             data-select-multiple="true"
