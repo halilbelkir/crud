@@ -59,7 +59,7 @@
                 <div class="table-responsive">
                     <table class="table align-middle @if(isset($area1) && $area1->order_column_name) moduleSortable @endif  table-row-dashed fs-6 gy-4 dataTable no-footer"
                            id="data-tables"
-                           @if(isset($area1) && $area1->order_column_name) data-link="{{route($crud->slug . '.orderable',['locale' => $language->code ?? null])}}" @endif
+                           @if(isset($area1) && $area1->order_column_name) data-link="{{route($crud->slug . '.orderable',['locale' => $locale ?? null])}}" @endif
                            @if(isset($area1) && $area1->order_column_name) data-order-column="{{$area1->order_column_name}}" @endif
                            @if(isset($area1) && $area1->order_column_name) data-order-direction="{{$area1->order_direction}}" @endif
                     >
