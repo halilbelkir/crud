@@ -2,6 +2,7 @@
 
 namespace crudPackage\Http\Controllers;
 
+use crudPackage\Exceptions\ForeignKeyConstraintException;
 use crudPackage\Models\Crud;
 use Carbon\Carbon;
 use crudPackage\Library\ImageUpload\ImageUpload;
@@ -962,14 +963,13 @@ class ModuleController extends Controller
 
             if (isset($otherRoute->route))
             {
-                $params  = [];
-                $allData = (count($this->languages) > 0) ? $allData[$this->languages[0]->code] : $allData;
+                $params = [];
 
                 if (isset($otherRoute->params))
                 {
                     foreach ($otherRoute->params as $param)
                     {
-                        $params[$param] = $allData[$param];
+                        $params[$param] = $value->{$param} ?? null;
                     }
                 }
 
@@ -990,7 +990,7 @@ class ModuleController extends Controller
         }
         catch (\Exception $e)
         {
-            if ($e->errorInfo()[1] == 1451)
+            if ($e instanceof ForeignKeyConstraintException && ($e->errorInfo()[1] ?? null) == 1451)
             {
                 $message = '<br> İlişkili tablolar:<br> ' . implode(',<br> ', $e->relations());
 
