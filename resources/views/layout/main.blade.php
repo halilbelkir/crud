@@ -4,6 +4,7 @@
     <title>{{isset($activePage) ? $activePage.' - ' : null}} {{ settings('title') }}</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="{{ settings('subtitle') }}">
     <link rel="shortcut icon" href="{{ strstr(settings('icon'),'crud') ? asset(settings('icon')) : Storage::disk('upload')->url(settings('icon')) }}" type="image/png">
     <meta name="msapplication-TileColor" content="{{ settings('color_1') }}">

@@ -6,11 +6,11 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{ settings('title') }}</title>
+    <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="{{ settings('subtitle') }}">
     <link rel="shortcut icon" href="{{ strstr(settings('icon'),'crud') ? asset(settings('icon')) : Storage::disk('upload')->url(settings('icon')) }}" type="image/png">
     <meta name="msapplication-TileColor" content="{{ settings('color_1') }}">
     <meta name="theme-color" content="{{ settings('color_1') }}">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
