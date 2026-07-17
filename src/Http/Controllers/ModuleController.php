@@ -44,7 +44,7 @@ class ModuleController extends Controller
 
         $this->crud              = Crud::where('slug', $this->slugPrefix)->first();
         $this->relationshipNames = CrudRelationships::getModelRelations($this->crud->model);
-        $this->languages         = settings('languages');
+        $this->languages         = ($this->crud->translatable ?? 1) == 1 ? settings('languages') : [];
     }
 
     /**

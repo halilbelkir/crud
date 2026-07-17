@@ -224,6 +224,16 @@ function diffFields(array $old, array $new): array
     return $diff;
 }
 
+function crudLanguages($crud = null): array
+{
+    if ($crud && ($crud->translatable ?? 1) == 0)
+    {
+        return [];
+    }
+
+    return settings('languages') ?? [];
+}
+
 function logAttributeValue($value): string
 {
     if (is_array($value) || is_object($value))

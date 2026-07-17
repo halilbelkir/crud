@@ -86,6 +86,19 @@
                             Sadece Düzenleme Adımı Olsun
                         </label>
                     </div>
+
+                    <div class="form-check form-check-sm mb-3">
+                        <input class="form-check-input"
+                               id="translatable"
+                               name="translatable"
+                               type="checkbox"
+                               value="1"
+                               checked
+                        />
+                        <label class="form-check-label text-gray-700 fw-semibold" for="translatable">
+                            Çok Dilli Yapı Aktif
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>

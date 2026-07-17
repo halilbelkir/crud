@@ -139,6 +139,7 @@ class CrudController extends Controller
             $data->other_route     = $request->get('other_route');
             $data->table_name      = $request->get('table_name');
             $data->only_edit       = $request->has('only_edit') ? 1 : 0;
+            $data->translatable    = $request->has('translatable') ? 1 : 0;
             $data->area_1          = isset($area1) ? json_encode($area1) : null;
             $data->save();
 
@@ -366,6 +367,7 @@ class CrudController extends Controller
             $data->icon            = $request->get('icon');
             $data->other_route     = $request->get('other_route');
             $data->only_edit       = $request->has('only_edit') ? 1 : 0;
+            $data->translatable    = $request->has('translatable') ? 1 : 0;
             $data->area_1          = isset($area1) ? json_encode($area1) : null;
             $data->save();
 
