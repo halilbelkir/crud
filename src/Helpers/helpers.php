@@ -231,7 +231,9 @@ function crudLanguages($crud = null): array
         return [];
     }
 
-    return settings('languages') ?? [];
+    $languages = settings('languages') ?? [];
+
+    return is_array($languages) ? array_values($languages) : $languages->values()->all();
 }
 
 function logAttributeValue($value): string
