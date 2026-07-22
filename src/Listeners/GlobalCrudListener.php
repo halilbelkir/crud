@@ -2,6 +2,7 @@
 
 namespace crudPackage\Listeners;
 
+use crudPackage\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Models\Activity;
 
@@ -23,12 +24,27 @@ class GlobalCrudListener
         return ! in_array($model->getTable(), $this->exceptTables);
     }
 
+    protected function causer()
+    {
+        if (auth()->check())
+        {
+            return auth()->user();
+        }
+
+        if (app()->bound('crud.causer_id'))
+        {
+            return User::find(app('crud.causer_id'));
+        }
+
+        return null;
+    }
+
     protected function log(Model $model, string $message, array $properties = []): void
     {
         activity()
             ->useLog($model->getTable())
             ->performedOn($model)
-            ->causedBy(auth()->user())
+            ->causedBy($this->causer())
             ->withProperties($properties)
             ->log($message);
     }

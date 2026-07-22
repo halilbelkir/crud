@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Database\Eloquent\Model;
 use crudPackage\Listeners\GlobalCrudListener;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobFailed;
 use \Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use crudPackage\Models\Crud;
@@ -131,6 +135,31 @@ class CrudServiceProvider extends ServiceProvider
                     $e->errorInfo
                 );
             }
+        });
+
+        Queue::createPayloadUsing(function ()
+        {
+            return auth()->check() ? ['crudCauserId' => auth()->id()] : [];
+        });
+
+        Event::listen(JobProcessing::class, function (JobProcessing $event)
+        {
+            $causerId = $event->job->payload()['crudCauserId'] ?? null;
+
+            if ($causerId)
+            {
+                $this->app->instance('crud.causer_id', $causerId);
+            }
+        });
+
+        Event::listen(JobProcessed::class, function ()
+        {
+            $this->app->forgetInstance('crud.causer_id');
+        });
+
+        Event::listen(JobFailed::class, function ()
+        {
+            $this->app->forgetInstance('crud.causer_id');
         });
 
         Event::listen('eloquent.created: *', function (string $event, array $data)
