@@ -45,7 +45,7 @@
                     $inputValue = $originalValue->{$column->column_name} ?? null;
                 }
 
-                $inputValue = ($inputValue !== null && $inputValue !== '') ? Storage::disk('upload')->url($inputValue) : null;
+                $inputValue = ($inputValue !== null && $inputValue !== '') ? uploadUrl($inputValue) : null;
             }
             else
             {
@@ -73,8 +73,7 @@
     </div>
 @elseif($formType->key == 'file' && !empty($inputValue) && isset($value) && $multiple != 'multiple')
     @php
-        $disk = Storage::disk('upload');
-        $url  = $disk->url($inputValue);
+        $url = uploadUrl($inputValue);
     @endphp
     <div class="text-center w-auto d-inline-block">
         <a href="{{ $url }}" target="_blank" class="mb-5 d-block text-decoration-underline color-primary"> {{ basename($inputValue) }} </a>
@@ -129,10 +128,10 @@
             @endphp
 
             @foreach($files as $order => $file)
-                @php $image = Storage::disk('upload')->url($file); @endphp
+                @php $image = uploadUrl($file); @endphp
                 @if($formType->key == 'image')
                     <div class="col multipleImage">
-                        <a class="d-block overlay" data-fslightbox="lightbox-hot-sales" href="{{$image}}">
+                        <a class="d-block overlay" data-fslightbox="lightbox-hot-sales" data-type="image" href="{{$image}}">
                             <div class="overlay-wrapper bgi-no-repeat bgi-position-center bgi-size-cover card-rounded h-175px"
                                  style="background-image:url({{$image}}">
                             </div>

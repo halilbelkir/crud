@@ -264,6 +264,23 @@ function getExtension(string $filename): string
     return pathinfo($filename, PATHINFO_EXTENSION);
 }
 
+function uploadUrl($path)
+{
+    if (empty($path))
+    {
+        return $path;
+    }
+
+    if (preg_match('/^https?:\/\//i', $path))
+    {
+        return $path;
+    }
+
+    $path = preg_replace('/^\/?upload\//', '', $path);
+
+    return \Illuminate\Support\Facades\Storage::disk('upload')->url(ltrim($path, '/'));
+}
+
 function googleFonts(): array
 {
     $apiKey = env('GOOGLE_FONTS_API_KEY');

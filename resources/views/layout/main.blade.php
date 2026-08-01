@@ -193,6 +193,8 @@
     <i class="ki-outline ki-arrow-up"></i>
 </div>
 <input type="hidden" class="editor_upload_url" value="{{route('ckeditor.imageUpload')}}">
+@php $uploadBaseUrl = Storage::disk('upload')->url('/'); @endphp
+<input type="hidden" class="upload_base_url" value="{{ preg_match('#^https?://#', $uploadBaseUrl) ? $uploadBaseUrl : '' }}">
 <script src="{{asset('crud/vendor/main/plugins.bundle.js')}}"></script>
 <script src="{{asset('crud/js/main/scripts.bundle.js')}}"></script>
 <script src="{{asset('crud/vendor/fslightbox/fslightbox.bundle.js')}}"></script>

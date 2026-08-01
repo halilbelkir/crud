@@ -62,6 +62,7 @@ function createEditor(selector)
             relative_urls: false,
             remove_script_host: false,
             convert_urls: false,
+            document_base_url: $('.upload_base_url').val() || undefined,
             images_upload_handler: example_image_upload_handler
         });
     });
@@ -809,17 +810,14 @@ function getDatatable(id,exportButtons = null,documentTitle = null)
             ]
         }).container().appendTo($(id));
 
-        // Hook dropdown menu click event to datatable export buttons
         const exportButtons = document.querySelectorAll('#kt_datatable_example_export_menu [data-kt-export]');
         exportButtons.forEach(exportButton => {
             exportButton.addEventListener('click', e => {
                 e.preventDefault();
 
-                // Get clicked export value
                 const exportValue = e.target.getAttribute('data-kt-export');
                 const target = document.querySelector('.dt-buttons .buttons-' + exportValue);
 
-                // Trigger click event on hidden datatable export buttons
                 target.click();
             });
         });

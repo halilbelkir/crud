@@ -50,12 +50,9 @@
                     @if(!empty($images))
                         <div class="row g-10 row-cols-2 row-cols-lg-5">
                             @foreach($images as $order => $image)
-                                @php
-                                    $disk     = Storage::disk('upload');
-                                    $imageUrl = $disk->url($image);
-                                @endphp
+                                @php $imageUrl = uploadUrl($image); @endphp
                                 <div class="col">
-                                    <a class="d-block overlay" data-fslightbox="lightbox-hot-sales" href="{{$imageUrl}}">
+                                    <a class="d-block overlay" data-fslightbox="lightbox-hot-sales" data-type="image" href="{{$imageUrl}}">
                                         <div class="overlay-wrapper bgi-no-repeat bgi-position-center bgi-size-cover card-rounded h-175px"
                                              style="background-image:url({{$imageUrl}})">
                                         </div>
@@ -88,10 +85,7 @@
                     @if(!empty($files))
                         <div class="row g-10 row-cols-2 row-cols-lg-5">
                             @foreach($files as $order => $file)
-                                @php
-                                    $disk = Storage::disk('upload');
-                                    $url  = $disk->url($file);
-                                @endphp
+                                @php $url = uploadUrl($file); @endphp
                                 <div class="col multipleImage">
                                     <a href="{{ $url }}" target="_blank" class="mb-5 d-block text-decoration-underline color-primary"> {{ basename($file) }} </a>
                                     <a class="d-block overlay">
