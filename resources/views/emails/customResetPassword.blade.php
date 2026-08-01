@@ -2,12 +2,16 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
     <title>{{ settings('title') }} - Şifre Sıfırlama</title>
     <style>
         :root
         {
             --primaryColor : {{ settings('color_1') }};
             --secondaryColor : {{ settings('color_2') }};
+            color-scheme: light;
+            supported-color-schemes: light;
         }
 
         body
@@ -32,7 +36,7 @@
         .button
         {
             background-color: {{ settings('color_1') }};
-            color: {{ settings('color_2') }} !important;
+            color: #ffffff !important;
             padding: 10px 20px;
             text-align: center;
             text-decoration: none;
@@ -56,8 +60,11 @@
 <body>
 
 <div class="container">
+    @php
+        $logoPath = public_path('upload/' . settings('logo'));
+    @endphp
     <div style="text-align: center">
-        <img src="{{ asset(settings('logo')) }}" style="height: 50px;" alt="">
+        <img src="{{ (settings('logo') && file_exists($logoPath)) ? $message->embed($logoPath) : asset('upload/' . settings('logo')) }}" style="height: 50px;" alt="{{ settings('title') }}">
     </div>
     <p><strong>Merhaba,</strong></p>
     <p>Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:</p>
