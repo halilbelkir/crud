@@ -143,7 +143,10 @@ class MediaController extends Controller
                 );
             }
 
-            Storage::disk($this->disk)->makeDirectory($request->path . '/' . $request->name);
+            $folder = $request->path . '/' . $request->name;
+
+            Storage::disk($this->disk)->makeDirectory($folder);
+            chmod(Storage::disk($this->disk)->path($folder), 0775);
 
             return response()->json(
                 [
