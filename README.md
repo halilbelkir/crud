@@ -72,6 +72,24 @@ Bu işlem; ekleme, düzenleme, silme ve kopyalama gibi durumlarda otomatik olara
 APP_CACHE_URL=https://example.com/cache-clear
 ```
 
+### Google Fonts API Key (Panel Font Seçimi)
+
+Ayarlar sayfasındaki font seçiminin tüm Google Fonts listesiyle (1900+ font) çalışabilmesi için `.env` dosyasına API key eklenmelidir:
+
+```bash
+GOOGLE_FONTS_API_KEY=your-api-key
+```
+
+API key almak için:
+
+1. [Google Cloud Console](https://console.cloud.google.com) adresine Google hesabınızla girin.
+2. Üstten bir proje seçin veya **New Project** ile yeni proje oluşturun.
+3. [Web Fonts Developer API](https://console.cloud.google.com/apis/library/webfonts.googleapis.com) sayfasına gidip **Enable** butonuna tıklayın.
+4. Sol menüden **APIs & Services → Credentials → + Create Credentials → API key** adımlarını izleyin.
+5. Oluşan anahtarı kopyalayıp `.env` dosyasına ekleyin. (Güvenlik için anahtara "Web Fonts Developer API" kısıtlaması eklemeniz önerilir.)
+
+> API key tanımlı değilse font alanı serbest metin girişine düşer; font listesi 1 hafta önbelleklenir. Font seçilmezse panelin varsayılan fontu kullanılır. Seçilen font panele, giriş ekranına ve maillere uygulanır (Gmail/Outlook gibi bazı mail istemcileri webfont yüklemediği için maillerde Arial'a düşebilir).
+
 Daha sonra `.env` dosyasını ihtiyacınıza göre düzenleyin.
 
 ---
@@ -92,10 +110,19 @@ Ana projenizin `config/filesystem.php` dosyasına aşağıdaki gibi **upload** a
 'upload' =>
             [
                 'driver' => 'local',
-                'root'   => public_path() . '/upload',
-                'url'    => '/upload',
+                'root'   => env('UPLOAD_PATH', public_path() . '/upload'),
+                'url'    => env('UPLOAD_URL', '/upload'),
             ],
 ```
+
+Panel + front ayrı uygulamalarsa yüklemelerin fiziksel olarak front projesinde tutulması için `.env` dosyasına front yolunu ekleyin (symlink kullanılmaz):
+
+```bash
+UPLOAD_PATH=/path/to/front/public/upload
+UPLOAD_URL=https://front-domain.com/upload
+```
+
+Env tanımlanmazsa yüklemeler panelin kendi `public/upload` klasörüne yapılır.
 
 ---
 
