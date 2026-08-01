@@ -4,7 +4,7 @@ namespace crudPackage\Http\Controllers;
 
 use crudPackage\Library\ImageUpload\ImageUpload;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Storage;
 
 class CkeditorImageUploadController extends Controller
 {
@@ -19,7 +19,11 @@ class CkeditorImageUploadController extends Controller
             $imageUpload = new ImageUpload();
             $imageName   = $imageUpload->getName($request->file($fileSelector),$this->randomNameGenerator(),'editor');
 
-            return response()->json(['location' => $imageName]);
+            return response()->json(
+                [
+                    'location' => Storage::disk('upload')->url($imageName)
+                ]
+            );
 
         }
 
