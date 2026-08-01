@@ -5,6 +5,8 @@ namespace crudPackage\Http\Controllers;
 use crudPackage\Library\ImageUpload\ImageUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Drivers\Imagick\Driver;
+use Intervention\Image\ImageManager;
 
 class CkeditorImageUploadController extends Controller
 {
@@ -14,10 +16,21 @@ class CkeditorImageUploadController extends Controller
 
         if ($request->hasFile($fileSelector))
         {
-            $extension   = $request->file($fileSelector)->getClientOriginalExtension();
-            $fileName     = $this->randomNameGenerator().'.' . $extension;
-            $imageUpload = new ImageUpload();
-            $imageName   = $imageUpload->getName($request->file($fileSelector),$this->randomNameGenerator(),'editor');
+            $file      = $request->file($fileSelector);
+            $extension = strtolower($file->getClientOriginalExtension());
+
+            if (in_array($extension, ['jpg', 'jpeg', 'png']))
+            {
+                $manager   = new ImageManager(new Driver());
+                $imageName = 'editor/' . $this->randomNameGenerator() . '.webp';
+
+                Storage::disk('upload')->put($imageName, (string) $manager->read($file)->toWebp(80));
+            }
+            else
+            {
+                $imageUpload = new ImageUpload();
+                $imageName   = $imageUpload->getName($file, $this->randomNameGenerator(), 'editor');
+            }
 
             return response()->json(
                 [
