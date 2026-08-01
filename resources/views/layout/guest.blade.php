@@ -25,6 +25,7 @@
             --secondaryColor : {{ settings('color_2') }};
         }
     </style>
+    @include('crudPackage::components.font')
 </head>
 <body id="kt_body"  class="app-blank bgi-size-cover bgi-no-repeat bgi-position-top">
 <script>

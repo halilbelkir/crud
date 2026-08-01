@@ -26,6 +26,7 @@
             --secondaryColor    : {{ settings('color_2') }};
         }
     </style>
+    @include('crudPackage::components.font')
 </head>
 @php $mainLogo = strstr(settings('logo'),'crud') ? asset(settings('logo')) : Storage::disk('upload')->url(settings('logo')); @endphp
 <body id="kt_app_body" data-kt-app-header-fixed="true" data-kt-app-header-fixed-mobile="true" data-kt-app-sidebar-enabled="true" data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-push-header="true" data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" data-kt-app-aside-enabled="true" data-kt-app-aside-fixed="true" data-kt-app-aside-push-header="true" data-kt-app-aside-push-toolbar="true" data-kt-app-aside-push-footer="true" class="app-default">

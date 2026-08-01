@@ -6,6 +6,10 @@
     <meta name="supported-color-schemes" content="light">
     <title>{{ settings('title') }} - Şifre Sıfırlama</title>
     <style>
+        @if(!empty(settings('font')))
+        @import url('https://fonts.googleapis.com/css2?family={{ str_replace(' ', '+', settings('font')) }}:wght@400;600;700&display=swap');
+        @endif
+
         :root
         {
             --primaryColor : {{ settings('color_1') }};
@@ -16,7 +20,7 @@
 
         body
         {
-            font-family: Arial, sans-serif;
+            font-family: @if(!empty(settings('font'))) '{{ settings('font') }}', @endif Arial, sans-serif;
             background-color: #f4f4f4;
             margin: 0;
             padding: 0;
@@ -61,10 +65,10 @@
 
 <div class="container">
     @php
-        $logoPath = public_path('upload/' . settings('logo'));
+        $logoPath = Storage::disk('upload')->path(settings('logo'));
     @endphp
     <div style="text-align: center">
-        <img src="{{ (settings('logo') && file_exists($logoPath)) ? $message->embed($logoPath) : asset('upload/' . settings('logo')) }}" style="height: 50px;" alt="{{ settings('title') }}">
+        <img src="{{ (settings('logo') && file_exists($logoPath)) ? $message->embed($logoPath) : Storage::disk('upload')->url(settings('logo')) }}" style="height: 50px;" alt="{{ settings('title') }}">
     </div>
     <p><strong>Merhaba,</strong></p>
     <p>Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:</p>

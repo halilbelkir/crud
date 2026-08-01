@@ -33,6 +33,27 @@
                     </select>
                 </div>
 
+                <div class="form-group col-12 mb-7 fv-plugins-icon-container">
+                    <label class="fw-semibold fs-6 mb-2">Font</label>
+                    @if(count($fonts) > 0)
+                        <select data-control="select2" data-placeholder="Font Seçiniz" data-allow-clear="true"
+                                class="form-control form-control-solid"
+                                data-select-font="true"
+                                name="font"
+                        >
+                            <option value=""></option>
+                            @foreach($fonts as $font)
+                                <option {{ ($value->font ?? null) == $font ? 'selected' : '' }} value="{{ $font }}">{{ $font }}</option>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="text" value="{{ $value->font ?? null }}" name="font"
+                               class="form-control form-control-solid mb-3 mb-lg-0" placeholder="Google Fonts font adı (ör. Poppins)">
+                        <div class="text-muted fs-7 mt-2">Tüm font listesi için .env dosyasına GOOGLE_FONTS_API_KEY ekleyiniz.</div>
+                    @endif
+                    <div class="text-muted fs-6 mt-3 fontPreview">Örnek yazı: Altınoluk Turizm ile güvenli yolculuk 0123456789</div>
+                </div>
+
                 <div class="form-group col-12 col-lg-6 mb-7 fv-plugins-icon-container">
                     <label class="required fw-semibold fs-6 mb-2">Logo</label>
                     @if(empty($value->logo))
@@ -142,5 +163,40 @@
                 }
             });
         });
+
+        $('[data-select-font="true"]').select2({
+            allowClear: true,
+            placeholder: 'Font Seçiniz'
+        });
+
+        function fontPreview(font)
+        {
+            if (!font)
+            {
+                $('.fontPreview').css('font-family', '');
+                return;
+            }
+
+            let linkId = 'fontPreviewLink';
+            let url    = 'https://fonts.googleapis.com/css2?family=' + font.replaceAll(' ', '+') + ':wght@400;600&display=swap';
+
+            if ($('#' + linkId).length === 0)
+            {
+                $('head').append('<link id="' + linkId + '" rel="stylesheet" href="' + url + '">');
+            }
+            else
+            {
+                $('#' + linkId).attr('href', url);
+            }
+
+            $('.fontPreview').css('font-family', "'" + font + "', sans-serif");
+        }
+
+        $('[name="font"]').on('change', function ()
+        {
+            fontPreview($(this).val());
+        });
+
+        fontPreview($('[name="font"]').val());
     </script>
 @endsection

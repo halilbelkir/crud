@@ -125,7 +125,6 @@ function menuGenerate($menu)
                 $routeChild = $child->dynamic_route == 1 ? route($child->route) : $child->route;
             }
 
-            // Tam route adını kullan, wildcard kullanma
             $htmlChildren     .= '<div class="menu-item">';
             $htmlChildren     .= '<a href="'.$routeChild.'" '. $target .' class="menu-link ' . (request()->routeIs($child->route) ? 'active' : null) . '">';
             $htmlChildren     .= '<span class="menu-icon">'. ($child->icon ?? '<i class="ki-outline ki-bookmark "></i>') .'</span>';
@@ -194,10 +193,11 @@ function settings($column)
             'icon'     => 'crud/images/fav/android-icon-192x192.png',
             'color_1'  => '#2900FF',
             'color_2'  => '#001244',
+            'font'     => null,
             'title'    => 'Zaurac Teknoloji',
         ];
 
-    return $cache[$column] ?? $columns[$column];
+    return $cache[$column] ?? $columns[$column] ?? null;
 }
 
 function diffFields(array $old, array $new): array
@@ -262,6 +262,38 @@ function shortFilename(string $filename, int $limit = 8): string
 function getExtension(string $filename): string
 {
     return pathinfo($filename, PATHINFO_EXTENSION);
+}
+
+function googleFonts(): array
+{
+    $apiKey = env('GOOGLE_FONTS_API_KEY');
+
+    if (empty($apiKey))
+    {
+        return [];
+    }
+
+    return Cache::remember('google_fonts_list', 60 * 60 * 24 * 7, function () use ($apiKey)
+    {
+        try
+        {
+            $response = \Illuminate\Support\Facades\Http::timeout(10)->get('https://www.googleapis.com/webfonts/v1/webfonts',
+                [
+                    'key'  => $apiKey,
+                    'sort' => 'alpha',
+                ]);
+
+            if ($response->successful())
+            {
+                return collect($response->json('items'))->pluck('family')->all();
+            }
+        }
+        catch (\Throwable $e)
+        {
+        }
+
+        return [];
+    });
 }
 
 function multipleLanguages($status = 0,$locale = null)
