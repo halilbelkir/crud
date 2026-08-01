@@ -86,36 +86,37 @@
                             @endforeach
                         </div>
                     </div>
-                    <!--end::Menu wrapper-->
                 </div>
-                <!--end::sidebar menu-->
-                <!--begin::Footer-->
                 <div class="app-sidebar-footer d-flex flex-stack px-10 py-10" id="kt_app_sidebar_footer">
-                    <!--begin::User-->
                     <div class="me-2">
-                        <!--begin::User info-->
-                        <div class="d-flex align-items-center" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-overflow="true" data-kt-menu-placement="top-start">
+                        <div class="d-flex align-items-center cursor-pointer" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-overflow="true" data-kt-menu-placement="top-start">
                             <div class="d-flex flex-center cursor-pointer symbol symbol-circle symbol-40px">
                                 <img src="{{asset('crud/images/avatar.png')}}" alt="image" />
                             </div>
-                            <!--begin::Name-->
                             <div class="d-flex flex-column align-items-start justify-content-center ms-3">
                                 <span class="text-gray-500 fs-8 fw-semibold">Merhaba</span>
-                                <a href="#" class="text-gray-800 fs-7 fw-bold text-hover-primary">{{\Illuminate\Support\Facades\Auth::user()->name}}</a>
+                                <span class="text-gray-800 fs-7 fw-bold text-hover-primary">{{\Illuminate\Support\Facades\Auth::user()->name}} <i class="ki-outline ki-down fs-7 ms-1"></i></span>
                             </div>
-                            <!--end::Name-->
+                        </div>
+                        <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg-primary fw-semibold w-200px py-3" data-kt-menu="true">
+                            <div class="menu-item px-3">
+                                <a href="{{route('profile.edit')}}" class="menu-link px-3">
+                                    <span class="menu-icon"><i class="ki-outline ki-user fs-3"></i></span>
+                                    <span class="menu-title">Profilim</span>
+                                </a>
+                            </div>
+
+                            <div class="menu-item px-3">
+                                <a href="{{route('logout')}}" class="menu-link px-3">
+                                    <span class="menu-icon"><i class="ki-outline ki-exit-right fs-3"></i></span>
+                                    <span class="menu-title">Çıkış Yap</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
-                    <!--end::User-->
-                    <a href="{{route('logout')}}" class="btn btn-icon btn-color-gray-500 btn-active-color-primary me-n7">
-                        <i class="ki-outline ki-exit-right fs-2"></i>
-                    </a>
                 </div>
-                <!--end::Footer-->
             </div>
-            <!--end::Sidebar-->
             <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-                <!--begin::Content wrapper-->
                 <div class="d-flex flex-column flex-column-fluid">
                     <div class="d-flex flex-column flex-column-fluid">
                         <div id="kt_app_toolbar" class="app-toolbar  pt-10 mb-3 ">
@@ -198,12 +199,10 @@
 <script src="{{asset('crud/vendor/datatables/datatables.bundle.min.js')}}"></script>
 <script src="{{asset('crud/vendor/tinymce/tinymce.min.js')}}"></script>
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-<script src="https://raw.githubusercontent.com/johnny/jquery-sortable/master/source/js/jquery-sortable-min.js"></script>
+<script src="{{asset('crud/vendor/jquery-ui/jquery-ui.min.js')}}"></script>
 @yield('js')
 <script src="{{asset('crud/js/script.min.js')}}"></script>
 <script>
-    // Bağımlı select alanları: data-depends-field tanımlı select'ler,
-    // bağlı oldukları alanın seçimi değişince seçeneklerini AJAX ile yeniler
     $(document).on('change', 'form select', function ()
     {
         var name = $(this).attr('name');
@@ -365,7 +364,6 @@
             exportButton.addEventListener('click', e => {
                 e.preventDefault();
 
-                // Get clicked export value
                 const exportValue = e.target.getAttribute('data-table-export-button-name');
 
                 $('.dt-buttons .buttons-' + exportValue).trigger('click');

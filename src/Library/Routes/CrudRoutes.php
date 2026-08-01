@@ -55,6 +55,8 @@ class CrudRoutes
         Route::middleware(['auth','variables'])->group(function ()
         {
             Route::get('/dashboard', function () {return view('crudPackage::dashboard');})->name('dashboard');
+            Route::get('profilim', [\crudPackage\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('profilim', [\crudPackage\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
             Route::post('status-update', [\crudPackage\Http\Controllers\MainController::class, 'statusUpdate'])->name('statusUpdate');
             Route::post('single/crud/{crud?}', [\crudPackage\Http\Controllers\MainController::class, 'crud'])->name('single.crud');
             Route::get('single/relation-options/{crud}/{column}', [\crudPackage\Http\Controllers\MainController::class, 'relationOptions'])->name('single.relationOptions');
