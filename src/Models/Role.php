@@ -24,7 +24,7 @@ class Role extends Model
                 $q->where('slug', 'like', "%{$route}%");
             })
                 ->orWhereHas('menuItem', function ($q) use ($route) {
-                    $q->where('route' , "{$route}");
+                    $q->where('route', "{$route}")->orWhere('route', 'like', "{$route}.%");
                 });
         });
     }

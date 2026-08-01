@@ -77,11 +77,11 @@ class CrudRoutes
             Route::get('logs/datatable', [\crudPackage\Http\Controllers\LogController::class, 'datatable'])->name('logs.datatables');
             Route::resource('logs', \crudPackage\Http\Controllers\LogController::class)->middleware('checkPermission');
 
-            Route::get('media/download/{path?}', [\crudPackage\Http\Controllers\MediaController::class, 'download'])->where('path', '.*')->name('media.download');
+            Route::get('media/download/{path?}', [\crudPackage\Http\Controllers\MediaController::class, 'download'])->where('path', '.*')->name('media.download')->middleware('checkPermission');
             Route::get('media/{path?}', [\crudPackage\Http\Controllers\MediaController::class, 'index'])->where('path', '.*')->name('media.index')->middleware('checkPermission');
-            Route::post('media/upload', [\crudPackage\Http\Controllers\MediaController::class, 'upload'])->name('media.upload');
-            Route::post('media/folder', [\crudPackage\Http\Controllers\MediaController::class, 'createFolder'])->name('media.createFolder');
-            Route::delete('media/delete/{path?}/{file?}', [\crudPackage\Http\Controllers\MediaController::class, 'delete'])->where('path', '.*')->name('media.delete');
+            Route::post('media/upload', [\crudPackage\Http\Controllers\MediaController::class, 'upload'])->name('media.upload')->middleware('checkPermission');
+            Route::post('media/folder', [\crudPackage\Http\Controllers\MediaController::class, 'createFolder'])->name('media.createFolder')->middleware('checkPermission');
+            Route::delete('media/delete/{path?}/{file?}', [\crudPackage\Http\Controllers\MediaController::class, 'delete'])->where('path', '.*')->name('media.delete')->middleware('checkPermission');
 
             Route::put('cruds/repeater/store/{crud}', [\crudPackage\Http\Controllers\CrudController::class, 'repeaterStore'])->name('cruds.repeater.store');
             Route::delete('cruds/repeater/delete/{crud_item}', [\crudPackage\Http\Controllers\CrudController::class, 'repeaterDestroy'])->name('cruds.repeater.destroy');
