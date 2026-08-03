@@ -64,7 +64,7 @@
                                 <i class="ki-outline ki-pencil fs-7"></i>
                                 <input type="file" class="imageUpdate" value="{{ $value->logo }}" name="logo">
                             </label>
-                            <img src="{{Storage::disk('upload')->url($value->logo)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
+                            <img src="{{uploadUrl($value->logo)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
                         </div>
                     @endif
                 </div>
@@ -79,7 +79,7 @@
                                 <i class="ki-outline ki-pencil fs-7"></i>
                                 <input type="file" class="imageUpdate" value="{{ $value->icon }}" name="icon">
                             </label>
-                            <img src="{{Storage::disk('upload')->url($value->icon)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
+                            <img src="{{uploadUrl($value->icon)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
                         </div>
                     @endif
                 </div>
@@ -94,7 +94,7 @@
                                 <i class="ki-outline ki-pencil fs-7"></i>
                                 <input type="file" class="imageUpdate" value="{{ $value->loader }}" name="loader">
                             </label>
-                            <img src="{{Storage::disk('upload')->url($value->loader)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
+                            <img src="{{uploadUrl($value->loader)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
                         </div>
                     @endif
                 </div>
@@ -110,7 +110,7 @@
                                 <i class="ki-outline ki-pencil fs-7"></i>
                                 <input type="file" class="imageUpdate" value="{{ $value->bg_image }}" name="bg_image">
                             </label>
-                            <img src="{{Storage::disk('upload')->url($value->bg_image)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
+                            <img src="{{uploadUrl($value->bg_image)}}" class="mb-7 w-100 object-fit-contain imageUpdatePreview h-175px">
                         </div>
                     @endif
                 </div>

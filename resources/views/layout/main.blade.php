@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="{{ settings('subtitle') }}">
-    <link rel="shortcut icon" href="{{ strstr(settings('icon'),'crud') ? asset(settings('icon')) : Storage::disk('upload')->url(settings('icon')) }}" type="image/png">
+    <link rel="shortcut icon" href="{{ strstr(settings('icon'),'crud') ? asset(settings('icon')) : uploadUrl(settings('icon')) }}" type="image/png">
     <meta name="msapplication-TileColor" content="{{ settings('color_1') }}">
     <meta name="theme-color" content="{{ settings('color_1') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -28,7 +28,7 @@
     </style>
     @include('crudPackage::components.font')
 </head>
-@php $mainLogo = strstr(settings('logo'),'crud') ? asset(settings('logo')) : Storage::disk('upload')->url(settings('logo')); @endphp
+@php $mainLogo = strstr(settings('logo'),'crud') ? asset(settings('logo')) : uploadUrl(settings('logo')); @endphp
 <body id="kt_app_body" data-kt-app-header-fixed="true" data-kt-app-header-fixed-mobile="true" data-kt-app-sidebar-enabled="true" data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-push-header="true" data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" data-kt-app-aside-enabled="true" data-kt-app-aside-fixed="true" data-kt-app-aside-push-header="true" data-kt-app-aside-push-toolbar="true" data-kt-app-aside-push-footer="true" class="app-default">
 <script>var defaultThemeMode = "light"; var themeMode; if ( document.documentElement ) { if ( document.documentElement.hasAttribute("data-bs-theme-mode")) { themeMode = document.documentElement.getAttribute("data-bs-theme-mode"); } else { if ( localStorage.getItem("data-bs-theme") !== null ) { themeMode = localStorage.getItem("data-bs-theme"); } else { themeMode = defaultThemeMode; } } if (themeMode === "system") { themeMode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } document.documentElement.setAttribute("data-bs-theme", themeMode); }</script>
 <div class="d-flex flex-column flex-root app-root" id="kt_app_root">

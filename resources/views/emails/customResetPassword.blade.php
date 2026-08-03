@@ -65,10 +65,10 @@
 
 <div class="container">
     @php
-        $logoPath = Storage::disk('upload')->path(settings('logo'));
+        $logoPath = Storage::disk('upload')->path(preg_replace('/^\/?upload\//', '', settings('logo')));
     @endphp
     <div style="text-align: center">
-        <img src="{{ (settings('logo') && file_exists($logoPath)) ? $message->embed($logoPath) : Storage::disk('upload')->url(settings('logo')) }}" style="height: 50px;" alt="{{ settings('title') }}">
+        <img src="{{ (settings('logo') && file_exists($logoPath)) ? $message->embed($logoPath) : uploadUrl(settings('logo')) }}" style="height: 50px;" alt="{{ settings('title') }}">
     </div>
     <p><strong>Merhaba,</strong></p>
     <p>Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:</p>
