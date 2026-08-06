@@ -48,6 +48,23 @@ class CrudServiceProvider extends ServiceProvider
 
         config(['auth.providers.users.model' => \crudPackage\Models\User::class]);
 
+        $uploadDisk = config('filesystems.disks.upload');
+
+        if (($uploadDisk['driver'] ?? null) == 'local' && !isset($uploadDisk['permissions']))
+        {
+            config(
+                [
+                    'filesystems.disks.upload.permissions'          =>
+                        [
+                            'dir'  => ['public' => 0755],
+                            'file' => ['public' => 0644],
+                        ],
+                    'filesystems.disks.upload.directory_visibility' => 'public',
+                    'filesystems.disks.upload.visibility'           => 'public',
+                ]
+            );
+        }
+
         $this->app['router']->aliasMiddleware('variables', \crudPackage\Http\Middleware\Variables::class);
         $this->app['router']->aliasMiddleware('checkPermission', \crudPackage\Http\Middleware\CheckPermission::class);
 
@@ -181,7 +198,7 @@ class CrudServiceProvider extends ServiceProvider
     protected function runMigrations()
     {
         Artisan::call('migrate', [
-            '--force' => true //
+            '--force' => true
         ]);
     }
 
@@ -259,7 +276,6 @@ class CrudServiceProvider extends ServiceProvider
 
         $packageRoutes = __DIR__ . '/../routes/web.php';
 
-        // Kopyalama işlemi
         File::copy($packageRoutes, $webRouteFile);
     }
 
