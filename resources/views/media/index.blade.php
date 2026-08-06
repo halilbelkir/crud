@@ -349,7 +349,7 @@
             document.getElementById('p-delete').dataset.title = name + ' isimli klasörü';
             document.getElementById('p-size').innerText       = '-';
             document.getElementById('p-modified').innerText    = '-';
-            document.getElementById('p-delete').dataset.route = document.getElementById('p-delete').dataset.route + '/' + name;
+            document.getElementById('p-delete').dataset.route = '{{ route('media.delete',['path' => $path]) }}' + '/' + name;
 
             $('#p-url').closest('li').addClass('d-none');
             $('#p-download').closest('li').addClass('d-none');
