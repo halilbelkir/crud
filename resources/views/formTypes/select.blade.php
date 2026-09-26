@@ -53,7 +53,7 @@
                 }
                 else if (isset($value->{$name}))
                 {
-                    $values = json_decode($value->{$name});
+                    $values = json_decode($value->{$name}) ?? [];
 
                     foreach ($values as $newValue)
                     {
@@ -61,10 +61,7 @@
                     }
                 }
 
-                if ($details['type'] == 'belongsToMany' || isset($value->{$name}))
-                {
-                    $options .= '<option value="'. $option->$matchColumn .'" '.( isset($value) && isset($selected[$option->$matchColumn]) &&  $selected[$option->$matchColumn] == true ? 'selected' : null ).'> '. $option->$showColumn .' </option>';
-                }
+                $options .= '<option value="'. $option->$matchColumn .'" '.( isset($value) && isset($selected[$option->$matchColumn]) &&  $selected[$option->$matchColumn] == true ? 'selected' : null ).'> '. $option->$showColumn .' </option>';
             }
             else
             {
