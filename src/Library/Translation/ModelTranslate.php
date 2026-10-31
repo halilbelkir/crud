@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class ModelTranslate
 {
     protected array $data;
+    protected array $translations;
     protected $model;
     protected string $locale;
     public function __construct($model, string $locale)
@@ -50,12 +51,18 @@ class ModelTranslate
                             ->toArray();
         }
 
-        $this->data = array_replace($base, $translations);
+        $this->translations = $translations;
+        $this->data         = array_replace($base, $translations);
     }
 
     public function __get(string $key)
     {
         return $this->data[$key] ?? null;
+    }
+
+    public function translated(string $key)
+    {
+        return $this->translations[$key] ?? null;
     }
 
     public function toArray(): array

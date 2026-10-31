@@ -12,7 +12,25 @@ class CkeditorImageUploadController extends Controller
 {
     public function storeImage(Request $request)
     {
-        $fileSelector = 'file';
+        $fileSelector = $request->hasFile('upload') ? 'upload' : 'file';
+
+        $validator = validator($request->all(),
+        [
+            $fileSelector => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif,svg', 'max:4096'],
+        ],
+        [
+            $fileSelector . '.required' => 'Görsel seçilmedi.',
+            $fileSelector . '.mimes'    => 'Yalnızca jpg, png, webp, gif ve svg yüklenebilir.',
+            $fileSelector . '.max'      => 'Görsel en fazla 4 MB olabilir.',
+        ]);
+
+        if ($validator->fails())
+        {
+            return response()->json(
+            [
+                'error' => ['message' => $validator->errors()->first($fileSelector)],
+            ], 422);
+        }
 
         if ($request->hasFile($fileSelector))
         {
@@ -32,9 +50,12 @@ class CkeditorImageUploadController extends Controller
                 $imageName   = $imageUpload->getName($file, $this->randomNameGenerator(), 'editor');
             }
 
+            $url = Storage::disk('upload')->url($imageName);
+
             return response()->json(
                 [
-                    'location' => Storage::disk('upload')->url($imageName)
+                    'url'      => $url,
+                    'location' => $url,
                 ]
             );
 

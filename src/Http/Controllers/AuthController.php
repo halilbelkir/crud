@@ -4,6 +4,7 @@ namespace crudPackage\Http\Controllers;
 
 use crudPackage\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -12,11 +13,17 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     public function index(Request $request)
     {
+        if (!$request->ajax())
+        {
+            return $this->store($request);
+        }
+
         try
         {
             $attribute =
@@ -106,139 +113,121 @@ class AuthController extends Controller
         }
     }
 
-    public function forgotSend(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        try
+        $credentials = $request->validate(
+        [
+            'email'    => ['required', 'email'],
+            'password' => ['required', 'string'],
+        ],
+        [],
+        [
+            'email'    => 'E-Mail Adresi',
+            'password' => 'Şifre',
+        ]);
+
+        if (!Auth::attempt($credentials, $request->boolean('remember')))
         {
-            $attribute =
-                [
-                    'email'    => 'E-Mail',
-                ];
-
-            $rules =
-                [
-                    'email'    => 'email|required',
-                ];
-
-            $validator = Validator::make($request->all(), $rules);
-            $validator->setAttributeNames($attribute);
-
-            if ($validator->fails())
-            {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
-            }
-
-            $status = Password::sendResetLink(
-                $request->only('email')
-            );
-
-            if ($status === Password::RESET_LINK_SENT)
-            {
-                return response()->json(
-                    [
-                        'result'  => 1,
-                        'message' => 'İşlem Başarılı. E-Mail adresinize şifre sıfırlama linki gönderilmiştir.',
-                        'route'   => route('login')
-                    ]
-                );
-            }
-            else if($status === Password::RESET_THROTTLED)
-            {
-                return response()->json(
-                    [
-                        'result'  => 0,
-                        'message' => 'Yakın zamanda şifre sıfırlama talebinde bulundunuz, lütfen e-postanızı kontrol edin.'
-                    ],403);
-            }
-            else
-            {
-                return response()->json(
-                    [
-                        'result'  => 0,
-                        'message' => 'İşlem Başarısız. Lütfen e-mail adresinizi kontrol ediniz.'
-                    ],403);
-            }
+            throw ValidationException::withMessages(
+            [
+                'email' => 'Giriş Başarısız. Lütfen E-mail veya şifrenizi kontrol ediniz.',
+            ]);
         }
-        catch (\Exception $e)
+
+        if (Auth::user()->status != 1)
         {
-            return response()->json(['result' => 0,'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'],403);
+            Auth::logout();
+
+            throw ValidationException::withMessages(
+            [
+                'email' => 'Giriş Başarısız. Bu hesap pasife alınmıştır. Lütfen yöneticiniz ile kontrol ediniz.',
+            ]);
         }
+
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('dashboard'))->with('status', 'Hoş geldiniz, ' . Auth::user()->name . '.');
     }
 
-    public function passwordResetUpdate(Request $request)
+    public function forgotSend(Request $request): RedirectResponse
     {
+        $request->validate(
+        [
+            'email' => ['required', 'email'],
+        ],
+        [],
+        [
+            'email' => 'E-posta',
+        ]);
+
         try
         {
-            $attribute =
-                [
-                    'email'    => 'E-Mail',
-                    'password' => 'Şifre',
-                ];
-
-            $rules =
-                [
-                    'email'    => 'email|required',
-                    'password' => 'required|confirmed|min:8',
-                ];
-
-            $validator = Validator::make($request->all(), $rules);
-            $validator->setAttributeNames($attribute);
-
-            if ($validator->fails())
-            {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
-            }
-
-            $status = Password::reset(
-                $request->only('email', 'password', 'password_confirmation', 'token'),
-                function (User $user, string $password) {
-                    $user->forceFill([
-                        'password' => Hash::make($password)
-                    ])->setRememberToken(Str::random(60));
-
-                    $user->save();
-
-                    event(new PasswordReset($user));
-                }
-            );
-
-            if ($status === Password::PASSWORD_RESET)
-            {
-                return response()->json(
-                    [
-                        'result'  => 1,
-                        'message' => 'İşlem Başarılı. Yönlendiriliyorsunuz...',
-                        'route'   => route('login')
-                    ]
-                );
-            }
-            else
-            {
-                return response()->json(
-                    [
-                        'result'  => 0,
-                        'message' => 'İşlem Başarısız. Lütfen e-mail adresinizi kontrol ediniz.'
-                    ],403);
-            }
+            $status = Password::sendResetLink($request->only('email'));
         }
-        catch (\Exception $e)
+        catch (\Throwable $exception)
         {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
+            report($exception);
+
+            throw ValidationException::withMessages(
+            [
+                'email' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.',
+            ]);
         }
+
+        if ($status === Password::RESET_THROTTLED)
+        {
+            throw ValidationException::withMessages(
+            [
+                'email' => 'Yakın zamanda şifre sıfırlama talebinde bulundunuz, lütfen e-postanızı kontrol edin.',
+            ]);
+        }
+
+        if ($status !== Password::RESET_LINK_SENT)
+        {
+            throw ValidationException::withMessages(
+            [
+                'email' => 'Bu e-posta adresiyle kayıtlı bir hesap bulunamadı.',
+            ]);
+        }
+
+        return back()->with('status', 'Sıfırlama bağlantısı e-posta adresinize gönderildi.');
+    }
+
+    public function passwordResetUpdate(Request $request): RedirectResponse
+    {
+        $request->validate(
+        [
+            'token'    => ['required'],
+            'email'    => ['required', 'email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ],
+        [],
+        [
+            'email'    => 'E-posta',
+            'password' => 'Şifre',
+        ]);
+
+        $status = Password::reset($request->only('email', 'password', 'password_confirmation', 'token'), function (User $user, string $password)
+        {
+            $user->forceFill(
+            [
+                'password'              => Hash::make($password),
+                'force_password_change' => 0,
+            ])->setRememberToken(Str::random(60));
+            $user->save();
+
+            event(new PasswordReset($user));
+        });
+
+        if ($status !== Password::PASSWORD_RESET)
+        {
+            throw ValidationException::withMessages(
+            [
+                'email' => 'Sıfırlama bağlantısı geçersiz veya süresi dolmuş. Lütfen yeni bağlantı isteyin.',
+            ]);
+        }
+
+        return redirect()->route('login')->with('status', 'Şifreniz güncellendi, yeni şifrenizle giriş yapabilirsiniz.');
     }
     public function logout()
     {

@@ -20,6 +20,7 @@ use \Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use crudPackage\Models\Crud;
 use crudPackage\Library\Relationships\CrudRelationships;
+use crudPackage\Library\Theme\ThemeManager;
 
 class CrudServiceProvider extends ServiceProvider
 {
@@ -32,8 +33,8 @@ class CrudServiceProvider extends ServiceProvider
         $laravelPublic = public_path('crud');
 
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'crudPackage');
         $this->loadHelpers();
+        $this->loadViewsFrom(ThemeManager::viewPaths(), 'crudPackage');
 
 
         if (is_link($laravelPublic))
@@ -47,6 +48,17 @@ class CrudServiceProvider extends ServiceProvider
         }
 
         config(['auth.providers.users.model' => \crudPackage\Models\User::class]);
+
+        config(
+            [
+                'auth.passwords.invites' => config('auth.passwords.invites',
+                    [
+                        'provider' => 'users',
+                        'table'    => config('auth.passwords.users.table', 'password_reset_tokens'),
+                        'expire'   => 60 * 24 * 7,
+                        'throttle' => 60,
+                    ]),
+            ]);
 
         $uploadDisk = config('filesystems.disks.upload');
 
@@ -251,10 +263,7 @@ class CrudServiceProvider extends ServiceProvider
 
     public function register()
     {
-        if (class_exists('Yajra\DataTables\DataTablesServiceProvider'))
-        {
-            $this->app->register('Yajra\DataTables\DataTablesServiceProvider');
-        }
+        $this->mergeConfigFrom(__DIR__ . '/../config/panel.php', 'crudPanel');
     }
 
     protected function loadHelpers()

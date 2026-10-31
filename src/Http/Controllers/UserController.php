@@ -3,265 +3,289 @@
 namespace crudPackage\Http\Controllers;
 
 use crudPackage\Models\RoleGroup;
-use crudPackage\Models\Setting;
 use crudPackage\Models\User;
+use crudPackage\Support\Actions;
+use crudPackage\Support\Permissions;
+use crudPackage\Support\Search;
+use crudPackage\Support\Table;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Validator;
-use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request): View|Response
     {
-        $roles = RoleGroup::all();
-        $user  = Auth::user();
-
-        if ($user->role_group_id != 1)
-        {
-            $roles = RoleGroup::where('id',$user->role_group_id)->get();
-        }
-
-        return view('crudPackage::users.index',compact('roles'));
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        try
-        {
-            $attribute =
-                [
-                    'name'          => 'Ad & Soyad',
-                    'email'         => 'E-mail',
-                    'role_group_id' => 'Yetki',
-                ];
-
-            $rules =
-                [
-                    'name'          => 'required',
-                    'email'         => 'required|email',
-                    'role_group_id' => 'required',
-                ];
-
-            $validator = Validator::make($request->all(), $rules);
-            $validator->setAttributeNames($attribute);
-
-            if ($validator->fails())
+        $records = $this->scoped($request)
+            ->with('roleGroup')
+            ->when($request->filled('q'), function ($query) use ($request)
             {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
-            }
+                $term = Search::pattern((string) $request->string('q'));
 
-            $panelTitle           = settings('title');
-            $newPassword          = Str::camel(Str::slug($panelTitle)) . '12345.,';
-            $data                 = new User;
-            $data->name           = $request->get('name');
-            $data->email          = $request->get('email');
-            $data->role_group_id  = $request->get('role_group_id');
-            $data->password       = Hash::make($newPassword);
-            $data->save();
-
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                ]
-            );
-
-        }
-        catch (\Exception $e)
-        {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
-        }
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(User $user)
-    {
-        $value = $user;
-
-        return view('crudPackage::users.show',compact('value'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(User $user)
-    {
-        $value = $user;
-        $roles = RoleGroup::all();
-
-        if ($user->role_group_id != 1)
-        {
-            $roles = RoleGroup::where('id',$user->role_group_id)->get();
-        }
-
-        return view('crudPackage::users.edit',compact('value','roles'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, User $user)
-    {
-        try
-        {
-            $attribute =
-                [
-                    'name'          => 'Ad & Soyad',
-                    'email'         => 'E-mail',
-                    'role_group_id' => 'Yetki',
-                ];
-
-            $rules =
-                [
-                    'name'          => 'required',
-                    'email'         => 'required|email',
-                    'role_group_id' => 'required',
-                ];
-
-            $validator = Validator::make($request->all(), $rules);
-            $validator->setAttributeNames($attribute);
-
-            if ($validator->fails())
-            {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
-            }
-
-            $data                = $user;
-            $data->name          = $request->get('name');
-            $data->email         = $request->get('email');
-            $data->role_group_id = $request->get('role_group_id');
-            $data->save();
-
-
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => $request->has('other_route') ? $request->get('other_route') : route('users.index')
-                ]
-            );
-
-        }
-        catch (\Exception $e)
-        {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
-        }
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(User $user)
-    {
-        try
-        {
-            $user->delete();
-
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => route('users.index')
-                ]
-            );
-        }
-        catch (\Exception $e)
-        {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
-        }
-    }
-
-    public function datatable()
-    {
-        $user = Auth::user();
-        $sql  = User::where('id','!=',$user->id);
-
-        if ($user->role_group_id != 1)
-        {
-            $sql = $sql->where('role_group_id',$user->role_group_id);
-        }
-
-        return Datatables::of($sql->get())
-            ->addColumn('role_group', function ($value) {
-                return $value->roleGroup->title ?? '-';
-            })
-            ->editColumn('status', function ($value) {
-                return $value->status == 1 ? '<span class="badge badge-success">Aktif</span>' :  '<span class="badge badge-danger">Pasif</span>';
-            })
-            ->addColumn('actions', function ($value)
-            {
-                if (auth()->user()->hasPermission('users.destroy') || auth()->user()->hasPermission('users.edit') || auth()->user()->hasPermission('users.show'))
+                $query->where(function ($inner) use ($term)
                 {
-                    $actions  = '<a href="#" class="btn btn-sm btn-light btn-active-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end" data-kt-menu-target="action-'.$value->id.'"> Aksiyon <i class="ki-duotone ki-down fs-5 ms-1"></i> </a>';
-                    $actions .= '<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-primary fw-semibold fs-7 w-125px py-4"  data-kt-menu="true" id="action-'.$value->id.'">';
-
-                    if (auth()->user()->hasPermission('users.edit'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="'.route('users.edit',$value->id).'" class="menu-link px-3"> Düzenle </a> </div>';
-                    }
-
-                    if (auth()->user()->hasPermission('users.edit'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="#" data-model-name="User" data-status="'.$value->status.'" data-id="'.$value->id.'" data-route="'.route('statusUpdate').'" class="menu-link px-3" onclick="statusUpdate(this)"> '.($value->status == 0 ? 'Aktif Et' : 'Pasif Et').' </a> </div>';                }
-
-                    if (auth()->user()->hasPermission('users.destroy'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="#" data-title="'.$value->title.' isimli kullanıcıyı" data-route="'.route('users.destroy',$value->id).'" class="menu-link px-3" onclick="destroy(this)"> Sil </a> </div>';
-                    }
-
-                    $actions .= '</div>';
-                }
-                else
-                {
-                    $actions = '';
-                }
-
-                return $actions;
+                    $inner->where('name', 'like', $term)
+                        ->orWhere('email', 'like', $term);
+                });
             })
-            ->rawColumns(['actions','status','role_group'])
-            ->toJson();
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->integer('status')))
+            ->when($request->filled('role'), fn ($query) => $query->where('role_group_id', $request->integer('role')))
+            ->orderByDesc('id');
+
+        $columns = $this->columns();
+        $records = Table::sort($records, $columns);
+
+        if ($export = Table::export($records, $columns, 'Kullanıcılar'))
+        {
+            return $export;
+        }
+
+        $users  = $records->paginate(Table::perPage())->withQueryString();
+        $roles  = $this->roles($request);
+        $total   = $this->scoped($request)->count();
+        $active  = $this->scoped($request)->where('status', 1)->count();
+        $pending = $this->scoped($request)->where('force_password_change', 1)->count();
+
+        $metrics = [
+            [
+                'label'   => 'Toplam kullanıcı',
+                'value'   => $total,
+                'percent' => 100,
+                'tone'    => 'primary',
+            ],
+            [
+                'label'   => 'Aktif kullanıcı',
+                'value'   => $active,
+                'percent' => $total > 0 ? (int) round($active / $total * 100) : 0,
+                'tone'    => 'success',
+            ],
+            [
+                'label'   => 'Pasif kullanıcı',
+                'value'   => $total - $active,
+                'percent' => $total > 0 ? (int) round(($total - $active) / $total * 100) : 0,
+                'tone'    => 'accent',
+            ],
+            [
+                'label'   => 'Bekleyen davet',
+                'value'   => $pending,
+                'percent' => $total > 0 ? (int) round($pending / $total * 100) : 0,
+                'tone'    => 'accent',
+            ],
+        ];
+
+        return view('crudPackage::users.index', compact('users', 'roles', 'columns', 'metrics', 'total', 'active', 'pending'));
+    }
+
+    protected function columns(): array
+    {
+        return [
+            [
+                'type'  => 'check',
+                'value' => fn (User $user) => $user->getKey(),
+            ],
+            [
+                'type'     => 'lead',
+                'label'    => 'Kullanıcı',
+                'width'    => '2.2fr',
+                'sortable' => 'name',
+                'name'     => fn (User $user) => $user->name,
+                'sub'      => fn (User $user) => $user->email,
+            ],
+            [
+                'type'  => 'badge',
+                'label' => 'Yetki',
+                'width' => '1.2fr',
+                'value' => fn (User $user) => $user->roleGroup?->title ?? 'Yetkisiz',
+                'tone'  => fn (User $user) => $user->role_group_id == 1 ? 'primary' : 'accent',
+            ],
+            [
+                'type'     => 'status',
+                'label'    => 'Durum',
+                'width'    => '0.9fr',
+                'sortable' => 'status',
+                'value'    => fn (User $user) => $this->statusLabel($user),
+                'tone'     => fn (User $user) => $user->isInvitePending() ? 'accent' : ($user->status == 1 ? 'success' : 'muted'),
+            ],
+            [
+                'type'  => 'actions',
+                'width' => '60px',
+                'menu'  => fn (User $user) => Actions::menu('users', $user,
+                [
+                    'editTitle' => 'Kullanıcıyı düzenle',
+                    'extra'     => $this->inviteAction($user),
+                ]),
+            ],
+        ];
+    }
+
+    protected function statusLabel(User $user): string
+    {
+        if ($user->isInvitePending())
+        {
+            return 'Davet bekliyor';
+        }
+
+        return $user->status == 1 ? 'Aktif' : 'Pasif';
+    }
+
+    protected function inviteAction(User $user): array
+    {
+        if (! $user->isInvitePending() || ! Permissions::allows('users.invite.update'))
+        {
+            return [];
+        }
+
+        return [[
+            'label'   => 'Daveti tekrar gönder',
+            'icon'    => 'mail',
+            'href'    => route('users.invite.update', $user),
+            'method'  => 'POST',
+            'confirm' => [
+                'title'        => 'Davet tekrar gönderilsin mi?',
+                'message'      => $user->email . ' adresine yeni bir şifre belirleme bağlantısı gönderilecek. Önceki bağlantı geçersiz olur.',
+                'confirmLabel' => 'Evet, gönder',
+            ],
+        ]];
+    }
+
+    public function show(User $user): View
+    {
+        $user->loadMissing('roleGroup');
+
+        return view('crudPackage::users.detail', compact('user'));
+    }
+
+    public function create(Request $request): View
+    {
+        $user  = new User(['status' => 1]);
+        $roles = $this->roles($request);
+
+        return view($request->ajax() ? 'crudPackage::users.form' : 'crudPackage::users.edit', compact('user', 'roles'));
+    }
+
+    public function edit(Request $request, User $user): View
+    {
+        $roles = $this->roles($request);
+
+        return view($request->ajax() ? 'crudPackage::users.form' : 'crudPackage::users.edit', compact('user', 'roles'));
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $this->validated($request);
+        $user = new User;
+
+        $user->forceFill(
+        [
+            'name'                  => $data['name'],
+            'email'                 => $data['email'],
+            'role_group_id'         => $data['role_group_id'],
+            'status'                => $data['status'],
+            'force_password_change' => 1,
+            'password'              => Hash::make(Str::password(32)),
+        ])->save();
+
+        if (! $this->deliverInvite($user))
+        {
+            return redirect()->route('users.index')
+                ->with('error', $user->name . ' oluşturuldu fakat davet e-postası gönderilemedi. Mail ayarlarını kontrol edip daveti tekrar gönderin.')
+                ->with('reload', true);
+        }
+
+        return redirect()->route('users.index')->with('status', $user->name . ' oluşturuldu, şifre belirleme daveti gönderildi.');
+    }
+
+    public function invite(User $user): RedirectResponse
+    {
+        if (! $user->isInvitePending())
+        {
+            return back()->with('status', $user->name . ' şifresini zaten belirlemiş.');
+        }
+
+        if (! $this->deliverInvite($user))
+        {
+            return back()->with('error', 'Davet e-postası gönderilemedi. Mail ayarlarını kontrol edip tekrar deneyin.');
+        }
+
+        return back()->with('status', $user->name . ' için davet tekrar gönderildi.');
+    }
+
+    protected function deliverInvite(User $user): bool
+    {
+        try
+        {
+            $user->sendInvite();
+        }
+        catch (\Throwable $exception)
+        {
+            report($exception);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    public function update(Request $request, User $user): RedirectResponse
+    {
+        $data = $this->validated($request, $user);
+
+        $user->forceFill($data)->save();
+
+        return redirect()->route('users.index')->with('status', 'Kullanıcı güncellendi.');
+    }
+
+    public function destroy(User $user): RedirectResponse
+    {
+        if ($user->is(auth()->user()))
+        {
+            return back()->with('status', 'Kendi hesabınızı silemezsiniz.');
+        }
+
+        $user->delete();
+
+        return redirect()->route('users.index')->with('status', 'Kullanıcı silindi.');
+    }
+
+    protected function scoped(Request $request)
+    {
+        $user = $request->user();
+
+        return User::query()
+            ->whereKeyNot($user->getKey())
+            ->when($user->role_group_id != 1, fn ($query) => $query->where('role_group_id', $user->role_group_id));
+    }
+
+    protected function roles(Request $request): array
+    {
+        $user = $request->user();
+
+        return RoleGroup::query()
+            ->when($user->role_group_id != 1, fn ($query) => $query->whereKey($user->role_group_id))
+            ->orderBy('title')
+            ->pluck('title', 'id')
+            ->all();
+    }
+
+    protected function validated(Request $request, ?User $user = null): array
+    {
+        return $request->validate(
+        [
+            'name'          => ['required', 'string', 'max:255'],
+            'email'         => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
+            'role_group_id' => ['required', Rule::in(array_keys($this->roles($request)))],
+            'status'        => ['required', 'in:0,1'],
+        ],
+        [],
+        [
+            'name'          => 'Ad & Soyad',
+            'email'         => 'E-mail',
+            'role_group_id' => 'Yetki',
+            'status'        => 'Durum',
+        ]);
     }
 }

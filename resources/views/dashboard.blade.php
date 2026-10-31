@@ -1,1 +1,0 @@
-@extends('crudPackage::layout.main')

@@ -3,166 +3,39 @@
 use crudPackage\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
-function menuGenerateOld($menu)
+
+function menuLink($menu, ?bool $target = null): array
 {
     if (strstr($menu->route,','))
     {
         $arr         = explode(',',$menu->route);
         $menu->route = $arr[0];
-        $parameter   = $arr[1];
-        $route       = route($menu->route,$parameter);
+        $href        = route($menu->route,$arr[1]);
     }
     else
     {
-        $route = $menu->dynamic_route == 1 ? route($menu->route) : $menu->route;
+        $href = $menu->dynamic_route == 1 && \Illuminate\Support\Facades\Route::has($menu->route) ? route($menu->route) : $menu->route;
     }
 
-    $activeRoute      = explode('.',$menu->route);
-    $activeRoute      = $activeRoute[0];
-    $activeRoute     .= '*';
-    $target           = $menu->target == 1 ? 'target="_blank"' : null;
-    $children         = $menu->children;
-    $childrenControl  = count($children) > 0 ? 1 : 0;
-    $html             = '';
-    $htmlChildren     = '';
-
-    if ($childrenControl)
-    {
-        $childrenRoutes = [];
-
-        foreach ($children as $child)
-        {
-            if (strstr($child->route,','))
-            {
-                $arr         = explode(',',$child->route);
-                $child->route = $arr[0];
-                $parameter   = $arr[1];
-                $routeChild  = route($child->route,$parameter);
-            }
-            else
-            {
-                $routeChild = $child->dynamic_route == 1 ? route($child->route) : $child->route;
-            }
-
-            $activeRouteChild  = explode('.',$child->route);
-            $activeRouteChild  = $activeRouteChild[0];
-            $activeRouteChild .= '*';
-            $htmlChildren     .= '<div class="menu-item">';
-            $htmlChildren     .= '<a href="'.$routeChild.'" '. $target .' class="menu-link ' . (request()->routeIs($activeRouteChild) ? 'active' : null) . '">';
-            $htmlChildren     .= '<span class="menu-icon">'. ($child->icon ?? '<i class="ki-outline ki-bookmark "></i>') .'</span>';
-            $htmlChildren     .= '<span class="menu-title">'. $child->title .'</span>';
-            $htmlChildren     .= '</a>';
-            $htmlChildren     .= '</div>';
-
-            array_push($childrenRoutes, $activeRouteChild);
-        }
-
-        $html  = '<div data-kt-menu-trigger="click" class="menu-item menu-accordion '. (request()->routeIs($childrenRoutes) ? 'hover show' : null) .'">';
-        $html .= '<span class="menu-link ' . (request()->routeIs($childrenRoutes) ? 'active' : null) . '">';
-    }
-    else
-    {
-        $html  = '<div data-kt-menu-trigger="click" class="menu-item menu-accordion">';
-        $html .= '<a href="'.$route.'" '. $target .' class="menu-link ' . (request()->routeIs($activeRoute) ? 'active' : null) . '">';
-    }
-
-    $html .= '<span class="menu-icon">'. ($menu->icon ?? '<i class="ki-outline ki-bookmark "></i>') .'</span>';
-    $html .= '<span class="menu-title">'. $menu->title.'</span>';
-
-    if ($childrenControl)
-    {
-        $html .= '<span class="menu-arrow"></span>';
-        $html .= '</span>';
-        $html .= '<div class="menu-sub menu-sub-accordion">';
-        $html .= $htmlChildren;
-        $html .= '</div>';
-    }
-    else
-    {
-        $html .= '</a>';
-    }
-
-    $html .= '</div>';
-
-    return $html;
+    return
+        [
+            'title'  => $menu->title,
+            'icon'   => $menu->icon,
+            'href'   => $href,
+            'route'  => $menu->route,
+            'target' => $target ?? $menu->target == 1,
+            'active' => request()->routeIs($menu->route),
+        ];
 }
 
-function menuGenerate($menu)
+function crudFieldKey(string $name): string
 {
-    if (strstr($menu->route,','))
-    {
-        $arr         = explode(',',$menu->route);
-        $menu->route = $arr[0];
-        $parameter   = $arr[1];
-        $route       = route($menu->route,$parameter);
-    }
-    else
-    {
-        $route = $menu->dynamic_route == 1 ? route($menu->route) : $menu->route;
-    }
+    return trim(str_replace(['[]', '][', '[', ']'], ['', '.', '.', ''], $name), '.');
+}
 
-    $target           = $menu->target == 1 ? 'target="_blank"' : null;
-    $children         = $menu->children;
-    $childrenControl  = count($children) > 0 ? 1 : 0;
-    $html             = '';
-    $htmlChildren     = '';
-
-    if ($childrenControl)
-    {
-        $childrenRoutes = [];
-
-        foreach ($children as $child)
-        {
-            if (strstr($child->route,','))
-            {
-                $arr         = explode(',',$child->route);
-                $child->route = $arr[0];
-                $parameter   = $arr[1];
-                $routeChild  = route($child->route,$parameter);
-            }
-            else
-            {
-                $routeChild = $child->dynamic_route == 1 ? route($child->route) : $child->route;
-            }
-
-            $htmlChildren     .= '<div class="menu-item">';
-            $htmlChildren     .= '<a href="'.$routeChild.'" '. $target .' class="menu-link ' . (request()->routeIs($child->route) ? 'active' : null) . '">';
-            $htmlChildren     .= '<span class="menu-icon">'. ($child->icon ?? '<i class="ki-outline ki-bookmark "></i>') .'</span>';
-            $htmlChildren     .= '<span class="menu-title">'. $child->title .'</span>';
-            $htmlChildren     .= '</a>';
-            $htmlChildren     .= '</div>';
-
-            array_push($childrenRoutes, $child->route);
-        }
-
-        $html  = '<div data-kt-menu-trigger="click" class="menu-item menu-accordion '. (request()->routeIs($childrenRoutes) ? 'hover show' : null) .'">';
-        $html .= '<span class="menu-link ' . (request()->routeIs($childrenRoutes) ? 'active' : null) . '">';
-    }
-    else
-    {
-        $html  = '<div data-kt-menu-trigger="click" class="menu-item menu-accordion">';
-        $html .= '<a href="'.$route.'" '. $target .' class="menu-link ' . (request()->routeIs($menu->route) ? 'active' : null) . '">';
-    }
-
-    $html .= '<span class="menu-icon">'. ($menu->icon ?? '<i class="ki-outline ki-bookmark "></i>') .'</span>';
-    $html .= '<span class="menu-title">'. $menu->title.'</span>';
-
-    if ($childrenControl)
-    {
-        $html .= '<span class="menu-arrow"></span>';
-        $html .= '</span>';
-        $html .= '<div class="menu-sub menu-sub-accordion">';
-        $html .= $htmlChildren;
-        $html .= '</div>';
-    }
-    else
-    {
-        $html .= '</a>';
-    }
-
-    $html .= '</div>';
-
-    return $html;
+function crudBrand(string $key, mixed $default = null): mixed
+{
+    return \crudPackage\Support\Brand::get($key, $default);
 }
 
 function settings($column)
@@ -188,13 +61,14 @@ function settings($column)
     $columns =
         [
             'logo'     => 'crud/images/logo.svg',
-            'loader'   => 'crud/images/loading.gif',
+            'loader'   => null,
             'bg_image' => 'crud/images/guest.jpg',
             'icon'     => 'crud/images/fav/android-icon-192x192.png',
             'color_1'  => '#2900FF',
             'color_2'  => '#001244',
             'font'     => null,
             'title'    => 'Zaurac Teknoloji',
+            'theme'    => 'default',
         ];
 
     return $cache[$column] ?? $columns[$column] ?? null;
@@ -236,6 +110,23 @@ function crudLanguages($crud = null): array
     return is_array($languages) ? array_values($languages) : $languages->values()->all();
 }
 
+function crudComponent(string $name, array $data = [], $slot = null): string
+{
+    return view('crudPackage::components.' . $name,
+        [
+            'attributes' => new \Illuminate\View\ComponentAttributeBag($data),
+            'slot'       => new \Illuminate\Support\HtmlString((string) $slot),
+        ]
+    )->render();
+}
+
+function crudStatusBadge($status, ?string $on = null, ?string $off = null, ?string $size = null): string
+{
+    return $status == 1
+        ? crudComponent('badge', ['tone' => 'success', 'size' => $size], $on ?? 'Aktif')
+        : crudComponent('badge', ['tone' => 'danger', 'size' => $size], $off ?? 'Pasif');
+}
+
 function logAttributeValue($value): string
 {
     if (is_array($value) || is_object($value))
@@ -262,6 +153,40 @@ function shortFilename(string $filename, int $limit = 8): string
 function getExtension(string $filename): string
 {
     return pathinfo($filename, PATHINFO_EXTENSION);
+}
+
+function filePreview(string $path, string $url, ?string $download = null): array
+{
+    $extension = strtolower(getExtension($path));
+    $kinds     = [
+        'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif'],
+        'pdf'   => ['pdf'],
+        'video' => ['mp4', 'webm', 'ogv', 'mov'],
+        'audio' => ['mp3', 'wav', 'ogg', 'm4a'],
+    ];
+
+    return [
+        'name'      => basename($path),
+        'url'       => $url,
+        'download'  => $download,
+        'extension' => $extension ?: 'dosya',
+        'kind'      => collect($kinds)->search(fn ($extensions) => in_array($extension, $extensions, true)) ?: 'file',
+    ];
+}
+
+function trLower(?string $value): string
+{
+    return mb_strtolower(strtr((string) $value, ['İ' => 'i', 'I' => 'ı']), 'UTF-8');
+}
+
+function trUpper(?string $value): string
+{
+    return mb_strtoupper(strtr((string) $value, ['i' => 'İ', 'ı' => 'I']), 'UTF-8');
+}
+
+function trUcfirst(?string $value): string
+{
+    return trUpper(mb_substr((string) $value, 0, 1, 'UTF-8')) . mb_substr((string) $value, 1, null, 'UTF-8');
 }
 
 function uploadUrl($path)

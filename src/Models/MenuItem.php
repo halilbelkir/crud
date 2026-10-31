@@ -11,6 +11,11 @@ class MenuItem extends Model
         return Crud::whereLike('slug', '%'.$route.'%')->first();
     }
 
+    public function menu()
+    {
+        return $this->belongsTo(Menu::class);
+    }
+
     public function children()
     {
         return $this->hasMany(MenuItem::class, 'parent_id')->orderBy('order');

@@ -4,14 +4,17 @@ namespace crudPackage\Http\Controllers;
 
 use crudPackage\Models\Crud;
 use crudPackage\Models\MenuItem;
-use crudPackage\Models\Role;
 use crudPackage\Models\RoleGroup;
+use crudPackage\Support\Actions;
+use crudPackage\Support\Search;
+use crudPackage\Support\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Validator;
-use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class RoleGroupController extends Controller
 {
@@ -44,410 +47,272 @@ class RoleGroupController extends Controller
                     'column' => 'delete'
                 ]
         ];
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+
+    public function index(Request $request): View|Response
     {
-        $cruds        = Crud::where('status',1)->orderBy('main','desc')->get();
-        $specialMenus = MenuItem::where('special',1)->orderBy('title','asc')->get();
-        $permissions  = $this->permissions;
-        $user         = Auth::user();
-
-        if ($user->role_group_id != 1)
-        {
-            $cruds        = Crud::where('status',1)->withRolePermissions($user->role_group_id)->orderBy('main','desc')->get();
-            $specialMenus = MenuItem::where('special',1)->withSpecialItemRolePermissions($user->role_group_id)->orderBy('title','asc')->get();
-        }
-
-        return view('crudPackage::roleGroups.index',compact('cruds','permissions','specialMenus'));
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        try
-        {
-            $attribute =
-                [
-                    'title'           => 'Başlık',
-                ];
-
-            $rules =
-                [
-                    'title'           => 'required',
-                ];
-
-            $validator = Validator::make($request->all(), $rules);
-            $validator->setAttributeNames($attribute);
-
-            if ($validator->fails())
+        $records = $this->scoped($request)
+            ->withCount('users')
+            ->withCount(['roles as granted_count' => fn ($query) => $query->where('browse', 1)])
+            ->when($request->filled('q'), function ($query) use ($request)
             {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
-            }
-
-            if (empty($request->get('permissions')) && empty($request->get('special_permissions')))
-            {
-                return response()->json(
-                    [
-                        'result'  => 2,
-                        'message' => ['permissions' => ['En az bir rol izni seçilmelidir.']]
-                    ],403
-                );
-            }
-
-
-            $data         = new RoleGroup;
-            $data->title  = $request->get('title');
-            $data->save();
-
-            $crudsSql           = Crud::where('status',1)->orderBy('main','desc')->get();
-            $cruds              = $request->get('permissions');
-            $specialPermissions = $request->get('special_permissions');
-            $specialMenus       = MenuItem::where('special',1)->orderBy('title','asc')->get();
-
-            foreach ($crudsSql as $key => $crud)
-            {
-                $roles                = new Role;
-                $roles->role_group_id = $data->id;
-                $roles->crud_id       = $crud->id;
-
-                if (!isset($cruds[$crud->id]))
-                {
-                    foreach ($this->permissions as $permission)
-                    {
-                        $roles->{$permission['column']} = 0;
-                    }
-                }
-                else
-                {
-                    foreach ($cruds[$crud->id] as $index => $permission)
-                    {
-                        $permission = (int) $permission;
-                        $roles->{$this->permissions[$index]['column']} = $permission;
-                    }
-                }
-
-                $roles->save();
-            }
-
-            foreach ($specialMenus as $specialMenuKey => $specialMenu)
-            {
-                $roles                = new Role;
-                $roles->role_group_id = $data->id;
-                $roles->menu_item_id  = $specialMenu->id;
-
-                if (!isset($specialPermissions[$specialMenu->id]))
-                {
-                    foreach ($this->permissions as $permission)
-                    {
-                        $roles->{$permission['column']} = 0;
-                    }
-                }
-                else
-                {
-                    foreach ($specialPermissions[$specialMenu->id] as $index => $permission)
-                    {
-                        $permission = (int) $permission;
-                        $roles->{$this->permissions[$index]['column']} = $permission;
-                    }
-                }
-
-                $roles->save();
-            }
-
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                ]
-            );
-
-        }
-        catch (\Exception $e)
-        {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
-        }
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(RoleGroup $roleGroup)
-    {
-        $value        = $roleGroup;
-        $cruds        = Crud::where('status',1)->orderBy('main','desc')->get();
-        $specialMenus = MenuItem::where('special',1)->orderBy('title','asc')->get();
-        $permissions  = $this->permissions;
-
-        if (Auth::user()->role_group_id != 1)
-        {
-            $cruds        = Crud::where('status',1)->withRolePermissions($value->id)->orderBy('main','desc')->get();
-            $specialMenus = MenuItem::where('special',1)->withSpecialItemRolePermissions($value->id)->orderBy('title','asc')->get();
-        }
-
-        return view('crudPackage::roleGroups.show',compact('cruds','permissions','value','specialMenus'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(RoleGroup $roleGroup)
-    {
-        $value        = $roleGroup;
-        $cruds        = Crud::where('status',1)->orderBy('main','desc')->get();
-        $specialMenus = MenuItem::where('special',1)->orderBy('title','asc')->get();
-        $permissions  = $this->permissions;
-
-        if (Auth::user()->role_group_id != 1)
-        {
-            $cruds        = Crud::where('status',1)->withRolePermissions($value->id)->orderBy('main','desc')->get();
-            $specialMenus = MenuItem::where('special',1)->withSpecialItemRolePermissions($value->id)->orderBy('title','asc')->get();
-        }
-
-        return view('crudPackage::roleGroups.edit',compact('cruds','permissions','value','specialMenus'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, RoleGroup $roleGroup)
-    {
-        try
-        {
-            $attribute =
-                [
-                    'title'           => 'Başlık',
-                ];
-
-            $rules =
-                [
-                    'title'           => 'required',
-                ];
-
-            $validator = Validator::make($request->all(), $rules);
-            $validator->setAttributeNames($attribute);
-
-            if ($validator->fails())
-            {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ], 403
-                );
-            }
-
-            if (empty($request->get('permissions')) && empty($request->get('special_permissions')))
-            {
-                return response()->json(
-                    [
-                        'result'  => 2,
-                        'message' => ['permissions' => ['En az bir rol izni seçilmelidir.']]
-                    ], 403
-                );
-            }
-
-
-            $data        = $roleGroup;
-            $data->title = $request->get('title');
-            $data->save();
-
-            $crudsSql           = Crud::where('status',1)->orderBy('main','desc')->get();
-            $cruds              = $request->get('permissions');
-            $specialPermissions = $request->get('special_permissions');
-            $specialMenus       = MenuItem::where('special',1)->orderBy('title','asc')->get();
-
-            foreach ($crudsSql as $key => $crud)
-            {
-                $roles = Role::where('role_group_id', $data->id)->where('crud_id', $crud->id)->first();
-
-                if (!isset($cruds[$crud->id]))
-                {
-                    foreach ($this->permissions as $permission)
-                    {
-                        $roles->{$permission['column']} = 0;
-                    }
-                }
-                else
-                {
-                    foreach ($this->permissions as $permissionKey => $permission)
-                    {
-                        if (isset($cruds[$crud->id][$permissionKey]))
-                        {
-                            $roles->{$permission['column']} = 1;
-                        }
-                        else
-                        {
-                            $roles->{$permission['column']} = 0;
-                        }
-                    }
-                }
-
-                $roles->save();
-            }
-
-            foreach ($specialMenus as $specialMenuKey => $specialMenu)
-            {
-                $roles = Role::where('role_group_id', $data->id)->where('menu_item_id', $specialMenu->id)->first();
-
-                if (empty($roles))
-                {
-                    $roles                = new Role;
-                    $roles->role_group_id = $data->id;
-                    $roles->menu_item_id  = $specialMenu->id;
-                }
-
-                if (!isset($specialPermissions[$specialMenu->id]))
-                {
-                    foreach ($this->permissions as $permission)
-                    {
-                        $roles->{$permission['column']} = 0;
-                    }
-                }
-                else
-                {
-                    foreach ($this->permissions as $permissionKey => $permission)
-                    {
-                        if (isset($specialPermissions[$specialMenu->id][$permissionKey]))
-                        {
-                            $roles->{$permission['column']} = 1;
-                        }
-                        else
-                        {
-                            $roles->{$permission['column']} = 0;
-                        }
-                    }
-                }
-
-                $roles->save();
-            }
-
-            $data->roles()->whereNull('roles.crud_id')->whereNull('roles.menu_item_id')->delete();
-
-            return response()->json(
-                [
-                    'result' => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => $request->has('other_route') ? $request->get('other_route') : route('role-groups.index')
-                ]
-            );
-        }
-        catch (\Exception $e)
-        {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
-        }
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(RoleGroup $roleGroup)
-    {
-        try
-        {
-            if ($roleGroup->users()->count() > 0)
-            {
-                return response()->json(
-                    [
-                        'result'  => 0,
-                        'message' => 'Bu yetkiye ait kullanıcılar tespit edildi.Lütfen kullanıcıların yetkilerini kaldırınız ve tekrar deneyiniz.'
-                    ],403);
-            }
-            else
-            {
-                $roleGroup->roles()->delete();
-                $roleGroup->delete();
-            }
-
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => route('role-groups.index')
-                ]
-            );
-        }
-        catch (\Exception $e)
-        {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
-        }
-    }
-
-    public function datatable()
-    {
-        $roles = RoleGroup::all();
-        $user  = Auth::user();
-
-        if ($user->role_group_id != 1)
-        {
-            $roles = RoleGroup::where('id',$user->role_group_id)->get();
-        }
-
-        return Datatables::of($roles)
-            ->addColumn('actions', function ($value)
-            {
-                if (auth()->user()->hasPermission('role-groups.destroy') || auth()->user()->hasPermission('role-groups.edit') || auth()->user()->hasPermission('role-groups.show'))
-                {
-                    $actions  = '<a href="#" class="btn btn-sm btn-light btn-active-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end" data-kt-menu-target="action-'.$value->id.'"> Aksiyon <i class="ki-duotone ki-down fs-5 ms-1"></i> </a>';
-                    $actions .= '<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-primary fw-semibold fs-7 w-125px py-4"  data-kt-menu="true" id="action-'.$value->id.'">';
-
-                    if (auth()->user()->hasPermission('role-groups.show'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="' . route('role-groups.show', $value->id) . '" class="menu-link px-3"> Detay </a> </div>';
-                    }
-
-                    if (auth()->user()->hasPermission('role-groups.edit'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="'.route('role-groups.edit',$value->id).'" class="menu-link px-3"> Düzenle </a> </div>';
-                    }
-
-                    if (auth()->user()->hasPermission('role-groups.edit'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="#" data-model-name="RoleGroup" data-status="'.$value->status.'" data-id="'.$value->id.'" data-route="'.route('statusUpdate').'" class="menu-link px-3" onclick="statusUpdate(this)"> '.($value->status == 0 ? 'Aktif Et' : 'Pasif Et').' </a> </div>';                }
-
-                    if (auth()->user()->hasPermission('role-groups.destroy'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="#" data-title="'.$value->title.' isimli rolü" data-route="'.route('role-groups.destroy',$value->id).'" class="menu-link px-3" onclick="destroy(this)"> Sil </a> </div>';
-                    }
-
-                    $actions .= '</div>';
-                }
-                else
-                {
-                    $actions = '';
-                }
-
-                return $actions;
+                $query->where('title', 'like', Search::pattern((string) $request->string('q')));
             })
-            ->rawColumns(['actions'])
-            ->toJson();
+            ->orderBy('title');
+
+        $columns = $this->columns();
+        $records = Table::sort($records, $columns);
+
+        if ($export = Table::export($records, $columns, 'Yetkiler'))
+        {
+            return $export;
+        }
+
+        $roleGroups = $records->paginate(Table::perPage())->withQueryString();
+        $total      = $this->scoped($request)->count();
+        $assigned   = $this->scoped($request)->has('users')->count();
+
+        return view('crudPackage::roleGroups.index', compact('roleGroups', 'columns', 'total', 'assigned'));
+    }
+
+    protected function scoped(Request $request): Builder
+    {
+        return RoleGroup::query()->when($request->user()->role_group_id != 1, function ($query) use ($request)
+        {
+            $query->where('id', $request->user()->role_group_id);
+        });
+    }
+
+    protected function columns(): array
+    {
+        return [
+            [
+                'type'     => 'lead',
+                'label'    => 'Yetki',
+                'width'    => '1.6fr',
+                'sortable' => 'title',
+                'name'     => fn (RoleGroup $roleGroup) => $roleGroup->title,
+                'sub'      => fn (RoleGroup $roleGroup) => $this->admin($roleGroup) ? 'Tüm modüllere erişir' : null,
+            ],
+            [
+                'type'     => 'text',
+                'label'    => 'Kullanıcı',
+                'width'    => '120px',
+                'bold'     => true,
+                'sortable' => 'users_count',
+                'value'    => fn (RoleGroup $roleGroup) => $roleGroup->users_count,
+            ],
+            [
+                'type'  => 'badge',
+                'label' => 'Erişim',
+                'width' => '180px',
+                'value' => fn (RoleGroup $roleGroup) => $this->admin($roleGroup) ? 'Tam yetki' : $roleGroup->granted_count . ' modül',
+                'tone'  => fn (RoleGroup $roleGroup) => $this->admin($roleGroup) ? 'primary' : ($roleGroup->granted_count > 0 ? 'accent' : 'neutral'),
+            ],
+            [
+                'type'  => 'actions',
+                'width' => '60px',
+                'menu'  => fn (RoleGroup $roleGroup) => Actions::menu('role-groups', $roleGroup,
+                [
+                    'editTitle' => 'Yetkiyi düzenle',
+                    'except'    => $this->admin($roleGroup) ? ['delete'] : [],
+                ]),
+            ],
+        ];
+    }
+
+    protected function admin(RoleGroup $roleGroup): bool
+    {
+        return (int) $roleGroup->getKey() === 1;
+    }
+
+    public function create(Request $request): View
+    {
+        $roleGroup = new RoleGroup;
+        $groups    = $this->groups($roleGroup);
+
+        return view($request->ajax() ? 'crudPackage::roleGroups.form' : 'crudPackage::roleGroups.edit', compact('roleGroup', 'groups'));
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $this->validated($request);
+
+        if ($data === null)
+        {
+            return back()->withInput()->with('error', 'En az bir izin seçilmelidir.');
+        }
+
+        $roleGroup = DB::transaction(function () use ($data, $request)
+        {
+            $roleGroup        = new RoleGroup;
+            $roleGroup->title = $data['title'];
+            $roleGroup->save();
+
+            $this->sync($roleGroup, $request);
+
+            return $roleGroup;
+        });
+
+        return redirect()->route('role-groups.index')->with('status', $roleGroup->title . ' oluşturuldu.');
+    }
+
+    public function show(RoleGroup $roleGroup): View
+    {
+        $roleGroup->loadCount('users');
+
+        $groups = $this->groups($roleGroup);
+
+        return view('crudPackage::roleGroups.detail', compact('roleGroup', 'groups'));
+    }
+
+    public function edit(Request $request, RoleGroup $roleGroup): View
+    {
+        $groups = $this->groups($roleGroup);
+
+        return view($request->ajax() ? 'crudPackage::roleGroups.form' : 'crudPackage::roleGroups.edit', compact('roleGroup', 'groups'));
+    }
+
+    public function update(Request $request, RoleGroup $roleGroup): RedirectResponse
+    {
+        $data = $this->validated($request);
+
+        if ($data === null)
+        {
+            return back()->withInput()->with('error', 'En az bir izin seçilmelidir.');
+        }
+
+        DB::transaction(function () use ($data, $request, $roleGroup)
+        {
+            $roleGroup->title = $data['title'];
+            $roleGroup->save();
+
+            $this->sync($roleGroup, $request);
+        });
+
+        return redirect()->route('role-groups.index')->with('status', 'Yetki güncellendi.');
+    }
+
+    public function destroy(RoleGroup $roleGroup): RedirectResponse
+    {
+        if ($this->admin($roleGroup))
+        {
+            return back()->with('error', 'Tam yetkili grup silinemez.');
+        }
+
+        if ($roleGroup->users()->exists())
+        {
+            return back()->with('error', 'Bu yetkiye bağlı kullanıcılar var. Kullanıcıların yetkisini değiştirip tekrar deneyin.');
+        }
+
+        DB::transaction(function () use ($roleGroup)
+        {
+            $roleGroup->roles()->delete();
+            $roleGroup->delete();
+        });
+
+        return redirect()->route('role-groups.index')->with('status', $roleGroup->title . ' silindi.');
+    }
+
+    protected function validated(Request $request): ?array
+    {
+        $data = $request->validate(
+        [
+            'title'               => ['required', 'string', 'max:255'],
+            'permissions'         => ['nullable', 'array'],
+            'special_permissions' => ['nullable', 'array'],
+        ],
+        [],
+        [
+            'title' => 'Başlık',
+        ]);
+
+        if (empty($data['permissions']) && empty($data['special_permissions']))
+        {
+            return null;
+        }
+
+        return $data;
+    }
+
+    protected function sync(RoleGroup $roleGroup, Request $request): void
+    {
+        $cruds = (array) $request->input('permissions', []);
+        $menus = (array) $request->input('special_permissions', []);
+
+        foreach (Crud::where('status', 1)->get() as $crud)
+        {
+            $this->grant($roleGroup, ['crud_id' => $crud->id], (array) ($cruds[$crud->id] ?? []));
+        }
+
+        foreach (MenuItem::where('special', 1)->get() as $menu)
+        {
+            $this->grant($roleGroup, ['menu_item_id' => $menu->id], (array) ($menus[$menu->id] ?? []));
+        }
+
+        $roleGroup->roles()->whereNull('crud_id')->whereNull('menu_item_id')->delete();
+    }
+
+    protected function grant(RoleGroup $roleGroup, array $target, array $selected): void
+    {
+        $role = $roleGroup->roles()->where($target)->first() ?? $roleGroup->roles()->make()->forceFill($target);
+
+        foreach ($this->permissions as $key => $permission)
+        {
+            $role->{$permission['column']} = isset($selected[$key]) ? 1 : 0;
+        }
+
+        $role->save();
+    }
+
+    protected function groups(RoleGroup $roleGroup): array
+    {
+        $scope  = (int) Auth::user()->role_group_id;
+        $roles  = $roleGroup->exists ? $roleGroup->roles()->get() : collect();
+        $groups = [];
+
+        $cruds = Crud::where('status', 1)
+            ->when($scope !== 1, fn ($query) => $query->withRolePermissions($scope))
+            ->orderBy('main', 'desc')
+            ->get();
+
+        $menus = MenuItem::where('special', 1)
+            ->when($scope !== 1, fn ($query) => $query->withSpecialItemRolePermissions($scope))
+            ->orderBy('title')
+            ->get();
+
+        foreach ($cruds as $crud)
+        {
+            $role  = $roles->firstWhere('crud_id', $crud->id);
+            $items = [];
+
+            foreach ($this->permissions as $key => $permission)
+            {
+                $items[] = [
+                    'name'    => 'permissions[' . $crud->id . '][' . $key . ']',
+                    'label'   => $permission['title'],
+                    'checked' => (bool) $role?->{$permission['column']},
+                ];
+            }
+
+            $groups[] = ['label' => $crud->title, 'items' => $items];
+        }
+
+        foreach ($menus as $menu)
+        {
+            $role = $roles->firstWhere('menu_item_id', $menu->id);
+
+            $groups[] = [
+                'label' => $menu->title,
+                'items' => [
+                    [
+                        'name'    => 'special_permissions[' . $menu->id . '][1]',
+                        'label'   => $this->permissions[1]['title'],
+                        'checked' => (bool) $role?->browse,
+                    ],
+                ],
+            ];
+        }
+
+        return $groups;
     }
 }

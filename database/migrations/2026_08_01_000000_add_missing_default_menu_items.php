@@ -12,7 +12,7 @@ return new class extends Migration
                 [
                     'title'         => 'Ayarlar',
                     'route'         => 'settings.index',
-                    'icon'          => '<i class="ki-outline ki-setting-2 fs-2"></i>',
+                    'icon'          => 'settings',
                     'menu_id'       => 1,
                     'order'         => 5,
                     'dynamic_route' => 1,
@@ -21,7 +21,7 @@ return new class extends Migration
                 [
                     'title'         => 'Geçmiş',
                     'route'         => 'logs.index',
-                    'icon'          => '<i class="bi bi-clock-history fs-2"></i>',
+                    'icon'          => 'history',
                     'menu_id'       => 1,
                     'order'         => 6,
                     'dynamic_route' => 1,
@@ -30,7 +30,7 @@ return new class extends Migration
                 [
                     'title'         => 'Media',
                     'route'         => 'media.index',
-                    'icon'          => '<i class="bi bi-images fs-2"></i>',
+                    'icon'          => 'upload',
                     'menu_id'       => 1,
                     'order'         => 7,
                     'dynamic_route' => 1,

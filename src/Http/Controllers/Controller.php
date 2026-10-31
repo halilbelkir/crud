@@ -16,7 +16,6 @@ abstract class Controller
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_exec($ch);
             $retcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
         }
     }
 

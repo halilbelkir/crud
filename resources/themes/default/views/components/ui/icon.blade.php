@@ -1,0 +1,61 @@
+@props([
+    'name',
+    'size'   => 20,
+    'stroke' => 1.8,
+])
+
+@php
+    $icons = [
+        'grid'          => '<rect x="3" y="3" width="7.6" height="7.6" rx="2.8"/><rect x="13.4" y="3" width="7.6" height="7.6" rx="2.8"/><rect x="3" y="13.4" width="7.6" height="7.6" rx="2.8"/><rect x="13.4" y="13.4" width="7.6" height="7.6" rx="2.8"/>',
+        'users'         => '<circle cx="6" cy="9" r="3"/><path d="M1.5 17.5c0-2.7 2-4.3 4.5-4.3s4.5 1.6 4.5 4.3"/><path d="M14 9.5h7.5M14 14.5h5"/>',
+        'user'          => '<circle cx="12" cy="9" r="3.5"/><path d="M5.5 20c0-3.4 2.9-5.5 6.5-5.5s6.5 2.1 6.5 5.5"/>',
+        'user-check'    => '<circle cx="6" cy="9" r="3"/><path d="M1.5 17.5c0-2.7 2-4.3 4.5-4.3s4.5 1.6 4.5 4.3"/><path d="M13.4 9.8l1.3 1.3 2.5-2.7"/><path d="M13.4 15h6"/>',
+        'settings'      => '<path d="M4 7.5h5.5M14.5 7.5h5.5M4 16.5h9.5M18.5 16.5h1.5"/><circle cx="12" cy="7.5" r="2.4"/><circle cx="16" cy="16.5" r="2.4"/>',
+        'bell'          => '<path d="M18 15.2v-5.2a6 6 0 0 0-12 0v5.2l-1.4 2.3a.8.8 0 0 0 .7 1.2h13.4a.8.8 0 0 0 .7-1.2z"/><path d="M10 19.4a2.2 2.2 0 0 0 4 0"/>',
+        'search'        => '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
+        'qr'            => '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><path d="M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5z"/>',
+        'chevron-down'  => '<path d="M7 10l4.3 4.3a1 1 0 0 0 1.4 0L17 10"/>',
+        'chevron-up'    => '<path d="M7 14l4.3-4.3a1 1 0 0 1 1.4 0L17 14"/>',
+        'chevron-left'  => '<path d="M14 7l-4.3 4.3a1 1 0 0 0 0 1.4L14 17"/>',
+        'chevron-right' => '<path d="M10 7l4.3 4.3a1 1 0 0 1 0 1.4L10 17"/>',
+        'plus'          => '<path d="M12 6v12M6 12h12"/>',
+        'logout'        => '<path d="M15 5.5H9a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h6"/><path d="M13 12h7.5"/><path d="M17.6 8.9l2.6 2.6a.7.7 0 0 1 0 1l-2.6 2.6"/>',
+        'export'        => '<path d="M12 4v11.4"/><path d="M7.6 11.4l3.7 3.7a1 1 0 0 0 1.4 0l3.7-3.7"/><path d="M5 20h14"/>',
+        'upload'        => '<path d="M12 16V4.6"/><path d="M7.6 8.6l3.7-3.7a1 1 0 0 1 1.4 0l3.7 3.7"/><path d="M5 20h14"/>',
+        'pen'           => '<path d="M14.8 5.6a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L8.7 19.9a2 2 0 0 1-1.4.6H5a1 1 0 0 1-1-1v-2.3a2 2 0 0 1 .6-1.4z"/><path d="M12.8 7.6l3.6 3.6"/>',
+        'copy'          => '<rect x="8" y="8" width="12" height="12" rx="3.6"/><path d="M16 8V6.6A2.6 2.6 0 0 0 13.4 4H6.6A2.6 2.6 0 0 0 4 6.6v6.8A2.6 2.6 0 0 0 6.6 16H8"/>',
+        'link'          => '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+        'trash'         => '<path d="M5 7h14"/><path d="M10 7V5.7c0-.9.8-1.7 1.7-1.7h.6c.9 0 1.7.8 1.7 1.7V7"/><path d="M7.2 7l.8 11.4c.1 1.2 1 2.1 2.2 2.1h3.6c1.2 0 2.1-.9 2.2-2.1L16.8 7"/>',
+        'eye'           => '<circle cx="12" cy="12" r="3.2"/><path d="M3.5 12c1.8-4 4.8-6 8.5-6s6.7 2 8.5 6c-1.8 4-4.8 6-8.5 6s-6.7-2-8.5-6z"/>',
+        'lock'          => '<rect x="4" y="10" width="16" height="10.5" rx="3.6"/><path d="M8 10V7.6a4 4 0 0 1 8 0V10"/>',
+        'check'         => '<path d="M5.5 12.4l3.5 3.5a1 1 0 0 0 1.5 0L18.5 8"/>',
+        'check-circle'  => '<circle cx="12" cy="12" r="8.5"/><path d="M8.8 12.4l1.9 1.9a1 1 0 0 0 1.4 0l3.6-3.8"/>',
+        'minus-circle'  => '<circle cx="12" cy="12" r="8.5"/><path d="M8 12h8"/>',
+        'close'         => '<path d="M6 6l12 12M18 6L6 18"/>',
+        'filter'        => '<path d="M4.4 5.2h15.2a1 1 0 0 1 .8 1.7l-5.5 6.4a2 2 0 0 0-.5 1.3v2.7a1 1 0 0 1-.6.9l-2.6 1.2a1 1 0 0 1-1.4-.9v-3.9a2 2 0 0 0-.5-1.3L3.6 6.9a1 1 0 0 1 .8-1.7z"/>',
+        'sort'          => '<path d="M8 9.2l3.3-3.3a1 1 0 0 1 1.4 0L16 9.2"/><path d="M8 14.8l3.3 3.3a1 1 0 0 0 1.4 0l3.3-3.3"/>',
+        'dots'          => '<circle cx="6" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
+        'file'          => '<path d="M14 3H8a3.2 3.2 0 0 0-3.2 3.2v11.6A3.2 3.2 0 0 0 8 21h8a3.2 3.2 0 0 0 3.2-3.2V8.2z"/><path d="M13.8 3v3.4A1.8 1.8 0 0 0 15.6 8.2h3.4"/>',
+        'clock'         => '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.5 2"/>',
+        'history'       => '<path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4.6V9.2h4.6"/><path d="M12 8.4v3.9l2.8 1.7"/>',
+        'wallet'        => '<rect x="3" y="6" width="18" height="13" rx="4.4"/><path d="M3 10.2h18"/><path d="M16.6 14.6h1.4"/>',
+        'shield-check'  => '<path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',
+        'chart'         => '<path d="M4.4 19.4h15.2"/><path d="M7.2 16V9.6M12 16V5.6M16.8 16v-5"/>',
+        'bank'          => '<path d="M4.4 10h15.2"/><path d="M5.4 10V8.8a1 1 0 0 1 .5-.9l5.6-3.5a1 1 0 0 1 1 0l5.6 3.5a1 1 0 0 1 .5.9V10"/><path d="M7.4 10.4v6.8M12 10.4v6.8M16.6 10.4v6.8"/><path d="M4.4 20h15.2"/>',
+        'menu'          => '<path d="M4 7h16M4 12h16M4 17h16"/>',
+        'grip'          => '<circle cx="9" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.4" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1.4" fill="currentColor" stroke="none"/>',
+        'inbox'         => '<path d="M4 8.7l7.2-3.6a2 2 0 0 1 1.6 0L20 8.7v6.6a2 2 0 0 1-1.1 1.8l-6 3a2 2 0 0 1-1.8 0l-6-3A2 2 0 0 1 4 15.3z"/><path d="M4.3 8.6l7 3.5a1.5 1.5 0 0 0 1.4 0l7-3.5"/><path d="M12 12.4v7.4"/>',
+        'mail'          => '<rect x="3" y="5.5" width="18" height="13" rx="4.4"/><path d="M4.4 8l6.5 4.5a2 2 0 0 0 2.2 0L19.6 8"/>',
+        'mail-filled'   => '<path fill="currentColor" fill-rule="evenodd" stroke="none" d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm8 9 8-5V6l-8 5-8-5v2l8 5Z"/>',
+        'whatsapp'      => '<path fill="currentColor" fill-rule="evenodd" stroke="none" d="M12 0C5.4 0 .06 5.34.06 11.94c0 2.1.55 4.15 1.6 5.96L0 24l6.28-1.62a11.9 11.9 0 0 0 5.72 1.46h.01c6.58 0 11.93-5.35 11.93-11.94C23.94 5.34 18.59 0 12 0Zm5.5 14.4c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.88-.79-1.48-1.76-1.66-2.06-.17-.3-.02-.46.13-.6.14-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.62.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2-1.41.25-.7.25-1.29.18-1.41-.08-.13-.28-.2-.58-.35Z"/>',
+        'phone'         => '<path d="M7.5 4h-2A1.5 1.5 0 0 0 4 5.5C4 13 11 20 18.5 20A1.5 1.5 0 0 0 20 18.5v-2a1 1 0 0 0-.8-1l-3-.6a1 1 0 0 0-1 .4l-1 1.3a12.5 12.5 0 0 1-5.3-5.3l1.3-1a1 1 0 0 0 .4-1l-.6-3a1 1 0 0 0-1-.8z"/>',
+        'calendar'      => '<rect x="4" y="5.5" width="16" height="14" rx="4.4"/><path d="M4 10.2h16"/><path d="M8.5 4v3M15.5 4v3"/>',
+        'alert'         => '<circle cx="12" cy="12" r="8.5"/><path d="M12 8v5M12 16h.01"/>',
+        'info'          => '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/>',
+        'swap'          => '<path d="M4 8.5h13"/><path d="M14 5.5l3 3-3 3"/><path d="M20 15.5H7"/><path d="M10 12.5l-3 3 3 3"/>',
+    ];
+@endphp
+
+<svg viewBox="0 0 24 24" width="{{ $size }}" height="{{ $size }}" fill="none" stroke="currentColor" stroke-width="{{ $stroke }}" stroke-linecap="round" stroke-linejoin="round" {{ $attributes }}>
+    {!! $icons[$name] ?? '' !!}
+</svg>

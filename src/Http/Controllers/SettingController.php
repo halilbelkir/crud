@@ -3,142 +3,94 @@
 namespace crudPackage\Http\Controllers;
 
 use crudPackage\Models\Setting;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use crudPackage\Models\Language;
 use Illuminate\Support\Facades\Validator;
 use crudPackage\Library\ImageUpload\ImageUpload;
+use crudPackage\Library\Theme\ThemeManager;
 class SettingController extends Controller
 {
     public function index()
     {
-        $value     = Setting::first();
-        $languages = Language::orderBy('order','asc')->get();
-        $fonts     = googleFonts();
+        $value       = Setting::first();
+        $languages   = Language::orderBy('order','asc')->get();
+        $fonts       = googleFonts();
+        $themes      = ThemeManager::selectable();
+        $activeTheme = ThemeManager::active();
 
-        return view('crudPackage::settings.index',compact('value','languages','fonts'));
+        return view('crudPackage::settings.index',compact('value','languages','fonts','themes','activeTheme'));
     }
 
-    public function create()
+    public function update(Request $request, $id): RedirectResponse
     {
+        $data  = Setting::findOrFail($id);
+        $image = ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,gif,svg', 'max:4096'];
 
-    }
+        $validated = $request->validate(
+        [
+            'title'       => ['required', 'string', 'max:255'],
+            'subtitle'    => ['required', 'string', 'max:255'],
+            'theme'       => ['required', 'in:' . implode(',', array_keys(ThemeManager::ready()))],
+            'color_1'     => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'color_2'     => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'font'        => ['nullable', 'string', 'max:255'],
+            'languages'   => ['nullable', 'array'],
+            'languages.*' => ['integer'],
+            'logo'        => $image,
+            'icon'        => $image,
+            'loader'      => $image,
+            'bg_image'    => $image,
+        ],
+        [],
+        [
+            'title'    => 'Başlık',
+            'subtitle' => 'Karşılama Mesajı',
+            'theme'    => 'Tema',
+            'color_1'  => 'Panel Renk 1',
+            'color_2'  => 'Panel Renk 2',
+            'logo'     => 'Logo',
+            'icon'     => 'İkon',
+            'loader'   => 'Yükleme Animasyonu',
+            'bg_image' => 'Arka Plan Resmi',
+        ]);
 
-    public function store(Request $request)
-    {
+        $imageUpload = new ImageUpload();
 
-    }
-
-    public function show(string $id)
-    {
-
-    }
-
-    public function edit(string $id)
-    {
-
-    }
-
-    public function update(Request $request, $id)
-    {
-        try
+        foreach (['logo', 'icon', 'loader', 'bg_image'] as $field)
         {
-            $data      = Setting::find($id);
-            $attribute =
-                [
-                    'title'     => 'Başlık',
-                    'subtitle'  => 'Karşılama Mesajı',
-                ];
-
-            $rules =
-                [
-                    'title'     => 'required',
-                    'subtitle'  => 'required',
-                ];
-
-            $validator = Validator::make($request->all(), $rules);
-            $validator->setAttributeNames($attribute);
-
-            if ($validator->fails())
+            if (! $request->hasFile($field) && $request->boolean($field . '_remove') && filled($data->{$field}))
             {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
+                $imageUpload->delete($data->{$field});
+
+                $data->{$field} = null;
+
+                continue;
             }
 
-            $imageUpload = new ImageUpload();
-
-            if ($request->has('logo'))
+            if (! $request->hasFile($field))
             {
-                $imageUpload->delete($data->logo);
-
-                $name       = 'logo-'.random_int(100000000, 999999999999).time();
-                $fileName    = $imageUpload->getName($request->file('logo'),$name,'settings');
-                $data->logo = $fileName;
+                continue;
             }
 
-            if ($request->has('icon'))
-            {
-                $imageUpload->delete($data->icon);
+            $imageUpload->delete($data->{$field});
 
-                $name       = 'icon-'.random_int(100000000, 999999999999).time();
-                $fileName    = $imageUpload->getName($request->file('icon'),$name,'settings');
-                $data->icon = $fileName;
-            }
-
-            if ($request->has('loader'))
-            {
-                $imageUpload->delete($data->loader);
-
-                $name         = 'loader-'.random_int(100000000, 999999999999).time();
-                $fileName      = $imageUpload->getName($request->file('loader'),$name,'settings');
-                $data->loader = $fileName;
-            }
-
-            if ($request->has('bg_image'))
-            {
-                $imageUpload->delete($data->bg_image);
-
-                $name           = 'bg_image-'.random_int(100000000, 999999999999).time();
-                $fileName        = $imageUpload->getName($request->file('bg_image'),$name,'settings');
-                $data->bg_image = $fileName;
-            }
-
-            $data->title     = $request->get('title');
-            $data->subtitle  = $request->get('subtitle');
-            $data->color_1   = $request->get('color_1');
-            $data->color_2   = $request->get('color_2');
-            $data->font      = $request->get('font');
-            $data->languages = $request->get('languages');
-            $data->save();
-
-            Cache::forget('settings');
-
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => route('settings.index')
-                ]
-            );
-
+            $data->{$field} = $imageUpload->getName($request->file($field), $field . '-' . random_int(100000000, 999999999999) . time(), 'settings');
         }
-        catch (\Exception $e)
-        {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
-        }
-    }
 
-    public function destroy(string $id)
-    {
+        $data->title     = $validated['title'];
+        $data->subtitle  = $validated['subtitle'];
+        $data->color_1   = $validated['color_1'] ?? null;
+        $data->color_2   = $validated['color_2'] ?? null;
+        $data->font      = $validated['font'] ?? null;
+        $data->theme     = $validated['theme'];
+        $data->languages = array_map('strval', $validated['languages'] ?? []);
+        $data->save();
 
+        Cache::forget('settings');
+
+        return redirect()->route('settings.index')->with('status', 'Ayarlar kaydedildi.');
     }
 }

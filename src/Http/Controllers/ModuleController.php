@@ -9,13 +9,18 @@ use crudPackage\Library\ImageUpload\ImageUpload;
 use crudPackage\Library\Relationships\CrudRelationships;
 use crudPackage\Models\DataTranslate;
 use crudPackage\Models\FormType;
+use crudPackage\Support\Actions;
+use crudPackage\Support\Permissions;
+use crudPackage\Support\Search;
+use crudPackage\Support\Sortable;
+use crudPackage\Support\Table;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
-use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ModuleController extends Controller
 {
@@ -47,15 +52,319 @@ class ModuleController extends Controller
         $this->languages         = crudLanguages($this->crud);
     }
 
-    /**
-     * Display a listing of the resource.
-     */
-    public function index($locale = null)
+    public function index(Request $request, $locale = null)
     {
-        $crud  = $this->crud;
-        $area1 = isset($crud->area_1) ? json_decode($crud->area_1) : null;
+        $crud    = $this->crud;
+        $area1   = isset($crud->area_1) ? json_decode($crud->area_1) : null;
+        $model   = $crud->model;
+        $columns = $this->browseColumns($locale);
+        $search  = $crud->browseColumns->filter(fn ($column) => $column->relationship == 0 && $column->repeater == 0 && in_array($column->form_type_id, [9, 10, 11], true));
 
-        return view('crudPackage::modules.index',compact('crud','area1','locale'));
+        $records = $model::query()
+            ->when(count($this->relationshipNames) > 0, fn ($query) => $query->with($this->relationshipNames))
+            ->when($request->filled('q') && $search->isNotEmpty(), function ($query) use ($request, $search)
+            {
+                $term = Search::pattern((string) $request->string('q'));
+
+                $query->where(function ($inner) use ($search, $term)
+                {
+                    foreach ($search as $column)
+                    {
+                        $inner->orWhere($column->column_name, 'like', $term);
+                    }
+                });
+            });
+
+        if (isset($area1->order_column_name) && ! $request->filled('sirala'))
+        {
+            $records->orderByTranslate($area1->order_column_name, $area1->order_direction, $locale);
+        }
+        elseif (! $request->filled('sirala'))
+        {
+            $instance = new $model;
+            $order    = Sortable::column();
+
+            Schema::hasColumn($instance->getTable(), $order)
+                ? $records->orderBy($order)->orderBy($instance->getQualifiedKeyName())
+                : $records->orderByDesc($instance->getQualifiedKeyName());
+        }
+
+        $records = Table::sort($records, $columns);
+
+        if ($export = Table::export($records, $columns, $crud->title))
+        {
+            return $export;
+        }
+
+        $rows      = $records->paginate(Table::perPage())->withQueryString();
+        $total     = $model::count();
+        $languages = $this->languages;
+
+        return view('crudPackage::modules.index', compact('crud', 'rows', 'columns', 'total', 'locale', 'languages', 'search'));
+    }
+
+    protected function browseColumns($locale = null): array
+    {
+        $crud    = $this->crud;
+        $columns = [];
+        $first   = true;
+
+        foreach ($crud->browseColumns as $column)
+        {
+            $details = json_decode($column->detail, true) ?? [];
+            $value   = fn ($record) => $this->plainColumn($locale ? $record->getTranslate($locale) : $record, $column, $details);
+            $related = $column->relationship == 1 && ($details['type'] ?? null) === 'belongsTo' && isset($details['model'], $details['show_column'], $details['match_column']);
+            $sort    = $column->repeater == 0 && ($column->relationship == 0 || $related) ? $column->column_name : null;
+            $order   = $related
+                ? fn ($query, $direction) => $query->orderBy(
+                    $details['model']::select($details['show_column'])
+                        ->whereColumn((new $details['model'])->qualifyColumn($details['match_column']), $query->getModel()->qualifyColumn($column->column_name))
+                        ->limit(1),
+                    $direction
+                )
+                : null;
+
+            if ($this->inlineEditable($column, $details))
+            {
+                $columns[] = [
+                    'type'     => 'field',
+                    'label'    => $column->title,
+                    'width'    => $column->form_type_id == 15 ? '170px' : '1.2fr',
+                    'sortable' => $sort,
+                    'name'     => $column->column_name,
+                    'value'    => $column->form_type_id == 15
+                        ? fn ($record) => $record->{$column->column_name} == 1 ? ($details['on'] ?? 'Aktif') : ($details['off'] ?? 'Pasif')
+                        : $value,
+                    'url'      => fn ($record) => route($crud->slug . '.realtime', array_filter([$record->getKey(), $locale])),
+                    'html'     => fn ($record) => $this->inlineField($record, $column, $locale),
+                ];
+
+                continue;
+            }
+
+            if ($column->form_type_id == 15)
+            {
+                $columns[] = [
+                    'type'     => 'status',
+                    'label'    => $column->title,
+                    'width'    => '150px',
+                    'sortable' => $sort,
+                    'value'    => fn ($record) => $record->{$column->column_name} == 1 ? ($details['on'] ?? 'Aktif') : ($details['off'] ?? 'Pasif'),
+                    'tone'     => fn ($record) => $record->{$column->column_name} == 1 ? 'success' : 'muted',
+                ];
+
+                continue;
+            }
+
+            if ($first)
+            {
+                $first     = false;
+                $image     = $crud->browseColumns->first(fn ($item) => $item->form_type_id == 6 && $item->repeater == 0);
+                $columns[] = [
+                    'type'     => 'lead',
+                    'label'    => $column->title,
+                    'width'    => '1.6fr',
+                    'sortable' => $sort,
+                    'order'    => $order,
+                    'name'     => $value,
+                    'title'    => fn ($record) => $this->recordTitle($record, $locale),
+                    'image'    => fn ($record) => $image ? $this->firstImage($record->{$image->column_name}) : null,
+                ];
+
+                continue;
+            }
+
+            if ($column->form_type_id == 6)
+            {
+                continue;
+            }
+
+            $columns[] = [
+                'type'     => 'text',
+                'label'    => $column->title,
+                'sortable' => $sort,
+                'order'    => $order,
+                'value'    => $value,
+            ];
+        }
+
+        $slug   = $crud->slug;
+        $extra  = Permissions::allows($slug . '.create') && Route::has($slug . '.copy')
+            ? fn ($record) => [['label' => 'Kopyala', 'icon' => 'copy', 'href' => route($slug . '.copy', $record->getKey()), 'drawer' => true, 'title' => $crud->display_single . ' kopyala']]
+            : fn ($record) => [];
+
+        $columns[] = [
+            'type'  => 'actions',
+            'width' => '60px',
+            'menu'  => fn ($record) => Actions::menu($slug, $record,
+            [
+                'editTitle' => $crud->display_single . ' düzenle',
+                'extra'     => $extra($record),
+            ]),
+        ];
+
+        return $columns;
+    }
+
+    protected function inlineEditable($column, array $details): bool
+    {
+        return ! empty($details['realtime'])
+            && $column->repeater == 0
+            && empty($details['multiple'])
+            && in_array($column->type?->key, ['text', 'number', 'date', 'datetime', 'select', 'select2', 'switch'], true)
+            && Permissions::allows($this->crud->slug . '.edit');
+    }
+
+    protected function inlineField($record, $column, $locale = null): string
+    {
+        $crud        = $this->crud;
+        $formType    = $column->type;
+        $type        = $formType->key;
+        $language    = $locale ? multipleLanguages(1, $locale) : null;
+        $languageKey = $locale ? multipleLanguages(2, $locale) : null;
+        $value       = $locale ? $record->getTranslate($locale) : $record;
+        $size        = 'sm';
+
+        return view('crudPackage::formTypes.' . $formType->group, compact('column', 'type', 'crud', 'formType', 'language', 'languageKey', 'value', 'size'))->render();
+    }
+
+    public function realtime(Request $request, string $id, $locale = null)
+    {
+        $crud    = $this->crud;
+        $column  = $crud->items->first(fn ($item) => $item->column_name === (string) $request->input('column') && ($item->browse == 1 || $item->read == 1));
+        $details = $column ? (json_decode($column->detail, true) ?? []) : [];
+
+        abort_unless($column && $this->inlineEditable($column, $details), 403);
+
+        $record      = $crud->model::findOrFail($id);
+        $languageKey = $locale ? multipleLanguages(2, $locale) : 0;
+        $rules       = [$column->required == 1 && empty($languageKey) ? 'required' : 'nullable'];
+
+        if (isset($details['maxlength']))
+        {
+            $rules[] = 'max:' . $details['maxlength'];
+        }
+
+        if (isset($details['items']) && $column->relationship == 0)
+        {
+            $rules[] = 'in:' . implode(',', array_keys($details['items']));
+        }
+
+        $request->validate(
+            [
+                'value' => $rules,
+            ],
+            [],
+            [
+                'value' => $column->title,
+            ]
+        );
+
+        $value = $request->input('value');
+        $value = $column->form_type_id == 15 ? ((string) $value === '1' ? 1 : 0) : (filled($value) ? $value : null);
+
+        if (! empty($languageKey))
+        {
+            $translate = DataTranslate::where('model', $crud->model)
+                ->where('locale', $locale)
+                ->where('foreign_key', $record->getKey())
+                ->where('column_name', $column->column_name)
+                ->first() ?? new DataTranslate();
+
+            $translate->model       = $crud->model;
+            $translate->locale      = $locale;
+            $translate->foreign_key = $record->getKey();
+            $translate->column_name = $column->column_name;
+            $translate->value       = $value;
+            $translate->save();
+        }
+        else
+        {
+            $record->{$column->column_name} = $value;
+            $record->save();
+        }
+
+        return response()->json(
+            [
+                'status' => $column->title . ' güncellendi.',
+            ]
+        );
+    }
+
+    protected function firstImage($value): ?string
+    {
+        $decoded = is_string($value) ? json_decode($value, true) : null;
+        $path    = is_array($decoded) ? ($decoded[0] ?? null) : $value;
+
+        return filled($path) && is_string($path) ? uploadUrl($path) : null;
+    }
+
+    protected function titleColumn()
+    {
+        $crud    = $this->crud;
+        $columns = $crud->items->where('repeater', 0)->where('relationship', 0)->whereIn('form_type_id', [10, 11]);
+
+        foreach (config('crudPanel.title_columns', []) as $name)
+        {
+            if ($column = $columns->firstWhere('column_name', $name))
+            {
+                return $column;
+            }
+        }
+
+        return $columns->first(fn ($column) => ! in_array($column->column_name, [$crud->order_column_name, 'order', 'slug'], true) && ! str_ends_with($column->column_name, '_id'));
+    }
+
+    protected function recordTitle($record, $locale = null): ?string
+    {
+        $column = $this->titleColumn();
+
+        if (! $column)
+        {
+            return null;
+        }
+
+        $value = $this->plainColumn($locale ? $record->getTranslate($locale) : $record, $column, json_decode($column->detail, true) ?? []);
+
+        return filled($value) ? Str::limit($value, 60) : null;
+    }
+
+    protected function plainColumn($value, $column, array $details): string
+    {
+        if ($column->repeater == 1)
+        {
+            $items = json_decode((string) $value->{$column->column_name}, true);
+
+            return is_array($items) ? count($items) . ' satır' : '';
+        }
+
+        if ($column->form_type_id == 1)
+        {
+            $items = json_decode((string) $value->{$column->column_name}, true);
+
+            return is_array($items) ? implode(', ', $items) : (string) ($value->{$column->column_name} ?? '');
+        }
+
+        if (in_array($column->form_type_id, [5, 6], true))
+        {
+            $items = json_decode((string) $value->{$column->column_name}, true);
+
+            return is_array($items) ? count($items) . ' dosya' : basename((string) ($value->{$column->column_name} ?? ''));
+        }
+
+        if ($column->form_type_id == 9)
+        {
+            return Str::limit(trim(html_entity_decode(strip_tags((string) $value->{$column->column_name}))), 80);
+        }
+
+        $text = trim(strip_tags((string) $this->renderStandardColumn($value, $column, $details, $column->column_name)));
+
+        if ($text === '' && $column->relationship == 0 && in_array($column->form_type_id, [10, 11, 13]))
+        {
+            return trim((string) ($value->{$column->column_name} ?? ''));
+        }
+
+        return $text;
     }
 
     public function columns($status = 0,$language = null, $languageKey = null,$value = null,$copy = null)
@@ -72,18 +381,43 @@ class ModuleController extends Controller
         {
             $formType  = $column->type;
             $type      = $formType->key;
-            $info      = '';
+            $info      = null;
 
             if ($column->repeater == 1)
             {
                 $details      = json_decode($column->detail);
                 $rElements    = '';
                 $elementsView = '';
+                $repeaterList = isset($language) ? $language->code . '[' . $column->column_name . ']' : $column->column_name;
+                $template     = $this->repeaterTemplate($details, $repeaterList, $crud, $language, $languageKey);
+
+                if (old() && is_array($oldRows = old(crudFieldKey($repeaterList))))
+                {
+                    foreach (array_values($oldRows) as $elementKey => $elementValue)
+                    {
+                        $rElements = '';
+
+                        foreach ($details as $detail)
+                        {
+                            $detail->required      = isset($detail->validation) && str_contains($detail->validation, 'required') ? 1 : 0;
+                            $detail->repeater      = 1;
+                            $detail->repeater_name = $repeaterList . '[' . $elementKey . ']';
+
+                            $formTypeR  = FormType::find($detail->form_type_id);
+                            $rElements .= $this->repeaterField($detail, view('crudPackage::formTypes.' . $formTypeR->group, ['column' => $detail, 'formType' => $formTypeR, 'type' => $formTypeR->key, 'value' => (object) $elementValue], compact('crud', 'language', 'languageKey'))->render());
+                        }
+
+                        $elementsView .= crudComponent('repeater-item', ['no' => $elementKey], $rElements);
+                    }
+
+                    $elements .= view('crudPackage::formTypes.' . $formType->group, ['elements' => $elementsView, 'rows' => count($oldRows)], compact('column', 'type', 'crud', 'formType', 'language', 'languageKey', 'template'))->render();
+
+                    continue;
+                }
 
                 if (isset($value))
                 {
-                    $elementValues = json_decode($value->{$column->column_name});
-                    $repeaterValue = [];
+                    $elementValues = array_values((array) (json_decode((string) $value->{$column->column_name}) ?? []));
 
                     foreach($elementValues as $elementKey => $elementValue)
                     {
@@ -91,66 +425,23 @@ class ModuleController extends Controller
 
                         foreach ($details as $detail)
                         {
-                            if (isset($detail->validation) && strstr('required',$detail->validation))
-                            {
-                                $detail->required = 1;
-                            }
-                            else
-                            {
-                                $detail->required = 0;
-                            }
-
-                            $detail->repeater = 1;
+                            $detail->required      = isset($detail->validation) && str_contains($detail->validation, 'required') ? 1 : 0;
+                            $detail->repeater      = 1;
+                            $detail->repeater_name = $repeaterList . '[' . $elementKey . ']';
 
                             $formTypeR  = FormType::find($detail->form_type_id);
                             $typeR      = $formTypeR->key;
-                            $rElements .= '<div class="form-group '.($detail->form_type_id == 13 ? 'd-none' : null) .' '.(isset($detail->class) ? $detail->class : 'col').' mb-7 fv-plugins-icon-container">';
-                            $rElements .= '<label class=" '.($detail->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="repeater_'.$detail->column_name.'">'.$detail->title.'</label>';
-                            $rElements .= view('crudPackage::formTypes.'. $formTypeR->group,['column' => $detail,'formType' => $formTypeR,'type' => $typeR,'value' => $elementValue],compact('crud','language','languageKey'))->render();
-                            $rElements .= '</div>';
+                            $rElements .= $this->repeaterField($detail, view('crudPackage::formTypes.'. $formTypeR->group,['column' => $detail,'formType' => $formTypeR,'type' => $typeR,'value' => $elementValue],compact('crud','language','languageKey'))->render());
                         }
 
-                        $elementsView .= '<div data-item-no="'.$elementKey.'" data-repeater-item>';
-                        $elementsView .= '<div class="form-group row">';
-                        $elementsView .= '<div class="col-md-1 form-group handle"><i class="bi text-dark me-3 fs-4 bi-arrows-move"></i></div>';
-                        $elementsView .= $rElements;
-                        $elementsView .= '<div class="col-md-1 form-group"> <a href="javascript:;" data-repeater-delete class="btn btn-flex btn-tertiary mt-6"> <i class="ki-outline ki-trash  fs-3"></i> Sil </a> </div>';
-                        $elementsView .= '</div>';
-                        $elementsView .= '</div>';
+                        $elementsView .= crudComponent('repeater-item', ['no' => $elementKey], $rElements);
                     }
 
-                    $elements .= view('crudPackage::formTypes.'. $formType->group,['elements' => $elementsView],compact('column','type','crud','formType','language','languageKey','value','originalValue'))->render();
+                    $elements .= view('crudPackage::formTypes.'. $formType->group,['elements' => $elementsView, 'rows' => count($elementValues)],compact('column','type','crud','formType','language','languageKey','value','originalValue','template'))->render();
                 }
                 else
                 {
-                    foreach($details as $detail)
-                    {
-                        if (isset($detail->validation) && strstr('required',$detail->validation))
-                        {
-                            $detail->required = 1;
-                        }
-                        else
-                        {
-                            $detail->required = 0;
-                        }
-
-                        $detail->repeater = 1;
-                        $formTypeR  = FormType::find($detail->form_type_id);
-                        $typeR      = $formTypeR->key;
-                        $rElements .= '<div class="form-group '.($detail->form_type_id == 13 ? 'd-none' : null) .' '.(isset($detail->class) ? $detail->class : 'col').' mb-7 fv-plugins-icon-container">';
-                        $rElements .= '<label class=" '.($detail->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="repeater_'.$detail->column_name.'">'.$detail->title.'</label>';
-                        $rElements .= view('crudPackage::formTypes.'. $formTypeR->group,['column' => $detail,'formType' => $formTypeR,'type' => $typeR],compact('crud','language','languageKey'))->render();
-                        $rElements .= '</div>';
-                    }
-
-                    $elementsView .= '<div data-item-no="0" data-repeater-item>';
-                    $elementsView .= '<div class="form-group row">';
-                    $elementsView .= '<div class="col-md-1 form-group handle"><i class="bi text-dark me-3 fs-4 bi-arrows-move"></i></div>';
-                    $elementsView .= $rElements;
-                    $elementsView .= '<div class="col-md-1 form-group"> <a href="javascript:;" data-repeater-delete class="btn btn-flex btn-tertiary mt-6"> <i class="ki-outline ki-trash  fs-3"></i> Sil </a> </div>';
-                    $elementsView .= '</div>';
-                    $elementsView .= '</div>';
-                    $elements     .= view('crudPackage::formTypes.'. $formType->group,['elements' => $elementsView],compact('column','type','crud','formType','language','languageKey'))->render();
+                    $elements .= view('crudPackage::formTypes.'. $formType->group,['elements' => str_replace('__index__', '0', $template), 'rows' => 1],compact('column','type','crud','formType','language','languageKey','template'))->render();
                 }
             }
             else
@@ -159,7 +450,7 @@ class ModuleController extends Controller
 
                 if (count((array)$details) > 0)
                 {
-                    $info = isset($details->info) ? ' (<small>' .$details->info. '</small>)' : null;
+                    $info = $details->info ?? null;
 
                     if (isset($details->type) && $details->type == 'belongsToMany' && !empty($languageKey))
                     {
@@ -167,25 +458,68 @@ class ModuleController extends Controller
                     }
                 }
 
-                $elements .= '<div class="form-group '.($column->form_type_id == 13 ? 'd-none' : null) .' col-12 mb-7 fv-plugins-icon-container">';
-                $elements .= '<label class=" '.($column->required == 1 ? 'required' : null) .' w-100 fw-semibold fs-6 mb-2" for="'.$column->column_name.$languageForAttr.'">'.$column->title.$languageTitle.$info.'</label>';
-                $elements .= view('crudPackage::formTypes.'. $formType->group,compact('column','type','crud','formType','language','languageKey','value','copy','originalValue'))->render();
-                $elements .= '</div>';
+                $elements .= crudComponent('field',
+                    [
+                        'label'      => $column->title . $languageTitle,
+                        'for'        => $column->column_name . $languageForAttr,
+                        'required'   => $column->required == 1,
+                        'info'       => $info,
+                        'hidden'     => $column->form_type_id == 13,
+                        'wide'       => in_array($column->form_type_id, [1, 9, 10], true) || ! empty($details->multiple),
+                        'labelClass' => 'w-100',
+                    ],
+                    view('crudPackage::formTypes.'. $formType->group,compact('column','type','crud','formType','language','languageKey','value','copy','originalValue'))->render()
+                );
             }
         }
 
         return $elements;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    private function filledRows($rows): array
+    {
+        return array_values(array_filter((array) $rows, fn ($row) => is_array($row) && count(array_filter($row, 'filled')) > 0));
+    }
+
+    private function repeaterTemplate($details, string $repeaterList, $crud, $language, $languageKey): string
+    {
+        $content = '';
+
+        foreach ($details as $detail)
+        {
+            $detail->required      = isset($detail->validation) && str_contains($detail->validation, 'required') ? 1 : 0;
+            $detail->repeater      = 1;
+            $detail->repeater_name = $repeaterList . '[__index__]';
+
+            $formType = FormType::find($detail->form_type_id);
+            $content .= $this->repeaterField($detail, view('crudPackage::formTypes.' . $formType->group, ['column' => $detail, 'formType' => $formType, 'type' => $formType->key], compact('crud', 'language', 'languageKey'))->render());
+        }
+
+        return crudComponent('repeater-item', ['no' => '__index__'], $content);
+    }
+
+    private function repeaterField($detail, string $content): string
+    {
+        preg_match('/col(?:-[a-z]+)?-(\d{1,2})\b/', (string) ($detail->class ?? ''), $match);
+
+        return crudComponent('field',
+            [
+                'label'      => $detail->title,
+                'for'        => 'repeater_' . $detail->column_name,
+                'required'   => $detail->required == 1,
+                'hidden'     => $detail->form_type_id == 13,
+                'span'       => min(12, max(1, (int) ($match[1] ?? 6))),
+                'labelClass' => 'w-100',
+            ],
+            $content
+        );
+    }
+
     public function create()
     {
-        $crud              = $this->crud;
-        $datatableColumns  = [];
-        $elements          = '';
-        $elementTabs       = [];
+        $crud        = $this->crud;
+        $elements    = '';
+        $elementTabs = [];
 
         if (count($this->languages) > 0)
         {
@@ -199,7 +533,7 @@ class ModuleController extends Controller
             $elements = $this->columns(0);
         }
 
-        return view('crudPackage::modules.create',compact('crud','datatableColumns','elements','elementTabs'));
+        return view(request()->ajax() ? 'crudPackage::modules.form' : 'crudPackage::modules.create',compact('crud','elements','elementTabs'));
     }
 
     public function dynamicValidation($request,$status = 0,$data = null)
@@ -233,30 +567,19 @@ class ModuleController extends Controller
                 $rules[$columnName] = ['required'];
             }
 
-            if ($status == 1 && isset($details->validation) && strstr($details->validation,'unique'))
+            if (isset($details->validation) && strstr($details->validation, 'unique'))
             {
-                $validations = $details->validation;
-                $exxploded   = explode('|',$validations);
-
-                if (count($exxploded) > 1)
+                $rules[$columnName] = array_map(function ($rule) use ($columnName, $status, $data)
                 {
-                    $uniqueValidateIndex = '';
+                    $parts = str_starts_with($rule, 'unique:') ? explode(',', substr($rule, 7)) : [];
 
-                    foreach ($exxploded as $exxplodeKey => $exxplode)
+                    if (count($parts) === 0 || count($parts) > 2)
                     {
-                        if (strstr($exxplode,'unique'))
-                        {
-                            $uniqueValidateIndex = $exxplodeKey;
-                        }
+                        return $rule;
                     }
 
-                    $exxploded[$uniqueValidateIndex] = $exxploded[$uniqueValidateIndex]. ','.$columnName.',' . $data->id;
-                    $rules[$columnName]              = $exxploded;
-                }
-                else
-                {
-                    $rules[$columnName] = [$details->validation. ','.$columnName.',' . $data->id];
-                }
+                    return 'unique:' . $parts[0] . ',' . ($parts[1] ?? $columnName) . ($status == 1 ? ',' . $data->id : '');
+                }, $rules[$columnName]);
             }
 
             if ($column->form_type_id == 1)
@@ -286,7 +609,21 @@ class ModuleController extends Controller
             if ($column->repeater == 1 && $column->required == 1)
             {
                 array_push($rules[$columnName],'array');
-                array_push($rules[$columnName],'min:1');
+
+                $rules[$columnName][] = function ($attribute, $value, $fail) use ($column)
+                {
+                    $language = strstr($attribute, '.', true);
+
+                    if ($language !== false && $language !== ($this->languages[0]->code ?? null))
+                    {
+                        return;
+                    }
+
+                    if (count($this->filledRows($value)) === 0)
+                    {
+                        $fail($column->title . ' alanı gereklidir.');
+                    }
+                };
 
                 foreach ($details as $detail)
                 {
@@ -307,7 +644,7 @@ class ModuleController extends Controller
                 $attribute[$columnName.'.*'] = $attribute[$columnName];
             }
 
-            if ($column->form_type_id == 6 && isset($data) && !empty($data->$columnName))
+            if (in_array($column->form_type_id, [5, 6, 14]) && isset($data) && !empty($data->$columnName))
             {
                 unset($rules[$columnName]);
             }
@@ -358,8 +695,28 @@ class ModuleController extends Controller
 
         foreach ($columns as $columnKey => $column)
         {
-            $formType = $column->form_type_id;
-            $details  = json_decode($column->detail,true);
+            $formType  = $column->form_type_id;
+            $details   = json_decode($column->detail,true);
+            $removeKey = $column->column_name . '_remove';
+            $remove    = in_array($formType, [5, 6]) && empty($details['multiple']) && ! empty($allData[$removeKey]) && empty($allFiles[$column->column_name]);
+            $copyKey   = $column->column_name . '_copy';
+            $copyKeep  = isset($allData[$copyKey]) ? array_values(array_filter((array) $allData[$copyKey], 'filled')) : null;
+
+            unset($allData[$removeKey], $allData[$copyKey]);
+
+            if ($formType == 14 && isset($data) && blank($allData[$column->column_name] ?? null))
+            {
+                unset($allData[$column->column_name]);
+
+                continue;
+            }
+
+            if ($remove && isset($data) && ! (isset($language) && $orderLanguage > 0) && filled($data->{$column->column_name}))
+            {
+                (new ImageUpload())->delete($data->{$column->column_name});
+
+                $allData[$column->column_name] = null;
+            }
 
             if ($formType == 15)
             {
@@ -376,7 +733,23 @@ class ModuleController extends Controller
             }
             if ($column->repeater == 1)
             {
-                $allData[$column->column_name] = json_encode($allData[$column->column_name]);
+                $allData[$column->column_name] = json_encode($this->filledRows($allData[$column->column_name] ?? []), JSON_UNESCAPED_UNICODE);
+            }
+
+            if ($column->relationship == 1 && ($details['type'] ?? null) == 'belongsToMany' && array_key_exists($column->column_name, $allData) && blank($allData[$column->column_name]))
+            {
+                unset($allData[$column->column_name]);
+
+                if (isset($data) && ! (isset($language) && $orderLanguage > 0))
+                {
+                    $belongsToMany[] =
+                        [
+                            'detail' => $column->detail,
+                            'values' => [],
+                        ];
+                }
+
+                continue;
             }
 
             if ($column->relationship == 1 && isset($allData[$column->column_name]))
@@ -400,7 +773,16 @@ class ModuleController extends Controller
                 $copyData  = $model::find($allData['crud_copy_id']);
                 $copyValue = $copyData->{$column->column_name};
 
-                if (isset($copyValue))
+                if (in_array($formType, [5, 6]) && isset($language) && $orderLanguage > 0)
+                {
+                    $copyValue = $copyData->getTranslate($language->code)->translated($column->column_name);
+                }
+
+                if ($remove)
+                {
+                    $allData[$column->column_name] = null;
+                }
+                else if (isset($copyValue))
                 {
                     if ($formType == 5 || $formType == 6)
                     {
@@ -412,6 +794,11 @@ class ModuleController extends Controller
 
                             foreach(json_decode($copyValue) as $order => $oldFile)
                             {
+                                if ($copyKeep !== null && ! in_array($oldFile, $copyKeep, true))
+                                {
+                                    continue;
+                                }
+
                                 $extension    = pathinfo($oldFile, PATHINFO_EXTENSION);
                                 $newFileName  = $crud->table_name.'/'.$crud->table_name.'-'.$order.'-'.random_int(100000000, 999999999999).time().'.'.$extension;
                                 $fileName      = $imageUpload->copy($oldFile, $newFileName);
@@ -610,9 +997,6 @@ class ModuleController extends Controller
         }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         try
@@ -620,7 +1004,7 @@ class ModuleController extends Controller
             $copyData = null;
             $status   = 0;
             $crud     = $this->crud;
-            $allData  = $request->all();
+            $allData  = $request->except('_token');
             $allFiles = $request->allFiles();
 
             if (isset($allData['crud_copy_id']))
@@ -633,15 +1017,7 @@ class ModuleController extends Controller
             $validator  = Validator::make($request->all(), $validators[1]);
             $validator->setAttributeNames($validators[0]);
 
-            if ($validator->fails())
-            {
-                return response()->json(
-                    [
-                        'result'  => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
-            }
+            $validator->validate();
 
             if (count($this->languages) > 0)
             {
@@ -691,14 +1067,11 @@ class ModuleController extends Controller
                 $otherRoute = route($crud->slug .'.index');
             }
 
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => $otherRoute
-                ]
-            );
-
+            return redirect($request->ajax() ? url()->previous() : $otherRoute)->with('status', ($crud->display_single ?: 'Kayıt') . ' eklendi.');
+        }
+        catch (ValidationException $e)
+        {
+            throw $e;
         }
         catch (\Exception $e)
         {
@@ -708,17 +1081,10 @@ class ModuleController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
+            return back()->withInput()->with('error', 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.');
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         try
@@ -727,22 +1093,14 @@ class ModuleController extends Controller
             $model      = $crud->model;
             $data       = $model::find($id);
             $allFiles   = $request->allFiles();
-            $allData    = $request->all();
+            $allData    = $request->except('_token');
 
             $validators = $this->dynamicValidation($request,1,$data);
             $validator  = Validator::make($request->all(), $validators[1]);
 
             $validator->setAttributeNames($validators[0]);
 
-            if ($validator->fails())
-            {
-                return response()->json(
-                    [
-                        'result'  => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
-            }
+            $validator->validate();
 
             if (count($this->languages) > 0)
             {
@@ -788,50 +1146,74 @@ class ModuleController extends Controller
 
             self::cacheClear();
 
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => $otherRoute
-                ]
-            );
-
+            return redirect($request->ajax() ? url()->previous() : $otherRoute)->with('status', ($crud->display_single ?: 'Kayıt') . ' güncellendi.');
+        }
+        catch (ValidationException $e)
+        {
+            throw $e;
         }
         catch (\Exception $e)
         {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
+            \Illuminate\Support\Facades\Log::error('ModuleController@update: ' . $e->getMessage(), [
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+            ]);
+
+            return back()->withInput()->with('error', 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.');
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
-        $crud        = $this->crud;
-        $elementTabs = [];
-        $values      = [];
-        $inputValue  = '';
+        $crud   = $this->crud;
+        $model  = $crud->model;
+        $record = $model::query()
+            ->when(count($this->relationshipNames) > 0, fn ($query) => $query->with($this->relationshipNames))
+            ->findOrFail($id);
 
-        if (count($this->languages) > 0)
+        $sections = [];
+        $locales  = count($this->languages) > 0 ? collect($this->languages)->pluck('title', 'code')->all() : [null => null];
+
+        foreach ($locales as $code => $title)
         {
-            foreach ($this->languages as $languageKey => $language)
+            $translated = $code ? $record->getTranslate($code) : $record;
+            $rows       = [];
+
+            foreach ($crud->readColumns as $column)
             {
-                $elements                     = $this->datatable($language->code,$id);
-                $elementTabs[$language->code] = $elements->getData()->data[0];
+                $details = json_decode($column->detail, true) ?? [];
+                $raw     = $translated->{$column->column_name} ?? null;
+                $images  = [];
+
+                if ($column->form_type_id == 6 && filled($raw))
+                {
+                    $decoded = json_decode((string) $raw, true);
+                    $images  = array_map('uploadUrl', is_array($decoded) ? $decoded : [$raw]);
+                }
+
+                $rows[] = [
+                    'label'  => $column->title,
+                    'value'  => $column->form_type_id == 15
+                        ? ($raw == 1 ? ($details['on'] ?? 'Aktif') : ($details['off'] ?? 'Pasif'))
+                        : $this->plainColumn($translated, $column, $details),
+                    'html'   => $column->form_type_id == 9 ? (string) $raw : null,
+                    'images' => $images,
+                    'inline' => $this->inlineEditable($column, $details)
+                        ? [
+                            'url'  => route($crud->slug . '.realtime', array_filter([$record->getKey(), $code])),
+                            'name' => $column->column_name,
+                            'html' => $this->inlineField($record, $column, $code ?: null),
+                        ]
+                        : null,
+                ];
             }
-        }
-        else
-        {
-            $elements = $this->datatable(null,$id);
-            $values   = $elements->getData()->data[0];
+
+            $sections[(string) $code] = ['title' => $title, 'rows' => $rows];
         }
 
-        return view('crudPackage::modules.show',compact('crud','values','inputValue','elementTabs'));
+        $title = $this->recordTitle($record);
+
+        return view('crudPackage::modules.detail', compact('crud', 'record', 'sections', 'title'));
     }
 
     public function getEdit(string $id,$copy = 0)
@@ -880,20 +1262,16 @@ class ModuleController extends Controller
 
     public function copy(string $id)
     {
-        return view('crudPackage::modules.copy',$this->getEdit($id,1));
+        return request()->ajax()
+            ? view('crudPackage::modules.form', [...$this->getEdit($id,1), 'copying' => true])
+            : view('crudPackage::modules.copy',$this->getEdit($id,1));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
-        return view('crudPackage::modules.edit',$this->getEdit($id));
+        return view(request()->ajax() ? 'crudPackage::modules.form' : 'crudPackage::modules.edit',$this->getEdit($id));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         try
@@ -915,28 +1293,22 @@ class ModuleController extends Controller
                     {
                         $deletedImages = !empty($value->{$column->column_name}) ? array_merge($deletedImages,json_decode($value->{$column->column_name})) : $deletedImages;
 
-                        if (count($this->languages) > 0)
-                        {
-                            $languageValuesMultiple = DataTranslate::where('model',$crud->model)->where('foreign_key',$id)->where('column_name',$column->column_name)->get();
+                        $languageValuesMultiple = DataTranslate::where('model',$crud->model)->where('foreign_key',$id)->where('column_name',$column->column_name)->get();
 
-                            foreach ($languageValuesMultiple as $languageValueMultiple)
-                            {
-                                $deletedImages = !empty($languageValueMultiple->value) ? array_merge($deletedImages,json_decode($languageValueMultiple->value)) : $deletedImages;
-                            }
+                        foreach ($languageValuesMultiple as $languageValueMultiple)
+                        {
+                            $deletedImages = !empty($languageValueMultiple->value) ? array_merge($deletedImages,json_decode($languageValueMultiple->value)) : $deletedImages;
                         }
                     }
                     else
                     {
                         array_push($deletedImages,$value->{$column->column_name});
 
-                        if (count($this->languages) > 0)
-                        {
-                            $languageValues = DataTranslate::where('model',$crud->model)->where('foreign_key',$id)->where('column_name',$column->column_name)->get();
+                        $languageValues = DataTranslate::where('model',$crud->model)->where('foreign_key',$id)->where('column_name',$column->column_name)->get();
 
-                            foreach ($languageValues as $languageValue)
-                            {
-                                array_push($deletedImages,$languageValue->value);
-                            }
+                        foreach ($languageValues as $languageValue)
+                        {
+                            array_push($deletedImages,$languageValue->value);
                         }
                     }
                 }
@@ -980,136 +1352,17 @@ class ModuleController extends Controller
                 $otherRoute = route($crud->slug .'.index');
             }
 
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => $otherRoute
-                ]
-            );
+            return redirect($otherRoute)->with('status', ($crud->display_single ?: 'Kayıt') . ' silindi.');
         }
         catch (\Exception $e)
         {
             if ($e instanceof ForeignKeyConstraintException && ($e->errorInfo()[1] ?? null) == 1451)
             {
-                $message = '<br> İlişkili tablolar:<br> ' . implode(',<br> ', $e->relations());
-
-                return response()->json(
-                    [
-                        'result'  => 0,
-                        'message' => $e->getMessage().' '.$message,
-                    ],500);
+                return back()->with('error', $e->getMessage() . ' İlişkili tablolar: ' . implode(', ', $e->relations()));
             }
 
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
+            return back()->with('error', 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.');
         }
-    }
-
-    public function datatable($locale = null, $id = null)
-    {
-        try
-        {
-            $crud      = $this->crud;
-            $model     = $crud->model;
-            $slug      = $crud->slug;
-            $columns   = isset($id) ? $crud->readColumns : $crud->browseColumns;
-            $area1     = isset($crud->area_1) ? json_decode($crud->area_1) : null;
-
-
-            $relationshipsToLoad = $this->relationshipNames;
-
-            if (isset($id))
-            {
-                $query = count($relationshipsToLoad) > 0
-                    ? $model::with($relationshipsToLoad)->where($crud->table_name .'.id', $id)
-                    : $model::where($crud->table_name .'.id', $id);
-            }
-            else
-            {
-                $query = count($relationshipsToLoad) > 0
-                    ? $model::with($relationshipsToLoad)
-                    : $model::select('*');
-            }
-
-            if (isset($area1->order_column_name) && empty($id))
-            {
-                $query->orderByTranslate($area1->order_column_name, $area1->order_direction, $locale);
-            }
-
-            $datatable = Datatables::eloquent($query);
-
-
-            foreach ($columns as $column)
-            {
-                $columnName = $column->column_name;
-
-                $datatable->editColumn($columnName, function ($value) use ($column, $locale, $crud, $columnName)
-                {
-                    $details         = json_decode($column->detail, true);
-                    $translatedValue = $locale ? $value->getTranslate($locale) : $value;
-
-
-                    if (isset($details['realtime']) && !request()->has('id'))
-                    {
-                        return $this->renderRealtimeColumn($translatedValue, $column, $details, $locale, $crud);
-                    }
-
-                    return $this->renderStandardColumn($translatedValue, $column, $details, $columnName);
-                });
-            }
-
-            $datatable->addColumn('actions', function ($value) use ($slug)
-            {
-                return $this->renderActions($value, $slug);
-            });
-
-            if (isset($area1->order_column_name))
-            {
-                $datatable->addColumn('orderable', function ($value)
-                {
-                    return '<i data-id="'. $value->id .'" class="bi text-dark fs-3 bi-arrows-move cursor-move"></i>';
-                });
-            }
-
-            // Raw columns
-            $datatable->rawColumns($this->getRawColumns($columns, $area1));
-
-            return $datatable->toJson();
-        }
-        catch (\Exception $e)
-        {
-
-            return response()->json([
-                'result' => 0,
-                'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-            ], 403);
-        }
-    }
-
-    private function getRawColumns($columns, $area1 = null)
-    {
-        $rawColumns = ['actions'];
-
-        if (isset($area1->order_column_name))
-        {
-            $rawColumns[] = 'orderable';
-        }
-
-        foreach ($columns as $column)
-        {
-            $details = json_decode($column->detail, true);
-
-            if ($column->form_type_id == 15 || $column->form_type_id == 1 || isset($details['realtime']))
-            {
-                $rawColumns[] = $column->column_name;
-            }
-        }
-
-        return $rawColumns;
     }
 
     private function renderRelationshipColumn($value, $column, $details, $columnName)
@@ -1168,52 +1421,16 @@ class ModuleController extends Controller
         return $relationModel->{$showColumn} ?? '';
     }
 
-    private function renderRealtimeColumn($value, $column, $details, $locale, $crud)
+    private function tagBadges(array $values): string
     {
-        $formType    = $column->type;
-        $type        = $formType->key;
-        $dt          = 1;
-        $language    = $locale ? multipleLanguages(1, $locale) : null;
-        $languageKey = $locale ? multipleLanguages(2, $locale) : null;
+        $badges = '';
 
-        return view('crudPackage::formTypes.'. $formType->group,compact('column', 'type', 'crud', 'value', 'formType', 'dt', 'language', 'languageKey'))->render();
-    }
-
-    private function renderActions($value, $slug)
-    {
-        $user = auth()->user();
-
-        if (!($user->hasPermission($slug . '.destroy') || $user->hasPermission($slug . '.edit') || $user->hasPermission($slug . '.show')))
+        foreach ($values as $item)
         {
-            return '';
+            $badges .= crudComponent('badge', ['class' => 'me-1'], $item);
         }
 
-        $actions  = '<a href="#" class="btn btn-sm btn-light btn-active-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end" data-kt-menu-target="action-'.$value->id.'"> Aksiyon <i class="ki-duotone ki-down fs-5 ms-1"></i> </a>';
-        $actions .= '<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-primary fw-semibold fs-7 w-125px py-4" data-kt-menu="true" id="action-'.$value->id.'">';
-
-        if ($user->hasPermission($slug . '.create'))
-        {
-            $actions .= '<div class="menu-item px-3"><a href="' . route($slug . '.copy', $value->id) . '" class="menu-link px-3">Kopyala</a></div>';
-        }
-
-        if ($user->hasPermission($slug . '.show'))
-        {
-            $actions .= '<div class="menu-item px-3"><a href="' . route($slug . '.show', $value->id) . '" class="menu-link px-3">Detay</a></div>';
-        }
-
-        if ($user->hasPermission($slug . '.edit'))
-        {
-            $actions .= '<div class="menu-item px-3"><a href="'.route($slug . '.edit', $value->id).'" class="menu-link px-3">Düzenle</a></div>';
-        }
-
-        if ($user->hasPermission($slug . '.destroy'))
-        {
-            $actions .= '<div class="menu-item px-3"><a href="#" data-title="Bu veriyi" data-route="'.route($slug . '.destroy', $value->id).'" class="menu-link px-3" onclick="destroy(this)">Sil</a></div>';
-        }
-
-        $actions .= '</div>';
-
-        return $actions;
+        return $badges;
     }
 
     private function renderStandardColumn($value, $column, $details, $columnName)
@@ -1228,19 +1445,18 @@ class ModuleController extends Controller
 
         if ($formType == 15)
         {
-            return $columnValue == 1
-                ? '<span class="badge badge-lg badge-success">'. ($details['on'] ?? 'Aktif') .'</span>'
-                : '<span class="badge badge-lg badge-danger">'. ($details['off'] ?? 'Pasif') .'</span>';
+            return crudStatusBadge($columnValue, $details['on'] ?? null, $details['off'] ?? null, 'lg');
         }
 
         if ($formType == 12 || $formType == 16)
         {
             if (isset($details['items']) && is_array($details['items']))
             {
-                if (is_array($columnValue) || is_string($columnValue) && json_decode($columnValue))
+                $selectedValues = is_array($columnValue) ? $columnValue : (is_string($columnValue) ? json_decode($columnValue, true) : null);
+
+                if (is_array($selectedValues))
                 {
-                    $selectedValues = is_array($columnValue) ? $columnValue : json_decode($columnValue, true);
-                    $selectedItems  = [];
+                    $selectedItems = [];
 
                     foreach ($selectedValues as $selectedValue)
                     {
@@ -1272,14 +1488,7 @@ class ModuleController extends Controller
 
             if (is_array($values))
             {
-                $badges = '';
-
-                foreach ($values as $item)
-                {
-                    $badges .= '<span class="badge badge-primary me-1">'. $item .'</span>';
-                }
-
-                return $badges;
+                return $this->tagBadges($values);
             }
 
             return $columnValue ?? '';
@@ -1302,261 +1511,6 @@ class ModuleController extends Controller
         }
 
         return $columnValue ?? '';
-    }
-    public function datatableOld($locale = null,$id = null)
-    {
-        try
-        {
-            $crud      = $this->crud;
-            $model     = $crud->model;
-            $slug      = $crud->slug;
-            $modelName = explode('\\', $model);
-            $modelName = end($modelName);
-            $columns   = isset($id) ? $crud->readColumns : $crud->browseColumns;
-            $area1     = isset($crud->area_1) ? json_decode($crud->area_1) : null;
-            $dtColumns = [];
-            $rawColumns = ['actions'];
-
-            if (isset($id))
-            {
-                $sql = count($this->relationshipNames) > 0 ? $model::with($this->relationshipNames)->where($crud->table_name .'.id',$id) : $model::where($crud->table_name .'.id',$id);
-            }
-            else
-            {
-                $sql = count($this->relationshipNames) > 0 ? $model::with($this->relationshipNames) : $model::select('*');
-            }
-
-            if (isset($area1) && isset($area1->order_column_name) && empty($id))
-            {
-                $sql->orderByTranslate($area1->order_column_name,$area1->order_direction,$locale);
-            }
-
-            $data = $sql->get();
-
-            foreach ($columns as $column)
-            {
-                $details    = json_decode($column->detail,true);
-                $columnName = $column->column_name;
-                $formType   = $column->form_type_id;
-
-                if (isset($details['realtime']) && empty($id))
-                {
-                    $formType  = $column->type;
-                    $type      = $formType->key;
-
-                    $dtColumns[$columnName] = function ($value) use ($columnName,$details,$formType,$type,$crud,$column,$locale)
-                    {
-                        $value       = isset($locale) ? $value->getTranslate($locale) : $value;
-                        $dt          = 1;
-                        $language    = isset($locale) ? multipleLanguages(1,$locale) : null;
-                        $languageKey = isset($locale) ? multipleLanguages(2,$locale) : null;
-
-                        return view('crudPackage::formTypes.'. $formType->group,compact('column','type','crud','value','formType','dt','language','languageKey'))->render();
-                    };
-                }
-                else
-                {
-                    $dtColumns[$columnName] = function ($value) use ($columnName,$locale)
-                    {
-                        $value = isset($locale) ? $value->getTranslate($locale) : $value;
-
-                        return $value->$columnName;
-                    };
-
-                    if ($formType == 15)
-                    {
-                        $dtColumns[$columnName] = function ($value) use ($columnName,$details,$locale)
-                        {
-                            $value = isset($value) ? ( isset($locale) ? $value->getTranslate($locale) : $value ) : null;
-
-                            return $value->$columnName == 1 ? '<span class="badge badge-lg badge-success">'. $details['on'] .'</span>' :  '<span class="badge badge-lg badge-danger">'. $details['off'] .'</span>';
-                        };
-                    }
-                    else if ($formType == 12)
-                    {
-                        $dtColumns[$columnName] = function ($value) use ($columnName,$details,$locale)
-                        {
-                            $value = isset($value) ? ( isset($locale) ? $value->getTranslate($locale) : $value ) : null;
-
-                            foreach ($details['items'] as $keyItem => $item)
-                            {
-                                if ($keyItem == $value->$columnName)
-                                {
-                                    return $item;
-                                }
-                            }
-                        };
-                    }
-                    else if ($formType == 1)
-                    {
-                        $dtColumns[$columnName] = function ($value) use ($columnName,$details,$locale)
-                        {
-                            $value  = isset($value) ? ( isset($locale) ? $value->getTranslate($locale) : $value ) : null;
-                            $values = json_decode($value->$columnName);
-                            $badges = '';
-
-                            if (is_array($values))
-                            {
-                                foreach ($values as $item)
-                                {
-                                    $badges .= '<span class="badge badge-primary me-1">'. $item .'</span>';
-                                }
-
-                                return $badges;
-                            }
-                            else
-                            {
-                                return $value->$columnName;
-                            }
-                        };
-                    }
-
-                    if ($column->relationship == 0 && count($details) > 0)
-                    {
-                        foreach ($details as $detailKey => $detail)
-                        {
-                            if ($detailKey == 'format')
-                            {
-                                $dtColumns[$columnName] = function ($value) use ($detail,$columnName,$locale)
-                                {
-                                    $value  = isset($value) ? ( isset($locale) ? $value->getTranslate($locale) : $value ) : null;
-
-                                    return Carbon::parse($value->$columnName)->format($detail);
-                                };
-                            }
-                        }
-                    }
-                    else if ($column->relationship == 1)
-                    {
-                        $relationship = CrudRelationships::generateName($model, $column->column_name);
-
-                        $dtColumns[$columnName] = function ($columnValue) use ($relationship, $columnName, $details, $locale)
-                        {
-                            $languageOrder = isset($locale) ? multipleLanguages(2,$locale) : 0;
-                            $value         = $languageOrder > 0 ? $columnValue->getTranslate($locale) : $columnValue;
-
-                            if (!$value)
-                            {
-                                return null;
-                            }
-
-                            $showColumn = $details['show_column'];
-
-                            if (!empty($details['multiple']) && $details['multiple'] === true)
-                            {
-                                $values     = json_decode($value->{$columnName}, true) ?? [];
-                                $showValues = [];
-
-                                if ($details['type'] == 'belongsToMany' && isset($columnValue))
-                                {
-                                    $values = $languageOrder > 0 ? $value->{$relationship} : $columnValue->{$relationship};
-
-                                    if (!empty($values))
-                                    {
-                                        foreach ($values as $item)
-                                        {
-                                            $translated   = $locale ? $item->getTranslate($locale) : $item;
-                                            $showValues[] = $translated->{$showColumn};
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!empty($values))
-                                    {
-                                        foreach ($values as $item)
-                                        {
-                                            $query = $details['model']::where($details['match_column'],$item)->first();
-
-                                            if ($query)
-                                            {
-                                                $translated   = $locale ? $query->getTranslate($locale) : $query;
-                                                $showValues[] = $translated->{$showColumn};
-                                            }
-                                        }
-                                    }
-                                }
-
-                                return implode(', ', $showValues);
-                            }
-
-                            $relationModel = $value->{$relationship};
-
-                            if (!$relationModel && !$columnValue->{$relationship})
-                            {
-                                return null;
-                            }
-
-                            $translated = $languageOrder > 0 ? ($relationModel ? $relationModel->getTranslate($locale) : $columnValue->{$relationship}) : $columnValue->{$relationship};
-
-                            return $translated->{$showColumn};
-                        };
-                    }
-                }
-            }
-
-            $datatable = Datatables::of($data);
-
-            foreach ($dtColumns as $name => $callback)
-            {
-                $datatable->addColumn($name, $callback);
-            }
-
-            if (isset($area1) && $area1->order_column_name)
-            {
-                $datatable->addColumn('orderable',function ($value)
-                {
-                    return '<i data-id="'. $value->id .'" class="bi text-dark fs-3 bi-arrows-move cursor-move"></i>';
-                });
-
-                array_push($rawColumns,'orderable');
-            }
-
-            $datatable->addColumn('actions', function ($value) use ($slug, $modelName)
-            {
-                if (auth()->user()->hasPermission($slug . '.destroy') || auth()->user()->hasPermission($slug . '.edit') || auth()->user()->hasPermission($slug . '.show'))
-                {
-                    $actions  = '<a href="#" class="btn btn-sm btn-light btn-active-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end" data-kt-menu-target="action-'.$value->id.'"> Aksiyon <i class="ki-duotone ki-down fs-5 ms-1"></i> </a>';
-                    $actions .= '<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-primary fw-semibold fs-7 w-125px py-4"  data-kt-menu="true" id="action-'.$value->id.'">';
-
-                    if (auth()->user()->hasPermission($slug . '.create'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="' . route($slug . '.copy', $value->id) . '" class="menu-link px-3"> Kopyala </a> </div>';
-                    }
-
-                    if (auth()->user()->hasPermission($slug . '.show'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="' . route($slug . '.show', $value->id) . '" class="menu-link px-3"> Detay </a> </div>';
-                    }
-
-                    if (auth()->user()->hasPermission($slug . '.edit'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="'.route($slug . '.edit',$value->id).'" class="menu-link px-3"> Düzenle </a> </div>';
-                    }
-
-                    if (auth()->user()->hasPermission($slug . '.destroy'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="#" data-title="Bu veriyi" data-route="'.route($slug . '.destroy',$value->id).'" class="menu-link px-3" onclick="destroy(this)"> Sil </a> </div>';
-                    }
-
-                    $actions .= '</div>';
-                }
-                else
-                {
-                    $actions = '';
-                }
-
-                return $actions;
-            });
-
-            $datatable->rawColumns(array_merge(array_keys($dtColumns), $rawColumns));
-
-            return $datatable->toJson();
-        }
-        catch (\Exception $e)
-        {
-            return response()->json(['result' => 0,'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'],403);
-        }
     }
 
     public function fileDestroy($id,$order,$columnName,$languageCode = null,$languageOrder = null)
@@ -1602,157 +1556,11 @@ class ModuleController extends Controller
 
             $data->save();
 
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.'
-                ]
-            );
+            return back()->with('status', 'Dosya silindi.');
         }
         catch (\Exception $e)
         {
-            return response()->json(['result' => 0,'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'],403);
-        }
-    }
-
-    public function orderable(Request $request,$locale = null)
-    {
-        $crud       = $this->crud;
-        $model      = $crud->model;
-        $data       = $model::get();
-        $columnName = $request->get('order_column_name');
-        $direction  = $request->get('order_direction');
-
-        foreach ($data as $value)
-        {
-            if (isset($locale))
-            {
-                $translate = DataTranslate::where('foreign_key',$value->id)->where('model',$crud->model)->where('locale',$locale)->where('column_name',$columnName)->first();
-
-                if (empty($translate))
-                {
-                    $translate              = new DataTranslate();
-                    $translate->model       = $crud->model;
-                    $translate->column_name = $columnName;
-                    $translate->locale      = $locale;
-                    $translate->foreign_key = $value->id;
-                }
-            }
-
-            foreach ($request->order as $order)
-            {
-                if ($direction == 'asc')
-                {
-                    $position = $order['position'];
-                }
-                else
-                {
-                    $position = (count($request->order) - $order['position']) + 1;
-                }
-
-                if ($order['id'] == ($value->foreign_key ?? $value->id))
-                {
-                    if (isset($locale))
-                    {
-                        $translate->value = $position;
-                        $translate->save();
-                    }
-                    else
-                    {
-                        $value->{$columnName} = $position;
-                        $value->save();
-                    }
-                }
-            }
-        }
-
-        return response()->json([
-            'result' => 1,
-        ]);
-    }
-
-    public function realtime(Request $request, string $id)
-    {
-        try
-        {
-            $crud          = $this->crud;
-            $model         = $crud->model;
-            $data          = $model::find($id);
-            $allData       = $request->all();
-            $newValue      = null;
-            $locale        = null;
-            $languageOrder = 0;
-            $columnName    = $allData['column_name'];
-
-            if (count($this->languages) > 0 && strstr($columnName,'['))
-            {
-                $columnName    = explode('[',$columnName);
-                $locale        = $columnName[0];
-                $columnName    = rtrim($columnName[1],']');
-                $languageOrder = multipleLanguages(2,$locale);
-            }
-
-            $column   = $crud->getColumn($columnName);
-            $formType = $column->form_type_id;
-            $details  = json_decode($column->detail,true);
-
-            if ($formType == 15)
-            {
-                $columnValue = $allData['value'];
-
-                if ($details['on'] ==  $columnValue)
-                {
-                    $newValue = 1;
-                }
-                else if ($details['off'] ==  $columnValue)
-                {
-                    $newValue = 0;
-                }
-            }
-            else
-            {
-                $newValue = $allData['value'];
-            }
-
-            unset($allData['_token']);
-
-            if (!empty($locale) && $languageOrder > 0)
-            {
-                $translate = DataTranslate::where('model',$crud->model)->where('locale',$locale)->where('foreign_key',$id)->where('column_name',$columnName)->first();
-
-                if (empty($translate))
-                {
-                    $translate              = new DataTranslate();
-                    $translate->model       = $crud->model;
-                    $translate->column_name = $columnName;
-                    $translate->locale      = $locale;
-                    $translate->foreign_key = $id;
-                }
-
-                $translate->value = $newValue;
-                $translate->save();
-            }
-            else
-            {
-                $data->$columnName = $newValue;
-                $data->save();
-            }
-
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                ]
-            );
-
-        }
-        catch (\Exception $e)
-        {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
+            return back()->with('error', 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.');
         }
     }
 }

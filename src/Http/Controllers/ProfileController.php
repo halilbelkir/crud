@@ -2,88 +2,62 @@
 
 namespace crudPackage\Http\Controllers;
 
-use crudPackage\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    public function edit()
+    public function edit(Request $request): View
     {
-        $value = Auth::user();
+        $user = $request->user()->loadMissing('roleGroup');
 
-        return view('crudPackage::profile.edit', compact('value'));
+        return view('crudPackage::profile.index', compact('user'));
     }
 
-    public function update(Request $request)
+    public function update(Request $request): RedirectResponse
     {
-        try
+        $data = $request->validate(
+        [
+            'name' => ['required', 'string', 'max:255'],
+        ],
+        [],
+        [
+            'name' => 'Ad & Soyad',
+        ]);
+
+        $request->user()->forceFill($data)->save();
+
+        return back()->with('status', 'Profil bilgileriniz güncellendi.');
+    }
+
+    public function password(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $request->validate(
+        [
+            'current_password' => ['required', 'string'],
+            'password'         => ['required', 'string', 'min:8', 'confirmed'],
+        ],
+        [],
+        [
+            'current_password' => 'Mevcut şifre',
+            'password'         => 'Yeni şifre',
+        ]);
+
+        if (! Hash::check($request->string('current_password')->toString(), $user->password))
         {
-            $user = User::find(Auth::id());
-
-            $attribute =
-                [
-                    'name'             => 'Ad & Soyad',
-                    'current_password' => 'Mevcut Şifre',
-                    'password'         => 'Yeni Şifre',
-                ];
-
-            $rules =
-                [
-                    'name'             => 'required',
-                    'current_password' => 'required_with:password',
-                    'password'         => 'nullable|min:8|confirmed',
-                ];
-
-            $validator = Validator::make($request->all(), $rules);
-            $validator->setAttributeNames($attribute);
-
-            if ($validator->fails())
-            {
-                return response()->json(
-                    [
-                        'result'  => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
-            }
-
-            if ($request->filled('password'))
-            {
-                if (!Hash::check($request->get('current_password'), $user->password))
-                {
-                    return response()->json(
-                        [
-                            'result'  => 2,
-                            'message' => ['current_password' => ['Mevcut şifreniz hatalı.']]
-                        ],403
-                    );
-                }
-
-                $user->password = Hash::make($request->get('password'));
-            }
-
-            $user->name = $request->get('name');
-            $user->save();
-
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => route('profile.edit')
-                ]
-            );
-
+            throw ValidationException::withMessages(
+            [
+                'current_password' => 'Mevcut şifreniz hatalı.',
+            ]);
         }
-        catch (\Exception $e)
-        {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
-        }
+
+        $user->forceFill(['password' => Hash::make($request->string('password')->toString())])->save();
+
+        return back()->with('status', 'Şifreniz değiştirildi.');
     }
 }

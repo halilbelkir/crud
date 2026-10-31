@@ -9,14 +9,21 @@ use crudPackage\Models\FormType;
 use crudPackage\Models\MenuItem;
 use crudPackage\Models\Role;
 use crudPackage\Models\RoleGroup;
+use crudPackage\Support\Actions;
+use crudPackage\Support\Menu as MenuSupport;
+use crudPackage\Support\Permissions;
+use crudPackage\Support\Search;
+use crudPackage\Support\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
-use Yajra\DataTables\Facades\DataTables;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Validation\Rule;
 class CrudController extends Controller
 {
@@ -28,128 +35,248 @@ class CrudController extends Controller
             'edit'     => "Düzenleme",
             'read'     => "Detay",
         ];
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+
+    protected $lockedColumns =
+        [
+            'id'         => 'hidden',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+        ];
+
+    public function index(Request $request): View|Response
     {
-        return view('crudPackage::cruds.index');
+        $cruds   = Crud::withCount('items')->get()->keyBy('table_name');
+        $columns = $this->columns();
+        $term    = Search::fold((string) $request->string('q'));
+        $records = collect($this->getTablesSql(1))
+            ->map(fn ($table) => $cruds[$table->title] ?? (new Crud())->forceFill(['table_name' => $table->title, 'title' => Str::headline($table->title)]))
+            ->when($term !== '', fn ($rows) => $rows->filter(fn (Crud $crud) => str_contains(Search::fold($crud->title . ' ' . $crud->table_name), $term)))
+            ->sortBy(fn (Crud $crud) => ($crud->exists ? '0' : '1') . $crud->table_name)
+            ->values();
+
+        if ($field = Table::sortColumn($columns))
+        {
+            $records = $records->sortBy($field, SORT_NATURAL | SORT_FLAG_CASE, Table::sortDirection() === 'desc')->values();
+        }
+
+        if ($export = Table::export($records, $columns, 'Modüller'))
+        {
+            return $export;
+        }
+
+        $page    = LengthAwarePaginator::resolveCurrentPage();
+        $perPage = Table::perPage();
+        $rows    = new LengthAwarePaginator($records->forPage($page, $perPage)->values(), $records->count(), $perPage, $page,
+        [
+            'path'  => $request->url(),
+            'query' => $request->query(),
+        ]);
+
+        $total   = $records->count();
+        $created = $records->where('exists', true)->count();
+
+        return view('crudPackage::cruds.index', compact('rows', 'columns', 'total', 'created'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create($tableName)
+    protected function columns(): array
     {
-        $title        = Str::headline($tableName);
-        $slug         = Str::slug($title);
-        $singular     = Str::singular($tableName);
-        $modelName    = Str::studly($singular);
-        $modelName    = 'App\\Models\\' . $modelName;
-        $columns      = Schema::getConnection()->getSchemaBuilder()->getColumns($tableName);
-        $columns      = json_decode(json_encode($columns));
-        $formTypes    = FormType::orderBy('title','desc')->get();
-        $visibilities = $this->visibility;
-
-        return view('crudPackage::cruds.create',compact('tableName','title','modelName','columns','formTypes','visibilities','slug'));
+        return [
+            [
+                'type'     => 'lead',
+                'label'    => 'Modül',
+                'width'    => '1.6fr',
+                'sortable' => 'title',
+                'name'     => fn (Crud $crud) => $crud->title,
+                'sub'      => fn (Crud $crud) => $crud->table_name,
+            ],
+            [
+                'type'     => 'text',
+                'label'    => 'Link',
+                'width'    => '1fr',
+                'sortable' => 'slug',
+                'value'    => fn (Crud $crud) => $crud->exists ? '/' . $crud->slug : '—',
+            ],
+            [
+                'type'     => 'text',
+                'label'    => 'Alan',
+                'width'    => '100px',
+                'bold'     => true,
+                'sortable' => 'items_count',
+                'value'    => fn (Crud $crud) => $crud->exists ? $crud->items_count : '—',
+            ],
+            [
+                'type'     => 'status',
+                'label'    => 'Durum',
+                'width'    => '150px',
+                'sortable' => 'status',
+                'value'    => fn (Crud $crud) => ! $crud->exists ? 'Kurulmadı' : ($crud->status == 1 ? 'Aktif' : 'Pasif'),
+                'tone'     => fn (Crud $crud) => ! $crud->exists ? 'accent' : ($crud->status == 1 ? 'success' : 'muted'),
+            ],
+            [
+                'type'   => 'actions',
+                'width'  => '60px',
+                'status' => fn (Crud $crud) => $crud->exists && $crud->main != 1,
+                'menu'   => fn (Crud $crud) => $crud->exists
+                    ? Actions::menu('cruds', $crud,
+                    [
+                        'drawer' => false,
+                        'except' => $crud->main == 1 ? ['delete'] : [],
+                    ])
+                    : (Permissions::allows('cruds.create')
+                        ? [['label' => 'Modül oluştur', 'icon' => 'plus', 'href' => route('cruds.create.new', $crud->table_name)]]
+                        : []),
+            ],
+        ];
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function create($tableName): View
     {
+        abort_unless(Schema::hasTable($tableName), 404);
+
+        $title = Str::headline($tableName);
+        $crud  = (new Crud())->forceFill(
+        [
+            'title'          => $title,
+            'slug'           => Str::slug($title),
+            'table_name'     => $tableName,
+            'display_single' => Str::headline(Str::singular($tableName)),
+            'display_plural' => $title,
+            'model'          => 'App\\Models\\' . Str::studly(Str::singular($tableName)),
+            'other_route'    => '{}',
+            'translatable'   => 1,
+        ]);
+
+        return view('crudPackage::cruds.edit', $this->form($crud));
+    }
+
+    protected function form(Crud $crud): array
+    {
+        $columns = json_decode(json_encode(Schema::getConnection()->getSchemaBuilder()->getColumns($crud->table_name)));
+        $items   = $crud->exists ? $crud->items()->orderBy('order')->get()->keyBy('column_name') : collect();
+        $fields  = [];
+
+        foreach ($items as $item)
+        {
+            $detail = json_decode($item->detail ?? '{}');
+
+            if ($item->relationship == 1 && ($detail->type ?? null) === 'belongsToMany')
+            {
+                $fields[$item->column_name] = ['name' => $item->column_name, 'type' => 'bigint', 'nullable' => false, 'item' => $item];
+            }
+        }
+
+        foreach ($columns as $column)
+        {
+            $fields[$column->name] = ['name' => $column->name, 'type' => $column->type_name, 'nullable' => $column->nullable, 'item' => $items[$column->name] ?? null];
+        }
+
+        uasort($fields, fn ($first, $second) => ($first['item']->order ?? PHP_INT_MAX) <=> ($second['item']->order ?? PHP_INT_MAX));
+
+        return [
+            'crud'         => $crud,
+            'fields'       => array_values($fields),
+            'columns'      => array_column($columns, 'name', 'name'),
+            'formTypes'    => FormType::orderBy('title')->pluck('title', 'id')->all(),
+            'formTypeKeys' => FormType::pluck('id', 'key')->all(),
+            'visibilities' => $this->visibility,
+            'locked'       => $this->lockedColumns,
+            'icons'        => array_combine(MenuSupport::icons(), MenuSupport::icons()),
+            'tables'       => array_column($this->getTablesSql(1), 'title', 'title'),
+            'area'         => json_decode($crud->area_1 ?? '{}', true) ?? [],
+        ];
+    }
+
+    protected function rules(?Crud $crud = null): array
+    {
+        return [
+            'title'                  => 'required',
+            'table_name'             => 'required',
+            'slug'                   => 'required|string|unique:cruds,slug' . ($crud ? ',' . $crud->id : ''),
+            'display_single'         => 'required',
+            'display_plural'         => 'required',
+            'icon'                   => ['nullable', Rule::in(MenuSupport::icons())],
+            'other_route'            => 'nullable|json',
+            'columns'                => 'required|array|min:1',
+            'columns.*.column_name'  => 'required',
+            'columns.*.form_type_id' => 'required',
+            'columns.*.detail'       => 'nullable|json',
+            'model'                  => [
+                'required',
+                function ($attribute, $value, $fail)
+                {
+                    if (!class_exists($value))
+                    {
+                        return $fail("Geçersiz model: {$value}");
+                    }
+
+                    if (!is_subclass_of($value, Model::class))
+                    {
+                        return $fail("{$value} bir Eloquent Model değil.");
+                    }
+
+                    if (!str_starts_with($value, 'App\\Models\\'))
+                    {
+                        return $fail("Model sadece App\\Models altında olmalı.");
+                    }
+                }
+            ]
+        ];
+    }
+
+    protected function attributes(): array
+    {
+        return [
+            'title'                  => 'Menü Başlık',
+            'table_name'             => 'Tablo Adı',
+            'slug'                   => 'Link',
+            'display_single'         => 'Tekli Sayfa Başlık',
+            'display_plural'         => 'Çoklu Sayfa Başlık',
+            'model'                  => 'Model',
+            'icon'                   => 'İkon',
+            'other_route'            => 'Diğer Route',
+            'columns'                => 'Modül Alanları',
+            'columns.*.column_name'  => 'Alan Adı',
+            'columns.*.form_type_id' => 'Tip',
+            'columns.*.detail'       => 'İsteğe Bağlı Ayrıntılar',
+        ];
+    }
+
+    protected function fill(Crud $data, Request $request): Crud
+    {
+        $area1 = $request->filled('order_column_name')
+            ? json_encode(['order_column_name' => $request->get('order_column_name'), 'order_direction' => $request->get('order_direction') ?: 'asc'])
+            : null;
+
+        $data->title          = $request->get('title');
+        $data->slug           = $request->get('slug');
+        $data->display_single = $request->get('display_single');
+        $data->display_plural = $request->get('display_plural');
+        $data->model          = $request->get('model');
+        $data->content        = $request->get('content');
+        $data->icon           = $request->get('icon');
+        $data->other_route    = $request->get('other_route');
+        $data->table_name     = $request->get('table_name');
+        $data->only_edit      = $request->boolean('only_edit') ? 1 : 0;
+        $data->translatable   = $request->boolean('translatable') ? 1 : 0;
+        $data->area_1         = $area1;
+        $data->save();
+
+        return $data;
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $request->validate($this->rules(), [], $this->attributes());
+
         try
         {
-            $attribute =
-                [
-                    'title'                  => 'Menü Başlık',
-                    'table_name'             => 'Tablo Adı',
-                    'slug'                   => 'Link',
-                    'display_single'         => 'Tekli Sayfa Başlık',
-                    'display_plural'         => 'Çoklu Sayfa Başlık',
-                    'model'                  => 'Model',
-                    'columns'                => 'Modül Alanları',
-                    'columns.*.column_name'  => 'Alan Adı',
-                    'columns.*.form_type_id' => 'Tip',
-                ];
+            DB::beginTransaction();
 
-            $rules =
-                [
-                    'title'                  => 'required',
-                    'table_name'             => 'required',
-                    'slug'                   => 'required|string|unique:cruds,slug',
-                    'display_single'         => 'required',
-                    'display_plural'         => 'required',
-                    'columns'                => 'required|array|min:1',
-                    'columns.*.column_name'  => 'required',
-                    'columns.*.form_type_id' => 'required',
-                    'model'                  => [
-                                                    'required',
-                                                    function ($attribute, $value, $fail)
-                                                    {
-                                                        if (!class_exists($value))
-                                                        {
-                                                            return $fail("Geçersiz model: {$value}");
-                                                        }
+            $data = $this->fill(new Crud(), $request);
 
-                                                        if (!is_subclass_of($value, Model::class))
-                                                        {
-                                                            return $fail("{$value} bir Eloquent Model değil.");
-                                                        }
-
-                                                        if (!str_starts_with($value, 'App\\Models\\'))
-                                                        {
-                                                            return $fail("Model sadece App\\Models altında olmalı.");
-                                                        }
-                                                    }
-                                                ]
-                ];
-
-            $validator = Validator::make($request->all(), $rules);
-            $validator->setAttributeNames($attribute);
-
-            if ($validator->fails())
+            foreach (array_values($request->get('columns')) as $key => $item)
             {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
-            }
-
-            if ($request->has('order_column_name'))
-            {
-                $area1 =
-                    [
-                        'order_column_name' => $request->get('order_column_name'),
-                        'order_direction'   => $request->get('order_direction'),
-                    ];
-            }
-
-            $data                  = new Crud();
-            $data->title           = $request->get('title');
-            $data->slug            = $request->get('slug');
-            $data->display_single  = $request->get('display_single');
-            $data->display_plural  = $request->get('display_plural');
-            $data->model           = $request->get('model');
-            $data->content         = $request->get('content');
-            $data->icon            = $request->get('icon');
-            $data->other_route     = $request->get('other_route');
-            $data->table_name      = $request->get('table_name');
-            $data->only_edit       = $request->has('only_edit') ? 1 : 0;
-            $data->translatable    = $request->has('translatable') ? 1 : 0;
-            $data->area_1          = isset($area1) ? json_encode($area1) : null;
-            $data->save();
-
-            $crudItems = $request->get('columns');
-
-            foreach ($crudItems as $key => $item)
-            {
-                $crudItem = new CrudItem();
-
-                $this->setItem($crudItem,$item,$data->id,($key + 1));
+                $this->setItem(new CrudItem(), $item, $data->id, ($key + 1));
             }
 
             if ($data->only_edit == 1)
@@ -163,7 +290,7 @@ class CrudController extends Controller
             $menuItemLast            = MenuItem::where('menu_id',$menuId)->orderBy('order','desc')->first();
             $menuItem                = new MenuItem();
             $menuItem->menu_id       = $menuId;
-            $menuItem->order         = $menuItemLast->order + 1;
+            $menuItem->order         = ($menuItemLast->order ?? 0) + 1;
             $menuItem->title         = $data->title;
             $menuItem->route         = $data->only_edit == 1 ? $route : $data->slug.'.index';
             $menuItem->icon          = $data->icon;
@@ -186,23 +313,16 @@ class CrudController extends Controller
                 $roles->save();
             }
 
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => route('cruds.index')
-                ]
-            );
+            DB::commit();
 
+            return redirect()->route('cruds.show', $data)->with('status', $data->title . ' modülü oluşturuldu.');
         }
         catch (\Exception $e)
         {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
+            DB::rollBack();
+            report($e);
 
-                ],403);
+            return back()->withInput()->with('error', 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.');
         }
     }
 
@@ -210,9 +330,9 @@ class CrudController extends Controller
     {
         $crudItem->crud_id      = $crudId;
         $crudItem->order        = $order;
-        $crudItem->title        = $item['title'];
+        $crudItem->title        = filled($item['title'] ?? null) ? $item['title'] : $item['column_name'];
         $crudItem->column_name  = $item['column_name'];
-        $crudItem->detail       = $item['detail'] ?? '{}';
+        $crudItem->detail       = filled($item['detail'] ?? null) ? $item['detail'] : '{}';
         $crudItem->form_type_id = $item['form_type_id'];
         $crudItem->required     = isset($item['required']) ? 1 : 0;
         $crudItem->browse       = isset($item['browse']) ? 1 : 0;
@@ -225,167 +345,67 @@ class CrudController extends Controller
         return $crudItem;
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Crud $crud)
+    public function show(Crud $crud): View
     {
-        $value        = $crud;
-        $formTypes    = FormType::orderBy('title','desc')->get();
-        $columns      = Schema::getConnection()->getSchemaBuilder()->getColumns($value->table_name);
-        $columns      = json_decode(json_encode($columns));
-        $visibilities = $this->visibility;
+        $items   = $crud->items()->with('type')->orderBy('order')->paginate(500)->withQueryString();
+        $columns = $this->itemColumns();
 
-        return view('crudPackage::cruds.show',compact('formTypes','visibilities','value','columns'));
+        return view('crudPackage::cruds.detail', compact('crud', 'items', 'columns'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Crud $crud)
+    protected function itemColumns(): array
     {
-        $value        = $crud;
-        $formTypes    = FormType::orderBy('title','desc')->get();
-        $columns      = Schema::getConnection()->getSchemaBuilder()->getColumns($value->table_name);
-        $columns      = json_decode(json_encode($columns));
-        $visibilities = $this->visibility;
-        $tables       = $this->getTablesSql(1);
-        $crudItems    = CrudItem::where('crud_id',$crud->id)->orderBy('order','asc')->get();
-        $area1        = isset($value->area_1) ? json_decode($value->area_1) : null;
-        $newColumns   = [];
-
-        foreach ($crudItems as $crudItem)
-        {
-            $newColumns[$crudItem->column_name]['item'] = $crudItem;
-
-            if($crudItem->relationship == 1)
-            {
-                $detail = json_decode($crudItem->detail);
-
-                if ($detail->type == 'belongsToMany')
-                {
-                    $newColumns[$crudItem->column_name]['attribute'] = (object)
-                    [
-                        "name"      => $crudItem->column_name,
-                        "type_name" => "bigint",
-                        "type"      => "bigint",
-                        "nullable"  => false,
-                    ];
-                }
-            }
-        }
-
-        foreach ($columns as $column)
-        {
-            $newColumns[$column->name]['attribute'] = $column;
-        }
-
-        return view('crudPackage::cruds.edit',compact('formTypes','visibilities','value','newColumns','tables','columns','area1'));
+        return [
+            [
+                'type'     => 'lead',
+                'label'    => 'Alan',
+                'width'    => '1.4fr',
+                'noAvatar' => true,
+                'name'     => fn (CrudItem $item) => $item->title,
+                'sub'      => fn (CrudItem $item) => $item->column_name,
+            ],
+            [
+                'type'  => 'badge',
+                'label' => 'Tip',
+                'width' => '170px',
+                'value' => fn (CrudItem $item) => $item->relationship == 1 ? 'İlişki' : ($item->type->title ?? '—'),
+                'tone'  => fn (CrudItem $item) => $item->relationship == 1 || $item->repeater == 1 ? 'primary' : 'accent',
+            ],
+            [
+                'type'  => 'chips',
+                'label' => 'Görünürlük',
+                'width' => '2fr',
+                'items' => fn (CrudItem $item) => collect($this->visibility)
+                    ->filter(fn ($label, $key) => $item->{$key} == 1)
+                    ->map(fn ($label, $key) => ['label' => $label, 'tone' => $key === 'required' ? 'primary' : 'neutral'])
+                    ->values()
+                    ->all(),
+            ],
+        ];
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Crud $crud)
+    public function edit(Crud $crud): View
     {
+        return view('crudPackage::cruds.edit', $this->form($crud));
+    }
+
+    public function update(Request $request, Crud $crud): RedirectResponse
+    {
+        $request->merge(['table_name' => $crud->table_name]);
+        $request->validate($this->rules($crud), [], $this->attributes());
+
         try
         {
-            $attribute =
-                [
-                    'title'                  => 'Menü Başlık',
-                    'table_name'             => 'Tablo Adı',
-                    'slug'                   => 'Link',
-                    'display_single'         => 'Tekli Sayfa Başlık',
-                    'display_plural'         => 'Çoklu Sayfa Başlık',
-                    'model'                  => 'Model',
-                    'columns'                => 'Modül Alanları',
-                    'columns.*.column_name'  => 'Alan Adı',
-                    'columns.*.form_type_id' => 'Tip',
-                ];
+            DB::beginTransaction();
 
-            $rules =
-                [
-                    'title'                  => 'required',
-                    'table_name'             => 'required',
-                    'slug'                   => 'required|string|unique:cruds,slug,' . $crud->id,
-                    'display_single'         => 'required',
-                    'display_plural'         => 'required',
-                    'columns'                => 'required|array|min:1',
-                    'columns.*.column_name'  => 'required',
-                    'columns.*.form_type_id' => 'required',
-                    'model'                  => [
-                        'required',
-                        function ($attribute, $value, $fail)
-                        {
-                            if (!class_exists($value))
-                            {
-                                return $fail("Geçersiz model: {$value}");
-                            }
-
-                            if (!is_subclass_of($value, Model::class))
-                            {
-                                return $fail("{$value} bir Eloquent Model değil.");
-                            }
-
-                            if (!str_starts_with($value, 'App\\Models\\'))
-                            {
-                                return $fail("Model sadece App\\Models altında olmalı.");
-                            }
-                        }
-                    ]
-                ];
-
-            $validator = Validator::make($request->all(), $rules);
-            $validator->setAttributeNames($attribute);
-
-            if ($validator->fails())
-            {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
-            }
-
-            if ($request->has('order_column_name'))
-            {
-                $area1 =
-                    [
-                        'order_column_name' => $request->get('order_column_name'),
-                        'order_direction'   => $request->get('order_direction'),
-                    ];
-            }
-
-            $data                  = $crud;
-            $data->title           = $request->get('title');
-            $data->slug            = $request->get('slug');
-            $data->display_single  = $request->get('display_single');
-            $data->display_plural  = $request->get('display_plural');
-            $data->model           = $request->get('model');
-            $data->content         = $request->get('content');
-            $data->icon            = $request->get('icon');
-            $data->other_route     = $request->get('other_route');
-            $data->only_edit       = $request->has('only_edit') ? 1 : 0;
-            $data->translatable    = $request->has('translatable') ? 1 : 0;
-            $data->area_1          = isset($area1) ? json_encode($area1) : null;
-            $data->save();
-
-            $crudItems   = $request->get('columns');
+            $data        = $this->fill($crud, $request);
             $moduleModel = $data->model;
             $moduleFirst = $moduleModel::first();
             $route       = $data->slug.'.index';
 
-            foreach ($crudItems as $crudItemKey => $item)
+            foreach (array_values($request->get('columns')) as $crudItemKey => $item)
             {
-                if (!empty($item['id']))
-                {
-                    $crudItem = CrudItem::find($item['id']);
-                }
-                else
-                {
-                    $crudItem = new CrudItem();
-                }
+                $crudItem = (!empty($item['id']) ? $crud->items()->find($item['id']) : null) ?? new CrudItem();
 
                 $this->setItem($crudItem,$item,$data->id,($crudItemKey + 1));
             }
@@ -422,164 +442,43 @@ class CrudController extends Controller
                 $menuItem->save();
             }
 
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => route('cruds.index')
-                ]
-            );
+            DB::commit();
 
+            return redirect()->route('cruds.show', $data)->with('status', $data->title . ' modülü güncellendi.');
         }
         catch (\Exception $e)
         {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
+            DB::rollBack();
+            report($e);
 
-                ],403);
+            return back()->withInput()->with('error', 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.');
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Crud $crud)
+    public function destroy(Crud $crud): RedirectResponse
     {
+        if ($crud->main == 1)
+        {
+            return back()->with('error', 'Sistem modülleri silinemez.');
+        }
+
         try
         {
-            $crud->menuItems()->delete();
-            $crud->getRoles()->delete();
-            $crud->items()->delete();
-            $crud->delete();
+            DB::transaction(function () use ($crud)
+            {
+                $crud->menuItems()->delete();
+                $crud->getRoles()->delete();
+                $crud->items()->delete();
+                $crud->delete();
+            });
 
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                    'route'   => route('cruds.index')
-                ]
-            );
+            return redirect()->route('cruds.index')->with('status', $crud->title . ' modülü silindi.')->with('reload', true);
         }
         catch (\Exception $e)
         {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
-        }
-    }
+            report($e);
 
-    public function datatable()
-    {
-        $sql = $this->getTablesSql(1);
-
-        return Datatables::of($sql)
-            ->editColumn('status', function ($value)
-            {
-                if (isset($value->status))
-                {
-                    return $value->status == 1 ? '<span class="badge badge-success">Aktif</span>' :  '<span class="badge badge-danger">Pasif</span>';
-                }
-
-                return null;
-            })
-            ->addColumn('actions', function ($value)
-            {
-                if (empty($value->id) && auth()->user()->hasPermission('cruds.create'))
-                {
-                    $actions = '<a class="btn btn-primary btn-sm" href="'. route('cruds.create.new',$value->title).'">Oluştur</a>';
-                }
-                else if (auth()->user()->hasPermission('cruds.destroy') || auth()->user()->hasPermission('cruds.edit') || auth()->user()->hasPermission('cruds.show'))
-                {
-                    $actions  = '<a href="#" class="btn btn-sm btn-light btn-active-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end" data-kt-menu-target="action-'.$value->id.'"> Aksiyon <i class="ki-duotone ki-down fs-5 ms-1"></i> </a>';
-                    $actions .= '<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-primary fw-semibold fs-7 w-125px py-4"  data-kt-menu="true" id="action-'.$value->id.'">';
-
-                    if (auth()->user()->hasPermission('cruds.show'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="' . route('cruds.show', $value->id) . '" class="menu-link px-3"> Detay </a> </div>';
-                    }
-
-                    if (auth()->user()->hasPermission('cruds.edit'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="'.route('cruds.edit',$value->id).'" class="menu-link px-3"> Düzenle </a> </div>';
-                    }
-
-                    if (auth()->user()->hasPermission('cruds.edit')  && $value->id != 1)
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="#" data-model-name="Crud" data-status="'.$value->status.'" data-id="'.$value->id.'" data-route="'.route('statusUpdate').'" class="menu-link px-3" onclick="statusUpdate(this)"> '.($value->status == 0 ? 'Aktif Et' : 'Pasif Et').' </a> </div>';                }
-
-                    if (auth()->user()->hasPermission('cruds.destroy') && $value->id != 1)
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="#" data-title="'.$value->title.' isimli modülü" data-route="'.route('cruds.destroy',$value->id).'" class="menu-link px-3" onclick="destroy(this)"> Sil </a> </div>';
-                    }
-
-                    $actions .= '</div>';
-                }
-                else
-                {
-                    $actions = '';
-                }
-
-                return $actions;
-            })
-            ->rawColumns(['actions','status'])
-            ->toJson();
-    }
-
-    public function orderable(Request $request)
-    {
-        try
-        {
-            $attribute =
-                [
-                    'columns' => 'Alanlar',
-                ];
-
-            $rules =
-                [
-                    'columns' => 'required',
-                ];
-
-            $validator = Validator::make($request->all(), $rules);
-            $validator->setAttributeNames($attribute);
-
-            if ($validator->fails())
-            {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
-            }
-
-            $data = $request->get('columns');
-
-            foreach ($data as $order => $value)
-            {
-                $parent            = CrudItem::find($value['id']);
-                $parent->order     = $order;
-                $parent->save();
-            }
-
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                ]
-            );
-
-        }
-        catch (\Exception $e)
-        {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
+            return back()->with('error', 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.');
         }
     }
 
@@ -625,7 +524,7 @@ class CrudController extends Controller
         return DB::select($sql);
     }
 
-    public function relationshipStore(Request $request,Crud $crud)
+    public function relationshipStore(Request $request,Crud $crud): RedirectResponse
     {
         try
         {
@@ -685,13 +584,16 @@ class CrudController extends Controller
 
             if ($validator->fails())
             {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
+                return back()->withErrors($validator)->withInput();
             }
+
+            $many = $request->get('relationship') === 'belongsToMany';
+
+            $request->merge(
+            [
+                'relationship_pivot_table_name' => $many ? $request->get('relationship_pivot_table_name') : null,
+                'relationship_column_name'      => $many ? null : $request->get('relationship_column_name'),
+            ]);
 
             $detail =
                 [
@@ -702,10 +604,10 @@ class CrudController extends Controller
                     'pivot_table'    => $request->get('relationship_pivot_table_name') ?? null,
                     'show_column'    => $request->get('show_column'),
                     'match_column'   => $request->get('match_column'),
-                    'multiple'       => !empty($request->get('relationship_pivot_table_name')) ? true : false,
+                    'multiple'       => $many,
                 ];
 
-            if (!empty($request->get('relationship_pivot_table_name')))
+            if ($many)
             {
                 $columnName = CrudRelationships::generateColumnName($request->get('relationship_table_model'),$request->get('relationship_pivot_table_name'));
                 $detailMany =
@@ -733,26 +635,17 @@ class CrudController extends Controller
             $crudItem->relationship = 1;
             $crudItem->save();
 
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.'
-                ]
-            );
-
+            return back()->with('status', $crudItem->title . ' ilişkisi kaydedildi.');
         }
         catch (\Exception $e)
         {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
+            report($e);
 
-                ],403);
+            return back()->withInput()->with('error', 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.');
         }
     }
 
-    public function relationshipDestroy(CrudItem $crudItem)
+    public function relationshipDestroy(CrudItem $crudItem): RedirectResponse
     {
         try
         {
@@ -766,52 +659,40 @@ class CrudController extends Controller
             {
                 $crudItem->relationship = 0;
                 $crudItem->detail       = '{}';
+                $crudItem->form_type_id = FormType::where('key', 'text')->value('id') ?? $crudItem->form_type_id;
                 $crudItem->save();
             }
 
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                ]
-            );
+            return back()->with('status', $crudItem->title . ' ilişkisi kaldırıldı.');
         }
         catch (\Exception $e)
         {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
+            report($e);
+
+            return back()->with('error', 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.');
         }
     }
 
-    public function repeaterDestroy(CrudItem $crudItem)
+    public function repeaterDestroy(CrudItem $crudItem): RedirectResponse
     {
         try
         {
-            $crudItem->repeater = 0;
-            $crudItem->detail   = '{}';
+            $crudItem->repeater     = 0;
+            $crudItem->detail       = '{}';
+            $crudItem->form_type_id = FormType::where('key', 'text')->value('id') ?? $crudItem->form_type_id;
             $crudItem->save();
 
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.',
-                ]
-            );
+            return back()->with('status', $crudItem->title . ' tekrarlanan alanı kaldırıldı.');
         }
         catch (\Exception $e)
         {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
-                ],403);
+            report($e);
+
+            return back()->with('error', 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.');
         }
     }
 
-    public function repeaterStore(Request $request,Crud $crud)
+    public function repeaterStore(Request $request,Crud $crud): RedirectResponse
     {
         try
         {
@@ -836,12 +717,7 @@ class CrudController extends Controller
 
             if ($validator->fails())
             {
-                return response()->json(
-                    [
-                        'result' => 2,
-                        'message' => $validator->errors()
-                    ],403
-                );
+                return back()->withErrors($validator)->withInput();
             }
 
             $repeaterAreas = $request->get('repeaterArea');
@@ -855,29 +731,21 @@ class CrudController extends Controller
                 array_push($repeaterData, $areaInfo);
             }
 
-            $crudItem               = CrudItem::where('column_name',$request->get('repeater_column_name'))->first();
-            $crudItem->column_name  = $request->get('repeater_column_name');
+            $crudItem               = $crud->items()->firstOrNew(['column_name' => $request->get('repeater_column_name')]);
+            $crudItem->title        = $crudItem->title ?? $crudItem->column_name;
+            $crudItem->order        = $crudItem->order ?? ($crud->items()->max('order') + 1);
             $crudItem->detail       = json_encode($repeaterData);
             $crudItem->form_type_id = 17;
             $crudItem->repeater     = 1;
             $crudItem->save();
 
-            return response()->json(
-                [
-                    'result'  => 1,
-                    'message' => 'İşlem Başarılı.'
-                ]
-            );
-
+            return back()->with('status', $crudItem->title . ' tekrarlanan alanı kaydedildi.');
         }
         catch (\Exception $e)
         {
-            return response()->json(
-                [
-                    'result'  => 0,
-                    'message' => 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.'
+            report($e);
 
-                ],403);
+            return back()->withInput()->with('error', 'İşleminizi şimdi gerçekleştiremiyoruz. Daha sonra tekrar deneyiniz.');
         }
     }
 }

@@ -4,173 +4,118 @@ namespace crudPackage\Http\Controllers;
 
 use crudPackage\Http\Controllers\Controller;
 use crudPackage\Models\User;
+use crudPackage\Support\Actions;
+use crudPackage\Support\ActivityLog;
+use crudPackage\Support\Search;
+use crudPackage\Support\Table;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
+use Illuminate\View\View;
 use Spatie\Activitylog\Models\Activity;
-use Carbon\Carbon;
+use Symfony\Component\HttpFoundation\Response;
 
 class LogController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request): View|Response
     {
-        $tables = Activity::query()->select('log_name')->distinct()->orderBy('log_name')->pluck('log_name');
-        $users  = User::query()->orderBy('name')->get(['id','name']);
-
-        return view('crudPackage::logs.index', compact('tables','users'));
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        $value   = Activity::findOrFail($id);
-        $status  = $value->description;
-        $message = '';
-        $values  = json_decode($value->properties);
-        $diff    = null;
-        $user    = User::find($value->causer_id);
-
-        if ($status == 1)
-        {
-            $message = '<span class="badge badge-success">Ekleme Yapıldı.</span>';
-        }
-        else if ($status == 2)
-        {
-            $diff    = diffFields( (array)$values->old ?? [], (array)$values->new ?? [] );
-            $message = '<span class="badge badge-warning">Düzenleme Yapıldı</span>';
-        }
-        else if ($status == 3)
-        {
-            $message = '<span class="badge badge-danger">Silme Yapıldı</span>';
-        }
-
-        return view('crudPackage::logs.show',compact('value','message','values','diff','user'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
-    public function datatable(Request $request)
-    {
-        $query = Activity::query()->with('causer');
-
-        if ($request->filled('description'))
-        {
-            $query->where('description', $request->input('description'));
-        }
-
-        if ($request->filled('log_name'))
-        {
-            $query->where('log_name', $request->input('log_name'));
-        }
-
-        if ($request->filled('causer_id'))
-        {
-            $query->where('causer_id', $request->input('causer_id'));
-        }
-
-        if ($request->filled('start_date'))
-        {
-            $query->whereDate('created_at', '>=', $request->input('start_date'));
-        }
-
-        if ($request->filled('end_date'))
-        {
-            $query->whereDate('created_at', '<=', $request->input('end_date'));
-        }
-
-        return Datatables::of($query)
-            ->editColumn('description', function ($value) 
+        $records = Activity::query()
+            ->with('causer')
+            ->when($request->filled('q'), function ($query) use ($request)
             {
-                $status  = $value->description;
-                $message = '';
-                
-                if ($status == 1)
-                {
-                    $message = '<span class="badge badge-success">Ekleme Yapıldı.</span>';
-                }
-                else if ($status == 2)
-                {
-                    $message = '<span class="badge badge-warning">Düzenleme Yapıldı</span>';
-                }
-                else if ($status == 3)
-                {
-                    $message = '<span class="badge badge-danger">Silme Yapıldı</span>';
-                }
-                
-                return $message;
-            })
-            ->editColumn('created_at', function ($value)
-            {
-                return Carbon::make($value->created_at)->format('d-m-Y H:i:s');
-            })
-            ->editColumn('user', function ($value)
-            {
-                return $value->causer->name ?? '-';
-            })
-            ->addColumn('actions', function ($value)
-            {
-                if (auth()->user()->hasPermission('logs.show'))
-                {
-                    $actions  = '<a href="#" class="btn btn-sm btn-light btn-active-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end" data-kt-menu-target="action-'.$value->id.'"> Aksiyon <i class="ki-duotone ki-down fs-5 ms-1"></i> </a>';
-                    $actions .= '<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-primary fw-semibold fs-7 w-125px py-4"  data-kt-menu="true" id="action-'.$value->id.'">';
+                $term   = (string) $request->string('q');
+                $like   = Search::pattern($term);
+                $folded = Search::fold($term);
 
-                    if (auth()->user()->hasPermission('logs.show'))
-                    {
-                        $actions .= '<div class="menu-item px-3"> <a href="' . route('logs.show', $value->id) . '" class="menu-link px-3"> Detay </a> </div>';
-                    }
+                $events = collect(ActivityLog::events())
+                    ->filter(fn (array $event) => str_contains(Search::fold($event['label']), $folded))
+                    ->keys()
+                    ->all();
 
-                    $actions .= '</div>';
-                }
-                else
+                $tables = collect(ActivityLog::tables())
+                    ->filter(fn (string $label) => str_contains(Search::fold($label), $folded))
+                    ->keys()
+                    ->all();
+
+                $query->where(function ($inner) use ($like, $events, $tables)
                 {
-                    $actions = '';
-                }
-
-                return $actions;
+                    $inner->whereIn('description', $events)
+                        ->orWhereIn('log_name', $tables)
+                        ->orWhere('properties', 'like', $like)
+                        ->orWhereHasMorph('causer', [User::class], fn ($causer) => $causer->where('name', 'like', $like));
+                });
             })
-            ->rawColumns(['actions','description','created_at','user'])
-            ->toJson();
+            ->when($request->filled('baslangic'), fn ($query) => $query->whereDate('created_at', '>=', $request->date('baslangic')))
+            ->when($request->filled('bitis'), fn ($query) => $query->whereDate('created_at', '<=', $request->date('bitis')))
+            ->when($request->filled('table'), fn ($query) => $query->where('log_name', $request->string('table')))
+            ->when($request->filled('event'), fn ($query) => $query->where('description', $request->string('event')))
+            ->when($request->filled('user'), fn ($query) => $query->where('causer_id', $request->integer('user')))
+            ->orderByDesc('id');
+
+        $columns = $this->columns();
+        $records = Table::sort($records, $columns);
+
+        if ($export = Table::export($records, $columns, 'Geçmiş'))
+        {
+            return $export;
+        }
+
+        $logs   = $records->paginate(Table::perPage())->withQueryString();
+        $tables = ActivityLog::tables();
+        $users  = User::orderBy('name')->pluck('name', 'id')->all();
+        $events = collect(ActivityLog::events())->map(fn ($event) => $event['label'])->all();
+        $total  = Activity::count();
+
+        return view('crudPackage::logs.index', compact('logs', 'columns', 'tables', 'users', 'events', 'total'));
+    }
+
+    public function show(Activity $log): View
+    {
+        $properties = (array) $log->properties->toArray();
+        $before     = ActivityLog::before($properties);
+        $after      = ActivityLog::after($properties);
+        $changes    = ActivityLog::changes($before, $after);
+        $snapshot   = ActivityLog::attributes($after ?? $before);
+
+        return view('crudPackage::logs.detail', compact('log', 'changes', 'snapshot'));
+    }
+
+    protected function columns(): array
+    {
+        return [
+            [
+                'type'     => 'lead',
+                'label'    => 'Kayıt',
+                'width'    => '2.2fr',
+                'noAvatar' => true,
+                'name'     => fn (Activity $log) => ActivityLog::subject($log),
+                'sub'      => fn (Activity $log) => ActivityLog::table($log->log_name),
+            ],
+            [
+                'type'     => 'badge',
+                'label'    => 'İşlem',
+                'width'    => '1.1fr',
+                'sortable' => 'description',
+                'value'    => fn (Activity $log) => ActivityLog::label($log->description),
+                'tone'     => fn (Activity $log) => ActivityLog::tone($log->description),
+            ],
+            [
+                'type'  => 'text',
+                'label' => 'Kullanıcı',
+                'width' => '1.3fr',
+                'value' => fn (Activity $log) => $log->causer?->name ?? 'Sistem',
+            ],
+            [
+                'type'     => 'text',
+                'label'    => 'Tarih',
+                'width'    => '1.2fr',
+                'sortable' => 'created_at',
+                'value'    => fn (Activity $log) => $log->created_at?->format('d.m.Y H:i'),
+            ],
+            [
+                'type'   => 'actions',
+                'width'  => '60px',
+                'status' => false,
+                'menu'   => fn (Activity $log) => Actions::menu('logs', $log),
+            ],
+        ];
     }
 }

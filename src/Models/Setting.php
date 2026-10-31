@@ -9,16 +9,13 @@ use crudPackage\Models\Language;
 
 class Setting extends Model
 {
-    /**
-     * languages JSON → HER ZAMAN ARRAY
-     */
     protected function languages(): Attribute
     {
         return Attribute::make(
             get: fn ($value) =>
             is_array($value)
                 ? $value
-                : json_decode($value, true) ?? [],
+                : json_decode($value ?? '[]', true) ?? [],
 
             set: fn ($value) => !empty($value) ? json_encode(array_values($value) ?? []) : null,
         );
