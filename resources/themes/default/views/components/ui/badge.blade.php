@@ -10,6 +10,8 @@
         'primary' => 'bg-tint-primary text-primary',
         'success' => 'bg-tint-success text-on-tint-success',
         'neutral' => 'bg-neutral text-body',
+        'warning' => 'bg-tint-warning text-on-tint-warning',
+        'danger'  => 'bg-tint-danger text-on-tint-danger',
     ];
 
     $sizes = [
